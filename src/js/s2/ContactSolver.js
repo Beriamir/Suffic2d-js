@@ -120,7 +120,7 @@ export default class ContactSolver {
     const friction = Math.max(bodyA.friction, bodyB.friction)
     const slop = 0.2
     const beta = 0.1
-    const maxBias = 100
+    const maxBias = 10
 
     for (let i = 0; i < contactPoints.length; ++i) {
       const cp = contactPoints[i]
