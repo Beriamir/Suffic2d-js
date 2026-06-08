@@ -58,11 +58,6 @@ export default class Vector {
     }
     return this
   }
-  isZero() {
-    const epsilon = 1e-3
-
-    return this.magSq() < epsilon * epsilon
-  }
 
   copyMulV(vector, s) {
     this.x = vector.x * s
@@ -88,6 +83,11 @@ export default class Vector {
   }
   magSq() {
     return this.x * this.x + this.y * this.y
+  }
+  isZero() {
+    const epsilon = 1e-3
+
+    return this.magSq() < epsilon * epsilon
   }
 
   static sub(vec1, vec2) {

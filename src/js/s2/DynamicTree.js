@@ -23,7 +23,7 @@ export default class DynamicTree {
     const start = this.nodes.length
     const end = start + capacity
 
-    for (let i = start; i < end; i++) {
+    for (let i = start; i < end; ++i) {
       this.nodes[i] = {
         id: this.uid++,
         aabb: new AABB(),

@@ -8,6 +8,7 @@ export default class World {
   constructor(options = {}) {
     this.bodies = []
     this.nearby = []
+    this.contacts = [] // Sorted
     this.dynamicTree = new DynamicTree()
     this.collision = new Collision()
     this.contactSolver = new ContactSolver()
@@ -32,6 +33,28 @@ export default class World {
 
   forEachContact(callback) {
     for (const [key, manifold] of this.newContacts.entries()) {
+      if (callback(manifold, key)) {
+        break
+      }
+    }
+  }
+
+  forEachSortedContact(callback) {
+    this.contacts.length = 0
+
+    for (const entry of this.newContacts.keys()) {
+      this.contacts.push(entry)
+    }
+
+    this.contacts.sort((a, b) => {
+      if (a < b) return -1
+      if (a > b) return 1
+      return 0
+    })
+
+    for (const key of this.contacts) {
+      const manifold = this.newContacts.get(key)
+
       if (callback(manifold, key)) {
         break
       }
@@ -73,24 +96,22 @@ export default class World {
   simulate(dt) {
     dt /= this.substeps
 
-    for (let i = 0; i < this.substeps; i++) {
+    const invH = 1 / dt
+
+    for (let substep = 0; substep < this.substeps; ++substep) {
       this.contactChecks.clear()
       this.newContacts.clear()
 
       this.forEachBody(bodyA => {
-        const idA = bodyA.id
+        let idA = bodyA.id
 
-        bodyA.contactKeys.clear()
         this.nearby.length = 0
         this.dynamicTree.queryAABB(bodyA.aabb, this.nearby)
 
         for (const bodyB of this.nearby) {
-          const idB = bodyB.id
+          let idB = bodyB.id
 
-          if (
-            (idA === idB && bodyA.type === bodyB.type) ||
-            !bodyA.aabb.overlaps(bodyB.aabb)
-          ) {
+          if (idA >= idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
             continue
           }
 
@@ -106,9 +127,10 @@ export default class World {
 
             for (const sB of bodyB.fixtures) {
               const key =
-                idA < idB
-                  ? `${idA}-${sA.id},${idB}-${sB.id}`
-                  : `${idB}-${sB.id},${idA}-${sA.id}`
+                ((BigInt(idA) & 0xffffffn) << 56n) |
+                ((BigInt(sA.id) & 0xffffn) << 40n) |
+                ((BigInt(idB) & 0xffffffn) << 16n) |
+                (BigInt(sB.id) & 0xffffn)
 
               if (this.contactChecks.has(key)) {
                 continue
@@ -172,10 +194,13 @@ export default class World {
         const newManifold = newContact.manifold
         const oldManifold = oldContact.manifold
 
-        for (let i = 0; i < newManifold.contactCount; i++) {
+        const newCount = newManifold.contactPoints.length
+        const oldCount = oldManifold.contactPoints.length
+
+        for (let i = 0; i < newCount; ++i) {
           const newCp = newManifold.contactPoints[i]
 
-          for (let j = 0; j < oldManifold.contactCount; j++) {
+          for (let j = 0; j < oldCount; j++) {
             const oldCp = oldManifold.contactPoints[j]
 
             if (newCp.id === oldCp.id) {
@@ -191,11 +216,24 @@ export default class World {
         this.contactSolver.warmStart(newContact)
       })
 
-      for (let i = 0; i < this.solverIterations; i++) {
-        this.forEachContact(contact => {
-          this.contactSolver.solve(contact, dt)
+      let useBias = true
+      for (let i = 0; i < this.solverIterations; ++i) {
+        this.forEachSortedContact(contact => {
+          this.contactSolver.solve(contact, invH, useBias)
         })
       }
+
+      this.forEachBody(body => {
+        if (!body.isStatic) {
+          body.transform(body.linearVelocity, body.angularVelocity, dt)
+          this.updateBody(body)
+        }
+      })
+
+      useBias = false
+      this.forEachSortedContact(contact => {
+        this.contactSolver.solve(contact, invH, useBias)
+      })
 
       this.oldContacts.clear()
       this.forEachContact((newContact, key) => {
@@ -203,10 +241,7 @@ export default class World {
       })
 
       this.forEachBody(body => {
-        if (!body.isStatic) {
-          body.transform(body.linearVelocity, body.angularVelocity, dt)
-          this.updateBody(body)
-        }
+        body.contactKeys.clear()
       })
     }
   }

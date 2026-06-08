@@ -12,7 +12,7 @@ export default class Collision {
     const start = this.vectors.length
     const end = start + capacity
 
-    for (let i = start; i < end; i++) {
+    for (let i = start; i < end; ++i) {
       this.vectors[i] = new Vector()
       this.vectors[i].next = i + 1
     }
@@ -40,9 +40,9 @@ export default class Collision {
       return
     }
 
+    this.vectors[index].zero()
     this.vectors[index].next = this.freeList
     this.vectors[index].allocated = false
-    this.vectors[index].zero()
     this.freeList = index
   }
 
@@ -71,6 +71,11 @@ export default class Collision {
       const support = this.support(vertsA, vertsB, dir)
 
       if (this.vectors[support].dot(dir) <= 0) {
+        this.deallocateVector(support)
+        for (let i = 0; i < simplex.length; ++i) {
+          this.deallocateVector(simplex[i])
+        }
+
         return null
       }
 
@@ -88,104 +93,92 @@ export default class Collision {
           simplex,
           dir
         )
-        const { refEdge, incEdge, contactPoints, contactCount } =
-          this.getContactPoints(vertsA, vertsB, normal)
+        const { ref, inc, contactPoints } = this.getContactPoints(
+          vertsA,
+          vertsB,
+          normal
+        )
 
         return {
           normal,
           overlap,
           polytope,
           contactPoints,
-          contactCount,
-          refEdge,
-          incEdge
+          ref,
+          inc
         }
       }
     }
   }
 
   getContactPoints(vertsA, vertsB, normal, contactPoints = []) {
-    const { edge: refEdge, index: refId } = this.bestEdge(
-      vertsA,
-      normal.x,
-      normal.y
-    )
-    const { edge: incEdge, index: incId } = this.bestEdge(
-      vertsB,
-      -normal.x,
-      -normal.y
-    )
+    const ref = this.bestEdge(vertsA, normal.x, normal.y)
+    const inc = this.bestEdge(vertsB, -normal.x, -normal.y)
 
-    const edgeDirX = refEdge[2] - refEdge[0]
-    const edgeDirY = refEdge[3] - refEdge[1]
+    const edgeDirX = ref.edge[2] - ref.edge[0]
+    const edgeDirY = ref.edge[3] - ref.edge[1]
 
-    const { clippedPoints: firstClipping, count: firstCount } = this.clipEdge(
-      incEdge,
-      refEdge[0],
-      refEdge[1],
+    const firstClipping = this.clipEdge(
+      inc.edge,
+      ref.edge[0],
+      ref.edge[1],
       edgeDirX,
       edgeDirY,
       true
     )
 
     let secondClipping = firstClipping
-    let secondCount = 0
 
-    if (firstCount > 1) {
-      const { clippedPoints, count } = this.clipEdge(
-        firstClipping,
-        refEdge[2],
-        refEdge[3],
+    if (firstClipping.count > 1) {
+      secondClipping = this.clipEdge(
+        firstClipping.points,
+        ref.edge[2],
+        ref.edge[3],
         -edgeDirX,
         -edgeDirY,
         true
       )
-
-      secondClipping = clippedPoints
-      secondCount = count
     }
 
     let finalClipping = secondClipping
-    let finalCount = 0
 
-    if (secondCount > 1) {
-      const { clippedPoints, count } = this.clipEdge(
-        secondClipping,
-        refEdge[0],
-        refEdge[1],
+    if (secondClipping.count > 1) {
+      finalClipping = this.clipEdge(
+        secondClipping.points,
+        ref.edge[0],
+        ref.edge[1],
         -edgeDirY,
         edgeDirX,
         false
       )
-
-      finalClipping = clippedPoints
-      finalCount = count
     }
 
-    const maxProj = refEdge[0] * normal.x + refEdge[1] * normal.y
+    const maxProj = ref.edge[0] * normal.x + ref.edge[1] * normal.y
 
-    for (let i = 0; i < finalCount; i += 2) {
-      const minProj =
-        finalClipping[i] * normal.x + finalClipping[i + 1] * normal.y
+    for (let i = 0; i < finalClipping.count; i += 2) {
+      const pointId = i >> 1
+      const pointX = finalClipping.points[i]
+      const pointY = finalClipping.points[i + 1]
+      const minProj = pointX * normal.x + pointY * normal.y
 
       contactPoints.push({
-        id: `${refId}-${incId}`,
-        pointX: finalClipping[i],
-        pointY: finalClipping[i + 1],
+        // id: `${ref.id}-${inc.id}-${pointId}`,
+        id: (ref.id << 16) | (inc.id << 8) | pointId,
+        pointX,
+        pointY,
         overlap: maxProj - minProj
       })
     }
 
     return {
-      refEdge,
-      incEdge,
-      contactPoints,
-      contactCount: contactPoints.length
+      ref,
+      inc,
+      contactPoints
     }
   }
 
   clipEdge(inc, startX, startY, dirX, dirY, isClip = false) {
-    const clippedPoints = new Float32Array(4)
+    const points = new Float32Array(4)
     const d0 = startX * dirX + startY * dirY
     const u0 = inc[0] * dirX + inc[1] * dirY - d0
     const u1 = inc[2] * dirX + inc[3] * dirY - d0
@@ -193,13 +186,13 @@ export default class Collision {
     let count = 0
 
     if (u0 >= 0) {
-      clippedPoints[count++] = inc[0]
-      clippedPoints[count++] = inc[1]
+      points[count++] = inc[0]
+      points[count++] = inc[1]
     }
 
     if (u1 >= 0) {
-      clippedPoints[count++] = inc[2]
-      clippedPoints[count++] = inc[3]
+      points[count++] = inc[2]
+      points[count++] = inc[3]
     }
 
     if (isClip && u0 * u1 < 0) {
@@ -207,11 +200,11 @@ export default class Collision {
       const deltaY = inc[3] - inc[1]
       const t = u0 / (u0 - u1)
 
-      clippedPoints[count++] = inc[0] + deltaX * t
-      clippedPoints[count++] = inc[1] + deltaY * t
+      points[count++] = inc[0] + deltaX * t
+      points[count++] = inc[1] + deltaY * t
     }
 
-    return { clippedPoints, count }
+    return { points, count }
   }
 
   bestEdge(vertices, dx, dy) {
@@ -228,8 +221,8 @@ export default class Collision {
     }
 
     const n = vertices.length
-    const prevIndex = (index - 2 + n) % n
-    const nextIndex = (index + 2) % n
+    const prevIndex = index >= 2 ? index - 2 : index - 2 + n
+    const nextIndex = index < n - 2 ? index + 2 : index + 2 - n
 
     const prevX = vertices[prevIndex]
     const prevY = vertices[prevIndex + 1]
@@ -243,23 +236,27 @@ export default class Collision {
     const nextDirX = nextX - bestX
     const nextDirY = nextY - bestY
 
-    const edge = new Float32Array(4)
     const prevDot = prevDirX * dx + prevDirY * dy
     const nextDot = nextDirX * dx + nextDirY * dy
+
+    const edge = new Float32Array(4)
+    let id = 0
 
     if (prevDot > nextDot) {
       edge[0] = prevX
       edge[1] = prevY
       edge[2] = bestX
       edge[3] = bestY
+      id = prevIndex >> 1
     } else {
       edge[0] = bestX
       edge[1] = bestY
       edge[2] = nextX
       edge[3] = nextY
+      id = index >> 1
     }
 
-    return { edge, index }
+    return { edge, id }
   }
 
   expandingPolytope(vertsA, vertsB, simplex, dir) {
@@ -267,8 +264,8 @@ export default class Collision {
       let minDot = Infinity
       let index = 0
 
-      for (let i = 0; i < simplex.length; i++) {
-        const j = (i + 1) % simplex.length
+      for (let i = 0; i < simplex.length; ++i) {
+        const j = i + 1 > simplex.length - 1 ? 0 : i + 1
 
         const a = simplex[i]
         const b = simplex[j]
@@ -289,18 +286,22 @@ export default class Collision {
         }
       }
 
-      const point = this.support(vertsA, vertsB, dir)
-      const dot = this.vectors[point].dot(dir)
+      const support = this.support(vertsA, vertsB, dir)
+      const dot = this.vectors[support].dot(dir)
 
       if (dot - minDot <= 1e-3) {
-        const polytope = new Float32Array(simplex.length * 2)
+        const polytope = new Float32Array(simplex.length << 1)
 
-        for (let i = 0; i < simplex.length; i++) {
-          const p = simplex[i]
+        for (let i = 0; i < simplex.length; ++i) {
+          const v = simplex[i]
 
-          polytope[i * 2] = this.vectors[p].x
-          polytope[i * 2 + 1] = this.vectors[p].y
+          polytope[i << 1] = this.vectors[v].x
+          polytope[(i << 1) + 1] = this.vectors[v].y
+
+          this.deallocateVector(v)
         }
+
+        this.deallocateVector(support)
 
         return {
           normal: dir,
@@ -309,7 +310,7 @@ export default class Collision {
         }
       }
 
-      simplex.splice(index, 0, point)
+      simplex.splice(index, 0, support)
     }
   }
 
@@ -330,7 +331,7 @@ export default class Collision {
       this.vectors[c].x - this.vectors[a].x,
       this.vectors[c].y - this.vectors[a].y
     )
-    this.vectors[ao].set(-this.vectors[a].x, -this.vectors[a].y)
+    this.vectors[ao].copy(this.vectors[a]).negate()
 
     this.tripleProduct(
       this.vectors[ac],
@@ -345,8 +346,6 @@ export default class Collision {
       this.vectors[acPerp]
     )
 
-    simplex.length = 2
-
     if (this.vectors[abPerp].isZero()) {
       this.vectors[abPerp].copy(this.vectors[ab]).perp()
     }
@@ -356,6 +355,7 @@ export default class Collision {
     }
 
     if (this.vectors[abPerp].dot(this.vectors[ao]) >= 0) {
+      simplex.length = 2
       simplex[0] = b
       simplex[1] = a
       dir.copy(this.vectors[abPerp])
@@ -371,6 +371,7 @@ export default class Collision {
     }
 
     if (this.vectors[acPerp].dot(this.vectors[ao]) >= 0) {
+      simplex.length = 2
       simplex[0] = c
       simplex[1] = a
       dir.copy(this.vectors[acPerp])
@@ -385,6 +386,11 @@ export default class Collision {
       return false
     }
 
+    this.deallocateVector(ab)
+    this.deallocateVector(ac)
+    this.deallocateVector(ao)
+    this.deallocateVector(abPerp)
+    this.deallocateVector(acPerp)
     return true
   }
 
@@ -399,7 +405,7 @@ export default class Collision {
       this.vectors[b].x - this.vectors[a].x,
       this.vectors[b].y - this.vectors[a].y
     )
-    this.vectors[ao].set(-this.vectors[a].x, -this.vectors[a].y)
+    this.vectors[ao].copy(this.vectors[a]).negate()
 
     this.tripleProduct(
       this.vectors[ab],

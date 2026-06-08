@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', _ => {
   const gfx = new Graphics(canvas)
 
   canvas.width = 800
-  canvas.height = 600
+  canvas.height = 800
 
   const world = new s2.World({
     gravity: new s2.Vector(0, 1000 * 0.981),
@@ -17,8 +17,6 @@ document.addEventListener('DOMContentLoaded', _ => {
   const debug = false
 
   function setup() {
-    world.clear()
-
     const ground = new s2.RigidBody(canvas.width / 2, canvas.height - 50, 0, {
       isStatic: true
     }).createFixture(
@@ -42,65 +40,30 @@ document.addEventListener('DOMContentLoaded', _ => {
 
     world.createBody(ground)
 
-    const restitution = 0.0
-    const body0 = new s2.RigidBody(400, 50, 0, {
-      restitution,
-      friction: 0.6
-    })
-    const body1 = new s2.RigidBody(400, 200, 0, {
-      restitution,
-      friction: 0.6
-    })
-    const body2 = new s2.RigidBody(400, 300, 0, {
-      restitution,
-      friction: 0.6
-    })
+    const size = 30
+    const rows = 20
+    const width = size / 2
+    const height = size / 2
 
-    let width = 100
-    let height = 100
-    const shape0 = new s2.Polygon(
-      [-width, -height, width, -height, width, height, -width, height],
-      { offset: new s2.Vector() }
-    )
-
-    width = 50
-    height = 50
-    const shape1 = new s2.Polygon(
-      [-width, -height, width, -height, width, height, -width, height],
-      { offset: new s2.Vector() }
-    )
-
-    width = 20
-    height = 20
-    const shape2 = new s2.Polygon(
-      [-width, -height, width, -height, width, height, -width, height],
-      { offset: new s2.Vector() }
-    )
-
-    body0.createFixture(shape0)
-    body1.createFixture(shape1)
-    body2.createFixture(shape2)
-    world.createBody(body0)
-    world.createBody(body1)
-    world.createBody(body2)
-
-    for (let i = 0; i < 100; i++) {
-      const x = Math.random() * canvas.width
-      const y = Math.random() * canvas.height
-      const body = new s2.RigidBody(x, y, 0, {
-        restitution: 0.3,
-        friction: 0.6
-      })
-
-      const width = 10
-      const height = 10
-      const shape1 = new s2.Polygon(
-        [-width, -height, width, -height, width, height, -width, height],
-        { offset: new s2.Vector() }
-      )
-
-      body.createFixture(shape1)
-      world.createBody(body)
+    for (let y = 0; y < rows; ++y) {
+      for (let x = 0; x < rows - y; ++x) {
+        world.createBody(
+          new s2.RigidBody(
+            canvas.width * 0.525 + x * size - (rows - y) * size * 0.5,
+            canvas.height - 90 - y * size,
+            0,
+            {
+              restitution: 0.1,
+              friction: 0.3
+            }
+          ).createFixture(
+            new s2.Polygon(
+              [-width, -height, width, -height, width, height, -width, height],
+              { offset: new s2.Vector() }
+            )
+          )
+        )
+      }
     }
   }
 
@@ -117,8 +80,10 @@ document.addEventListener('DOMContentLoaded', _ => {
     gfx.clear(0, 0, canvas.width, canvas.height)
 
     world.forEachBody(body => {
+      const { position, cos, sin } = body
+
       for (const s of body.fixtures) {
-        gfx.drawPolygon(body.position.x, body.position.y, body.cos, body.sin, {
+        gfx.drawPolygon(position.x, position.y, cos, sin, {
           offsetX: s.offset.x,
           offsetY: s.offset.y,
           vertices: s.vertices,
@@ -141,14 +106,7 @@ document.addEventListener('DOMContentLoaded', _ => {
         const {
           bodyA,
           bodyB,
-          manifold: {
-            normal,
-            overlap,
-            polytope,
-            contactPoints,
-            refEdge,
-            incEdge
-          }
+          manifold: { normal, overlap, polytope, contactPoints, ref, inc }
         } = contact
 
         for (const s of bodyA.fixtures) {
@@ -192,11 +150,11 @@ document.addEventListener('DOMContentLoaded', _ => {
         const color = 'red'
 
         gfx.drawLine(0, 0, 1, 0, {
-          vertices: refEdge,
+          vertices: ref.edge,
           strokeColor: color
         })
         gfx.drawLine(0, 0, 1, 0, {
-          vertices: incEdge,
+          vertices: inc.edge,
           strokeColor: color
         })
 
@@ -205,20 +163,20 @@ document.addEventListener('DOMContentLoaded', _ => {
 
           nImpulse[0] = 0
           nImpulse[1] = 0
-          nImpulse[2] = normal.x * cp.normalImpulse
-          nImpulse[3] = normal.y * cp.normalImpulse
+          nImpulse[2] = normal.x * cp.normalImpulse * dt
+          nImpulse[3] = normal.y * cp.normalImpulse * dt
 
-          gfx.drawNormal(cp.pointX, cp.pointY, normal.x, normal.y, {
-            strokeColor: color
+          gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
+            vertices: nImpulse,
+            strokeColor: 'white'
           })
           gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
             radius: 5,
             strokeColor: color,
             wireframe: true
           })
-          gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
-            vertices: nImpulse,
-            strokeColor: 'white'
+          gfx.drawNormal(cp.pointX, cp.pointY, normal.x, normal.y, {
+            strokeColor: color
           })
         }
       })
@@ -226,7 +184,7 @@ document.addEventListener('DOMContentLoaded', _ => {
 
     gfx.status(10, 10, [
       `fps: ${Math.ceil(1 / dt)}`,
-      `steps: ${world.substeps}`,
+      `sub steps: ${world.substeps}`,
       `solver iters: ${world.solverIterations}`,
       `bodies: ${world.bodies.length}`,
       `joints: ${0}`
@@ -238,7 +196,8 @@ document.addEventListener('DOMContentLoaded', _ => {
     let accu = 0
     const interval = 1 / 60
 
-    const loop = now => {
+    const loop = () => {
+      const now = performance.now()
       const dt = (now - last) * 0.001
 
       last = now
@@ -246,14 +205,14 @@ document.addEventListener('DOMContentLoaded', _ => {
 
       if (accu >= interval) {
         accu = 0
-
         simulate(interval)
         render(gfx, dt)
       }
+
       requestAnimationFrame(loop)
     }
 
-    requestAnimationFrame(loop)
+    loop()
   }
 
   setup()
