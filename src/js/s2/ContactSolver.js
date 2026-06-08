@@ -115,6 +115,7 @@ export default class ContactSolver {
     const tangentX = -normal.y
     const tangentY = normal.x
 
+    const restitutionThreashold = 0.1
     const restitution = Math.min(bodyA.restitution, bodyB.restitution)
     const friction = Math.max(bodyA.friction, bodyB.friction)
     const slop = 0.2
@@ -134,7 +135,11 @@ export default class ContactSolver {
         bias = maxBias
       }
 
-      let impulse = (-(1 + restitution) * vn + bias) * cp.effNormalMass
+      if (vn > 0) {
+        bias += restitution * Math.max(vn - restitutionThreashold, 0)
+      }
+
+      let impulse = (-vn + bias) * cp.effNormalMass
 
       const oldImpulse = cp.normalImpulse
       const newImpulse = Math.max(oldImpulse + impulse, 0)

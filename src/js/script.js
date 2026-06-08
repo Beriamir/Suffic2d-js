@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', _ => {
             canvas.height - 90 - y * size,
             0,
             {
-              restitution: 0.1,
-              friction: 0.3
+              restitution: 0.3,
+              friction: 0.6
             }
           ).createFixture(
             new s2.Polygon(
