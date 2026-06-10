@@ -39,23 +39,27 @@ export default class ContactSolver {
       const rtB = tangentX * -rbY + tangentY * rbX
       const kt = mA + mB + rtA * rtA * iA + rtB * rtB * iB
 
-      cp.rnA = rnA
-      cp.rnB = rnB
-      cp.effNormalMass = kn !== 0 ? 1 / kn : 0
-
-      cp.rtA = rtA
-      cp.rtB = rtB
-      cp.effTangentMass = kt !== 0 ? 1 / kt : 0
-
       cp.raX = raX
       cp.raY = raY
       cp.rbX = rbX
       cp.rbY = rbY
 
+      cp.rnA = rnA
+      cp.rnB = rnB
+      cp.rtA = rtA
+      cp.rtB = rtB
+
+      cp.effNormalMass = kn !== 0 ? 1 / kn : 0
+      cp.effTangentMass = kt !== 0 ? 1 / kt : 0
+
       cp.normalImpulse = 0
       cp.tangentImpulse = 0
-
       cp.persistent = false
+
+      const slop = 0.2
+      const beta = 0.1
+
+      cp.velocityBias = Math.max(cp.overlap - slop, 0) * beta
     }
   }
 
@@ -115,11 +119,14 @@ export default class ContactSolver {
     const tangentX = -normal.y
     const tangentY = normal.x
 
+    const restitution =
+      bodyA.restitution < bodyB.restitution
+        ? bodyA.restitution
+        : bodyB.restitution
+    const friction =
+      bodyA.friction < bodyB.friction ? bodyA.friction : bodyB.friction
+
     const restitutionThreashold = 0.1
-    const restitution = Math.min(bodyA.restitution, bodyB.restitution)
-    const friction = Math.max(bodyA.friction, bodyB.friction)
-    const slop = 0.2
-    const beta = 0.1
     const maxBias = 10
 
     for (let i = 0; i < contactPoints.length; ++i) {
@@ -129,15 +136,13 @@ export default class ContactSolver {
       const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
       const vn = relVelX * normal.x + relVelY * normal.y
 
-      let bias = useBias ? Math.max(0, cp.overlap - slop) * (beta * invH) : 0
+      let bias = useBias ? cp.velocityBias * invH : 0
 
       if (bias > maxBias) {
         bias = maxBias
       }
 
-      if (vn > 0) {
-        bias += restitution * Math.max(vn - restitutionThreashold, 0)
-      }
+      bias += restitution * Math.max(vn - restitutionThreashold, 0)
 
       let impulse = (-vn + bias) * cp.effNormalMass
 
@@ -188,5 +193,31 @@ export default class ContactSolver {
     bodyB.linearVelocity.copy(vB)
     bodyA.angularVelocity = wA
     bodyB.angularVelocity = wB
+  }
+
+  solvePosition(contact) {
+    const {
+      bodyA,
+      bodyB,
+      manifold: { normal, contactPoints }
+    } = contact
+
+    const mA = bodyA.invMass
+    const mB = bodyB.invMass
+    const iA = bodyA.invInertia
+    const iB = bodyB.invInertia
+
+    const slop = 0.2
+    const beta = 0.1
+
+    for (let i = 0; i < contactPoints.length; ++i) {
+      const cp = contactPoints[i]
+      const error = cp.velocityBias * cp.effNormalMass
+
+      bodyA.translate(normal, -error * mA)
+      bodyB.translate(normal, error * mB)
+      bodyA.rotate(cp.rnA * -error * iA)
+      bodyB.rotate(cp.rnB * error * iB)
+    }
   }
 }

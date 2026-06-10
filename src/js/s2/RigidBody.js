@@ -113,8 +113,6 @@ export default class RigidBody {
     }
 
     if (this.isStatic) {
-      this.restitution = 1
-      this.friction = 0
       this.invMass = 0
       this.invInertia = 0
       return

@@ -18,7 +18,7 @@ export default class World {
 
     this.gravity = options.gravity ?? new Vector()
     this.substeps = options.substeps ?? 2
-    this.solverIterations = options.solverIterations ?? 4
+    this.iterations = options.iterations ?? 4
   }
 
   forEachBody(callback) {
@@ -217,7 +217,7 @@ export default class World {
       })
 
       let useBias = true
-      for (let i = 0; i < this.solverIterations; ++i) {
+      for (let i = 0; i < this.iterations; ++i) {
         this.forEachSortedContact(contact => {
           this.contactSolver.solve(contact, invH, useBias)
         })

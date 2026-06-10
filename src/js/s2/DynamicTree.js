@@ -81,6 +81,7 @@ export default class DynamicTree {
     while (this.nodes[sibling].height > 0) {
       const cost = directCost + inheritedCost
 
+      // Remember the current best sibling
       if (cost < bestCost) {
         bestSibling = sibling
         bestCost = cost
@@ -91,6 +92,7 @@ export default class DynamicTree {
       const child1 = this.nodes[sibling].child1
       const child2 = this.nodes[sibling].child2
 
+      // How promising is child1?
       let leaf1 = this.nodes[child1].height === 0
       let area1 = 0
       let lowerCost1 = Infinity
@@ -114,6 +116,7 @@ export default class DynamicTree {
           Math.min(this.nodes[node].aabb.perimeter - area1, 0)
       }
 
+      // Is child2 better?
       let leaf2 = this.nodes[child2].height === 0
       let area2 = 0
       let lowerCost2 = Infinity
@@ -145,6 +148,7 @@ export default class DynamicTree {
         break
       }
 
+      // Tie breaker
       if (lowerCost1 === lowerCost2) {
         const meanX = this.nodes[node].aabb.meanX
         const meanY = this.nodes[node].aabb.meanY
@@ -162,6 +166,7 @@ export default class DynamicTree {
         lowerCost2 = dx2 * dx2 + dy2 * dy2
       }
 
+      // Descend
       if (lowerCost1 < lowerCost2) {
         sibling = child1
         siblingArea = area1

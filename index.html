@@ -17,9 +17,17 @@
         top: 0;
         left: 0;
       }
+      .gui {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        touch-action: none;
+      }
     </style>
   </head>
   <body>
+    <div id="gui" class="gui"></div>
     <canvas id="canvas" class="canvas"></canvas>
     <script src="src/js/script.js" type="module"></script>
   </body>
