@@ -1,70 +1,84 @@
 export default class Graphics {
   constructor(canvas, options = {}) {
-    this.canvas = canvas
     this.ctx = canvas.getContext('2d', options)
+    this.canvas = canvas
   }
-
   get centerX() {
     return this.canvas.width * 0.5
   }
-
   get centerY() {
     return this.canvas.height * 0.5
   }
-
-  status(x, y, list, options = {}) {
-    if (typeof list !== 'object') {
-      return
-    }
-
+  setSize(width, height) {
+    this.canvas.width = width
+    this.canvas.height = height
+    return this
+  }
+  clear(x, y, w, h) {
+    this.ctx.clearRect(x, y, w, h)
+    return this
+  }
+  drawText(x, y, text, options = {}) {
+    const fillColor = options.fillColor ?? '#0e0e0e'
+    const baseline = options.baseline ?? 'top'
     const fontSize = options.fontSize ?? 12
-    const fillColor = options.fillColor ?? 'white'
-    const height = options.height ?? 1.5
+    const align = options.align ?? 'start'
 
     this.ctx.fillStyle = fillColor
     this.ctx.font = `normal ${fontSize}px verdana`
-    this.ctx.textBaseline = 'top'
-    this.ctx.textAlign = 'start'
-    for (let i = 0; i < list.length; i++) {
-      this.ctx.fillText(list[i], x, y + fontSize * height * i)
-    }
+    this.ctx.textBaseline = baseline
+    this.ctx.textAlign = align
+    this.ctx.fillText(text, x, y)
+    return this
   }
-
-  clear(x, y, w, h) {
-    this.ctx.clearRect(x, y, w, h)
-  }
-
   drawCircle(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
     const radius = options.radius ?? null
     const wireframe = options.wireframe ?? false
+    const noStroke = options.noStroke ?? false
+    const strokeColor = options.strokeColor ?? '#0e0e0e'
+    const strokeWidth = options.strokeWidth ?? 1
 
     if (!radius) {
-      return
+      return this
     }
 
     const worldX = x + (localX * cos - localY * sin)
     const worldY = y + (localX * sin + localY * cos)
+    const anchorX = worldX + (radius * cos - 0 * sin)
+    const anchorY = worldY + (radius * sin + 0 * cos)
 
     this.ctx.beginPath()
     this.ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
+    this.ctx.moveTo(worldX, worldY)
+    this.ctx.lineTo(anchorX, anchorY)
+
     if (!wireframe) {
       this.ctx.fillStyle = options.fillColor ?? `gray`
       this.ctx.fill()
     }
-    this.ctx.strokeStyle = options.strokeColor ?? `white`
-    this.ctx.stroke()
-  }
 
+    if (noStroke) {
+      return this
+    }
+
+    this.ctx.lineWidth = strokeWidth
+    this.ctx.strokeStyle = strokeColor
+    this.ctx.stroke()
+    return this
+  }
   drawPolygon(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
     const vertices = options.vertices ?? null
     const wireframe = options.wireframe ?? false
+    const noStroke = options.noStroke ?? false
+    const strokeColor = options.strokeColor ?? '#0e0e0e'
+    const strokeWidth = options.strokeWidth ?? 1
 
     if (!vertices) {
-      return
+      return this
     }
 
     let x0 = localX + vertices[0]
@@ -90,17 +104,25 @@ export default class Graphics {
       this.ctx.fillStyle = options.fillColor ?? `gray`
       this.ctx.fill()
     }
-    this.ctx.strokeStyle = options.strokeColor ?? `white`
-    this.ctx.stroke()
-  }
 
+    if (noStroke) {
+      return this
+    }
+
+    this.ctx.lineWidth = strokeWidth
+    this.ctx.strokeStyle = strokeColor
+    this.ctx.stroke()
+    return this
+  }
   drawLine(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
     const vertices = options.vertices ?? null
+    const strokeColor = options.strokeColor ?? '#0e0e0e'
+    const strokeWidth = options.strokeWidth ?? 1
 
     if (!vertices) {
-      return
+      return this
     }
 
     let x0 = localX + vertices[0]
@@ -117,12 +139,16 @@ export default class Graphics {
       worldY = y + (x0 * sin + y0 * cos)
       this.ctx.lineTo(worldX, worldY)
     }
-    this.ctx.strokeStyle = options.strokeColor ?? `white`
+    this.ctx.lineWidth = strokeWidth
+    this.ctx.strokeStyle = strokeColor
     this.ctx.stroke()
+    return this
   }
-
   drawAABB(aabb, options = {}) {
     const wireframe = options.wireframe ?? false
+    const noStroke = options.noStroke ?? false
+    const strokeColor = options.strokeColor ?? '#0e0e0e'
+    const strokeWidth = options.strokeWidth ?? 1
 
     this.ctx.beginPath()
     this.ctx.moveTo(aabb.minX, aabb.minY)
@@ -135,11 +161,19 @@ export default class Graphics {
       this.ctx.fillStyle = options.fillColor ?? `gray`
       this.ctx.fill()
     }
-    this.ctx.strokeStyle = options.strokeColor ?? `white`
-    this.ctx.stroke()
-  }
 
+    if (noStroke) {
+      return this
+    }
+
+    this.ctx.lineWidth = strokeWidth
+    this.ctx.strokeStyle = strokeColor
+    this.ctx.stroke()
+    return this
+  }
   drawNormal(x, y, normalX, normalY, options = {}) {
+    const strokeColor = options.strokeColor ?? '#0e0e0e'
+    const strokeWidth = options.strokeWidth ?? 1
     const length = options.length ?? 20
 
     const head = length * 0.3
@@ -158,10 +192,12 @@ export default class Graphics {
     this.ctx.beginPath()
     this.ctx.moveTo(x, y)
     this.ctx.lineTo(endX, endY)
-    this.ctx.lineTo(leftX, leftY)
-    this.ctx.moveTo(endX, endY)
+    this.ctx.moveTo(leftX, leftY)
+    this.ctx.lineTo(endX, endY)
     this.ctx.lineTo(rightX, rightY)
-    this.ctx.strokeStyle = options.strokeColor ?? `white`
+    this.ctx.lineWidth = strokeWidth
+    this.ctx.strokeStyle = strokeColor
     this.ctx.stroke()
+    return this
   }
 }

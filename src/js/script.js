@@ -6,19 +6,21 @@ document.addEventListener('DOMContentLoaded', _ => {
   const canvas = document.getElementById('canvas')
   const guiEl = document.getElementById('gui')
 
-  const gfx = new Graphics(canvas)
+  const gfx = new Graphics(canvas, {
+    //
+  }).setSize(800, 800)
   const gui = new dat.GUI({
     autoPlace: false,
     hideable: true
   })
-
   const world = new s2.World({
-    gravity: new s2.Vector(0, 1000 * 0.981),
+    gravity: { x: 0, y: 1000 * 0.981 },
     substeps: 2,
     iterations: 4
   })
 
   const debugs = {
+    wireframe: false,
     epa: false,
     normal: false,
     point: false,
@@ -35,28 +37,36 @@ document.addEventListener('DOMContentLoaded', _ => {
   }
 
   const statsFol = gui.addFolder('Stats')
-  const debugsFol = gui.addFolder('Debugs')
-  const perimetersFol = gui.addFolder('Perimeters')
-
   for (const stat of Object.keys(stats)) {
     statsFol.add(stats, stat).listen().name(stat.toUpperCase())
   }
   statsFol.open()
 
+  const debugsFol = gui.addFolder('Debugs')
   for (const key of Object.keys(debugs)) {
     debugsFol.add(debugs, key).name(key.toUpperCase())
   }
   debugsFol.open()
 
+  const perimetersFol = gui.addFolder('Perimeters')
   perimetersFol.add(world, 'substeps', 1, 10, 1).name('SUB STEPS')
   perimetersFol.add(world, 'iterations', 1, 10, 1).name('ITERATIONS')
   perimetersFol.open()
 
-  canvas.width = 800
-  canvas.height = 800
+  gui.add(
+    {
+      restart() {
+        setup()
+      }
+    },
+    'restart'
+  )
+
   guiEl.appendChild(gui.domElement)
 
   function setup() {
+    world.clear()
+
     const ground = new s2.RigidBody(canvas.width / 2, canvas.height, 0, {
       isStatic: true,
       restitution: 1,
@@ -87,7 +97,7 @@ document.addEventListener('DOMContentLoaded', _ => {
     world.createBody(ground)
 
     const size = 30
-    const rows = 10
+    const rows = 20
 
     for (let y = 0; y < rows; ++y) {
       for (let x = 0; x < rows - y; ++x) {
@@ -114,8 +124,7 @@ document.addEventListener('DOMContentLoaded', _ => {
                 height,
                 -width,
                 height
-              ]),
-              {}
+              ])
             )
           )
         )
@@ -145,15 +154,18 @@ document.addEventListener('DOMContentLoaded', _ => {
           vertices: s.vertices,
           fillColor: s.fillColor,
           strokeColor: s.strokeColor,
-          wireframe: false
+          wireframe: debugs.wireframe,
+          noStroke: !debugs.wireframe
         })
       }
     })
 
+    const debugColor = 'lightgray'
+
     if (debugs.bvh) {
       world.traverseTree(node => {
         gfx.drawAABB(node.aabb, {
-          strokeColor: 'dimgray',
+          strokeColor: debugColor,
           wireframe: true
         })
       })
@@ -169,14 +181,14 @@ document.addEventListener('DOMContentLoaded', _ => {
       if (debugs.aabb) {
         for (const s of bodyA.fixtures) {
           gfx.drawAABB(s.aabb, {
-            strokeColor: 'dimgray',
+            strokeColor: debugColor,
             wireframe: true
           })
         }
 
         for (const s of bodyB.fixtures) {
           gfx.drawAABB(s.aabb, {
-            strokeColor: 'dimgray',
+            strokeColor: debugColor,
             wireframe: true
           })
         }
@@ -195,32 +207,30 @@ document.addEventListener('DOMContentLoaded', _ => {
         gfx.drawPolygon(originX, originY, 1, 0, {
           vertices: polytope,
           wireframe: true,
-          strokeColor: 'dimgray'
+          strokeColor: debugColor
         })
         gfx.drawCircle(originX, originY, 1, 0, {
-          radius: 1,
-          fillColor: 'white',
-          strokeColor: 'white'
+          radius: 2,
+          fillColor: debugColor,
+          strokeColor: debugColor
         })
         gfx.drawLine(originX, originY, 1, 0, {
           vertices: mtv,
-          strokeColor: 'red'
+          strokeColor: debugColor
         })
       }
-
-      const color = 'red'
 
       if (debugs.ref) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: ref.edge,
-          strokeColor: color
+          strokeColor: debugColor
         })
       }
 
       if (debugs.inc) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: inc.edge,
-          strokeColor: color
+          strokeColor: debugColor
         })
       }
 
@@ -235,21 +245,22 @@ document.addEventListener('DOMContentLoaded', _ => {
         if (debugs.impulse) {
           gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
             vertices: nImpulse,
-            strokeColor: 'white'
+            strokeColor: debugColor
           })
         }
 
         if (debugs.point) {
           gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-            radius: 5,
-            strokeColor: color,
-            wireframe: true
+            radius: 2,
+            fillColor: debugColor,
+            noStroke: true
           })
         }
 
         if (debugs.normal) {
           gfx.drawNormal(cp.pointX, cp.pointY, normal.x, normal.y, {
-            strokeColor: color
+            length: 10,
+            strokeColor: debugColor
           })
         }
       }
@@ -270,12 +281,12 @@ document.addEventListener('DOMContentLoaded', _ => {
 
       if (accu >= interval) {
         accu = 0
+        simulate(interval)
+        render(gfx, dt)
+
         stats.fps = 1 / dt
         stats.bodies = world.bodies.length
         stats.joints = 0
-
-        simulate(interval)
-        render(gfx, dt)
       }
 
       requestAnimationFrame(loop)

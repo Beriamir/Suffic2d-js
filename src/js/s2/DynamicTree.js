@@ -18,7 +18,6 @@ export default class DynamicTree {
 
     this.grow(16)
   }
-
   grow(capacity) {
     const start = this.nodes.length
     const end = start + capacity
@@ -41,7 +40,6 @@ export default class DynamicTree {
     this.nodes[end - 1].next = this.freeList
     this.freeList = start
   }
-
   allocate() {
     if (this.freeList < 0) {
       this.grow(this.nodes.length)
@@ -55,7 +53,6 @@ export default class DynamicTree {
 
     return index
   }
-
   free(index) {
     if (!this.nodes[index].allocated) {
       return
@@ -65,7 +62,6 @@ export default class DynamicTree {
     this.nodes[index].allocated = false
     this.freeList = index
   }
-
   findBestSibling(node) {
     let sibling = this.root
     let siblingArea = this.nodes[sibling].aabb.perimeter
@@ -180,7 +176,6 @@ export default class DynamicTree {
 
     return bestSibling
   }
-
   rotate(node) {
     if (this.nodes[node].height < 2) {
       return
@@ -402,7 +397,6 @@ export default class DynamicTree {
       }
     }
   }
-
   insertBody(data, margin = null) {
     const node = this.allocate()
 
@@ -459,7 +453,6 @@ export default class DynamicTree {
       ancestor = this.nodes[ancestor].parent
     }
   }
-
   removeBody(data) {
     const node = data.node
 
@@ -516,7 +509,6 @@ export default class DynamicTree {
       this.free(node)
     }
   }
-
   updateBody(data, margin) {
     const node = data.node
 
@@ -525,7 +517,6 @@ export default class DynamicTree {
       this.insertBody(data, margin)
     }
   }
-
   queryAABB(aabb, result = []) {
     this.stack.length = 0
     this.stack.push(this.root)
@@ -548,7 +539,6 @@ export default class DynamicTree {
 
     return result
   }
-
   traverse(callback) {
     this.stack.length = 0
     this.stack.push(this.root)

@@ -3,7 +3,6 @@ export default class Vector {
     this.x = x
     this.y = y
   }
-
   set(x, y) {
     this.x = x
     this.y = y
@@ -58,7 +57,6 @@ export default class Vector {
     }
     return this
   }
-
   copyMulV(vector, s) {
     this.x = vector.x * s
     this.y = vector.y * s
@@ -74,7 +72,6 @@ export default class Vector {
     this.y += vector.y * s
     return this
   }
-
   dot(vector) {
     return this.x * vector.x + this.y * vector.y
   }
@@ -89,7 +86,13 @@ export default class Vector {
 
     return this.magSq() < epsilon * epsilon
   }
-
+  toString() {
+    return `(${this.x},${this.y})`
+  }
+  log(text = ': ') {
+    console.log(text + this.toString())
+    return this
+  }
   static sub(vec1, vec2) {
     return new Vector(vec1.x - vec2.x, vec1.y - vec2.y)
   }
@@ -101,13 +104,5 @@ export default class Vector {
   }
   static perp(vec) {
     return new Vector(-vec.y, vec.x)
-  }
-
-  toString() {
-    return `(${this.x},${this.y})`
-  }
-  log(text = ': ') {
-    console.log(text + this.toString())
-    return this
   }
 }

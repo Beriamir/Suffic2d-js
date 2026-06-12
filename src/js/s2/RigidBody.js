@@ -3,7 +3,6 @@ import AABB from './AABB.js'
 
 export default class RigidBody {
   static uid = 0
-
   constructor(x, y, rot, options = {}) {
     this.id = RigidBody.uid++
     this.type = 'rigid'
@@ -36,7 +35,6 @@ export default class RigidBody {
     this.contactKeys = new Set()
     this.aabb = new AABB()
   }
-
   createFixture(shape) {
     this.fixtures.push(shape)
     shape.index = this.fixtures.length - 1
@@ -44,7 +42,6 @@ export default class RigidBody {
     this.updateAABB()
     return this
   }
-
   destroyFixture(shape) {
     const index = shape.index
     const last = this.fixtures.length - 1
@@ -56,13 +53,11 @@ export default class RigidBody {
     this.updateAABB()
     return this
   }
-
   createAnchor(anchor) {
     this.anchors.push(anchor)
     anchor.index = this.anchors.length - 1
     return this
   }
-
   destroyAnchor(anchor) {
     const index = anchor.index
     const last = this.anchors.length - 1
@@ -72,7 +67,28 @@ export default class RigidBody {
     anchor.index = -1
     return this
   }
+  updateMass() {
+    this.density = 0
+    this.area = 0
+    this.mass = 0
+    this.inertia = 0
 
+    for (const s of this.fixtures) {
+      this.density += s.density
+      this.area += s.area
+      this.mass += s.mass
+      this.inertia += s.inertia
+    }
+
+    if (this.isStatic) {
+      this.invMass = 0
+      this.invInertia = 0
+      return
+    }
+
+    this.invMass = 1 / this.mass
+    this.invInertia = 1 / this.inertia
+  }
   updateAABB() {
     const aabb = this.aabb
     const position = this.position
@@ -98,61 +114,18 @@ export default class RigidBody {
       }
     }
   }
-
-  updateMass() {
-    this.density = 0
-    this.area = 0
-    this.mass = 0
-    this.inertia = 0
-
-    for (const s of this.fixtures) {
-      this.density += s.density
-      this.area += s.area
-      this.mass += s.mass
-      this.inertia += s.inertia
-    }
-
-    if (this.isStatic) {
-      this.invMass = 0
-      this.invInertia = 0
-      return
-    }
-
-    this.invMass = 1 / this.mass
-    this.invInertia = 1 / this.inertia
-  }
-
-  testPoint(px, py) {
-    const position = this.position
-    const cos = this.cos
-    const sin = this.sin
-
-    for (const s of this.fixtures) {
-      if (s.testPoint(position.x, position.y, cos, sin, px, py)) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  transform(vector, angle, s = 1) {
-    this.position.addMulV(vector, s)
-    this.rotation += angle * s
-    this.cos = Math.cos(this.rotation)
-    this.sin = Math.sin(this.rotation)
-    this.updateAABB()
-  }
-
   translate(vector, s = 1) {
     this.position.addMulV(vector, s)
-    this.updateAABB()
   }
-
   rotate(angle) {
     this.rotation += angle
     this.cos = Math.cos(this.rotation)
     this.sin = Math.sin(this.rotation)
-    this.updateAABB()
+  }
+  addForce(force, s = 1) {
+    this.linearVelocity.add(force, s)
+  }
+  addTorque(torque) {
+    this.angularVelocity += torque
   }
 }

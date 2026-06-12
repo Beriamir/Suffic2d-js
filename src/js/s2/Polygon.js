@@ -4,12 +4,10 @@ import AABB from './AABB.js'
 
 export default class Polygon {
   static uid = 0
-
   constructor(vertices, options = {}) {
     this.id = Polygon.uid++
     this.type = 'polygon'
-
-    this.vertices = vertices
+    this.vertices = vertices // local
     this.worldVertices = new Float32Array(vertices)
     this.offset = options.offset ?? new Vector()
     this.rotation = options.rotation ?? 0
@@ -36,7 +34,6 @@ export default class Polygon {
 
     this.aabb = new AABB()
   }
-
   getWorldVertices(x, y, cos, sin) {
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.offset.x + this.vertices[i]
@@ -48,34 +45,6 @@ export default class Polygon {
 
     return this.worldVertices
   }
-
-  testPoint(x, y, cos, sin, pointX, pointY) {
-    const worldVertices = this.getWorldVertices(x, y, cos, sin)
-    const n = this.worldVertices.length
-
-    for (let i = 0; i < n; i += 2) {
-      const j = (i + 2) % n
-
-      const x0 = worldVertices[i]
-      const y0 = worldVertices[i + 1]
-      const x1 = worldVertices[j]
-      const y1 = worldVertices[j + 1]
-
-      const abX = x1 - x0
-      const abY = y1 - y0
-      const apX = pointX - x0
-      const apY = pointY - y0
-
-      const isOutside = abX * apY - abY * apX < 0
-
-      if (isOutside) {
-        return false
-      }
-    }
-
-    return true
-  }
-
   rotate(angle) {
     this.rotation += angle
     this.cos = Math.cos(this.rotation)
@@ -89,7 +58,6 @@ export default class Polygon {
       this.vertices[i + 1] = x0 * this.sin + y0 * this.cos
     }
   }
-
   translate(vector, s = 1) {
     this.offset.addMulV(vector, s)
   }

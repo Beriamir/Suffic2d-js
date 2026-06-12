@@ -8,11 +8,12 @@ export default class World {
   constructor(options = {}) {
     this.bodies = []
     this.nearby = []
-    this.contacts = [] // Sorted
     this.dynamicTree = new DynamicTree()
     this.collision = new Collision()
     this.contactSolver = new ContactSolver()
     this.contactChecks = new Set()
+
+    this.contactKeys = []
     this.newContacts = new Map()
     this.oldContacts = new Map()
 
@@ -20,7 +21,6 @@ export default class World {
     this.substeps = options.substeps ?? 2
     this.iterations = options.iterations ?? 4
   }
-
   forEachBody(callback) {
     for (let i = 0; i < this.bodies.length; ++i) {
       const body = this.bodies[i]
@@ -30,69 +30,33 @@ export default class World {
       }
     }
   }
-
   forEachContact(callback) {
-    for (const [key, manifold] of this.newContacts.entries()) {
-      if (callback(manifold, key)) {
-        break
-      }
+    for (const key of this.contactKeys) {
+      callback(this.newContacts.get(key), key)
     }
   }
-
-  forEachSortedContact(callback) {
-    this.contacts.length = 0
-
-    for (const entry of this.newContacts.keys()) {
-      this.contacts.push(entry)
-    }
-
-    this.contacts.sort((a, b) => {
-      if (a < b) return -1
-      if (a > b) return 1
-      return 0
-    })
-
-    for (const key of this.contacts) {
-      const manifold = this.newContacts.get(key)
-
-      if (callback(manifold, key)) {
-        break
-      }
-    }
-  }
-
   traverseTree(callback) {
     this.dynamicTree.traverse(callback)
   }
-
   clear() {
     this.forEachBody(body => {
       this.dynamicTree.removeBody(body)
     })
     this.bodies.length = 0
   }
-
   createBody(body) {
     this.dynamicTree.insertBody(body)
     this.bodies.push(body)
     body.index = this.bodies.length - 1
   }
-
   destroyBody(body) {
     this.dynamicTree.removeBody(body)
-
     const index = body.index
     const last = this.bodies.length - 1
-
     this.bodies[index] = this.bodies[last]
     this.bodies[index].index = index
     this.bodies.pop()
   }
-
-  updateBody(body) {
-    this.dynamicTree.updateBody(body)
-  }
-
   simulate(dt) {
     dt /= this.substeps
 
@@ -100,16 +64,21 @@ export default class World {
 
     for (let substep = 0; substep < this.substeps; ++substep) {
       this.contactChecks.clear()
+      this.contactKeys.length = 0
       this.newContacts.clear()
 
+      // Collision detection
+      this.forEachBody(body => {
+        body.contactKeys.clear()
+      })
       this.forEachBody(bodyA => {
-        let idA = bodyA.id
+        const idA = bodyA.id
 
         this.nearby.length = 0
         this.dynamicTree.queryAABB(bodyA.aabb, this.nearby)
 
         for (const bodyB of this.nearby) {
-          let idB = bodyB.id
+          const idB = bodyB.id
 
           if (idA >= idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
             continue
@@ -168,6 +137,7 @@ export default class World {
 
               bodyA.contactKeys.add(key)
               bodyB.contactKeys.add(key)
+              this.contactKeys.push(key)
               this.newContacts.set(key, newContact)
             }
           }
@@ -176,25 +146,33 @@ export default class World {
 
       // todo Simulation Island?
 
+      // Apply gravity
       this.forEachBody(body => {
         if (!body.isStatic) {
           body.linearVelocity.addMulV(this.gravity, dt)
         }
       })
 
+      // Improves convergence
+      this.contactKeys.sort((a, b) => {
+        if (a < b) return -1
+        if (a > b) return 1
+        return 0
+      })
+
+      // Prepare and warm start contacts
       this.forEachContact((newContact, key) => {
         this.contactSolver.prepare(newContact)
 
-        const oldContact = this.oldContacts.get(key)
-
-        if (!oldContact) {
+        if (!this.oldContacts.has(key)) {
           return
         }
 
         const newManifold = newContact.manifold
-        const oldManifold = oldContact.manifold
-
         const newCount = newManifold.contactPoints.length
+
+        const oldContact = this.oldContacts.get(key)
+        const oldManifold = oldContact.manifold
         const oldCount = oldManifold.contactPoints.length
 
         for (let i = 0; i < newCount; ++i) {
@@ -216,32 +194,30 @@ export default class World {
         this.contactSolver.warmStart(newContact)
       })
 
+      // Solve
       let useBias = true
       for (let i = 0; i < this.iterations; ++i) {
-        this.forEachSortedContact(contact => {
+        this.forEachContact(contact => {
           this.contactSolver.solve(contact, invH, useBias)
         })
       }
 
+      // Update bodies
       this.forEachBody(body => {
-        if (!body.isStatic) {
-          body.transform(body.linearVelocity, body.angularVelocity, dt)
-          this.updateBody(body)
-        }
+        if (body.isStatic) return
+
+        body.translate(body.linearVelocity, dt)
+        body.rotate(body.angularVelocity * dt)
+        body.updateAABB()
+        this.dynamicTree.updateBody(body)
       })
 
+      // Relax ans store contacts
       useBias = false
-      this.forEachSortedContact(contact => {
-        this.contactSolver.solve(contact, invH, useBias)
-      })
-
       this.oldContacts.clear()
-      this.forEachContact((newContact, key) => {
-        this.oldContacts.set(key, newContact)
-      })
-
-      this.forEachBody(body => {
-        body.contactKeys.clear()
+      this.forEachContact((contact, key) => {
+        this.contactSolver.solve(contact, invH, useBias)
+        this.oldContacts.set(key, contact)
       })
     }
   }
