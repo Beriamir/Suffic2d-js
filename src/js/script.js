@@ -8,9 +8,7 @@ document.addEventListener('DOMContentLoaded', _ => {
   const guiEl = document.getElementById('gui')
 
   const decomposer = new Decomposer()
-  const gfx = new Graphics(canvas, {
-    //
-  }).setSize(800, 800)
+  const gfx = new Graphics(canvas, {}).setSize(800, 800)
   const gui = new dat.GUI({
     autoPlace: false,
     hideable: true
@@ -42,17 +40,18 @@ document.addEventListener('DOMContentLoaded', _ => {
   for (const stat of Object.keys(stats)) {
     statsFol.add(stats, stat).listen().name(stat.toUpperCase())
   }
-  statsFol.open()
 
   const debugsFol = gui.addFolder('Debugs')
   for (const key of Object.keys(debugs)) {
     debugsFol.add(debugs, key).name(key.toUpperCase())
   }
-  debugsFol.open()
 
   const perimetersFol = gui.addFolder('Perimeters')
   perimetersFol.add(world, 'substeps', 1, 10, 1).name('SUB STEPS')
   perimetersFol.add(world, 'iterations', 1, 10, 1).name('ITERATIONS')
+
+  statsFol.open()
+  debugsFol.open()
   perimetersFol.open()
 
   gui.add(
@@ -66,18 +65,47 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   guiEl.appendChild(gui.domElement)
 
-  function randomConvexVertices(count, min = 50, max = min) {
-    const vertices = new Float32Array(count * 2)
+  function createPyramid(world, options = {}) {
+    const {
+      rows = 5,
+      boxSize = 30,
+      spacing = 0,
+      centerX = canvas.width / 2,
+      bottomY = canvas.height - 80,
+      restitution = 0.0,
+      friction = 0.3
+    } = options
 
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2
-      const radius = min + Math.random() * (max - min)
+    const halfSize = boxSize / 2
+    const step = boxSize + spacing
 
-      vertices[i * 2] = radius * Math.cos(angle)
-      vertices[i * 2 + 1] = radius * Math.sin(angle)
+    for (let row = 0; row < rows; ++row) {
+      const count = rows - row
+      const rowY = bottomY - halfSize - row * step
+      const rowStartX = centerX - (count * step) / 2 + step / 2
+
+      for (let col = 0; col < count; ++col) {
+        const x = rowStartX + col * step
+        const y = rowY
+
+        world.createBody(
+          new s2.RigidBody(x, y, 0, { restitution, friction }).createFixture(
+            new s2.Polygon(
+              new Float32Array([
+                -halfSize,
+                -halfSize,
+                halfSize,
+                -halfSize,
+                halfSize,
+                halfSize,
+                -halfSize,
+                halfSize
+              ])
+            )
+          )
+        )
+      }
     }
-
-    return vertices
   }
 
   function setup() {
@@ -111,71 +139,34 @@ document.addEventListener('DOMContentLoaded', _ => {
     )
 
     world.createBody(ground)
+    createPyramid(world, {
+      rows: 15,
+      boxSize: 40,
+      spacing: 2,
+      bottomY: canvas.height - height
+    })
 
-    // const polygons = []
-    // const pieces = []
-
-    // for (let i = 0; i < 1; i++) {
-    //   const width = 50
-    //   const height = 50
-
-    //   polygons.push(randomConvexVertices(10, 40, 50))
-    // }
-
-    // for (const polygon of polygons) {
-    //   const x = Math.random() * canvas.width
-    //   const y = Math.random() * canvas.height * 0.5
-    //   const body = new s2.RigidBody(x, y, 0, {
-    //     restitution: 0.1,
-    //     friction: 0.3
-    //   })
-
-    //   pieces.length = 0
-    //   decomposer.decompose(polygon, pieces)
-
-    //   for (const piece of pieces) {
-    //     const shape = new s2.Polygon(piece, {})
-
-    //     body.createFixture(shape)
-    //   }
-
-    //   world.createBody(body)
-    // }
-
-    const size = 30
-    const rows = 20
-
-    for (let y = 0; y < rows; ++y) {
-      for (let x = 0; x < rows - y; ++x) {
-        const width = size / 2
-        const height = size / 2
-
-        world.createBody(
-          new s2.RigidBody(
-            canvas.width / 2 + x * size - (rows - y) * size * 0.5,
-            canvas.height - 65 - y * size,
-            0,
-            {
-              restitution: 0.1,
-              friction: 0.3
-            }
-          ).createFixture(
-            new s2.Polygon(
-              new Float32Array([
-                -width,
-                -height,
-                width,
-                -height,
-                width,
-                height,
-                -width,
-                height
-              ])
-            )
-          )
-        )
-      }
+    /*
+    const polygons = []
+    for (let i = 0; i < 10; i++) {
+      polygons.push(decomposer.createConcaveShape(12, 50))
     }
+
+    for (const polygon of polygons) {
+      const x = Math.random() * canvas.width
+      const y = Math.random() * canvas.height * 0.5
+      const body = new s2.RigidBody(x, y, 0, {
+        restitution: 0.0,
+        friction: 0.3
+      })
+
+      for (const piece of decomposer.decompose(polygon)) {
+        body.createFixture(new s2.Polygon(piece, {}))
+      }
+
+      world.createBody(body)
+    }
+    */
   }
 
   function simulate(dt) {
@@ -189,7 +180,6 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   function render(gfx, dt) {
     gfx.clear(0, 0, canvas.width, canvas.height)
-
     world.forEachBody(body => {
       const { position, cos, sin } = body
 

@@ -11,7 +11,6 @@ export default class World {
     this.dynamicTree = new DynamicTree()
     this.collision = new Collision()
     this.contactSolver = new ContactSolver()
-    this.contactChecks = new Set()
 
     this.contactKeys = []
     this.newContacts = new Map()
@@ -63,21 +62,20 @@ export default class World {
     const invH = 1 / dt
 
     for (let substep = 0; substep < this.substeps; ++substep) {
-      this.contactChecks.clear()
+      // Reset
       this.contactKeys.length = 0
       this.newContacts.clear()
-
-      // Collision detection
       this.forEachBody(body => {
         body.contactKeys.clear()
       })
-      this.forEachBody(bodyA => {
-        const idA = bodyA.id
 
+      // Collision detection
+      this.forEachBody(bodyA => {
         this.nearby.length = 0
         this.dynamicTree.queryAABB(bodyA.aabb, this.nearby)
 
         for (const bodyB of this.nearby) {
+          const idA = bodyA.id
           const idB = bodyB.id
 
           if (idA >= idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
@@ -95,18 +93,6 @@ export default class World {
             Vertices.getAABB(worldVerticesA, sA.aabb)
 
             for (const sB of bodyB.fixtures) {
-              const key =
-                ((BigInt(idA) & 0xffffffn) << 56n) |
-                ((BigInt(sA.id) & 0xffffn) << 40n) |
-                ((BigInt(idB) & 0xffffffn) << 16n) |
-                (BigInt(sB.id) & 0xffffn)
-
-              if (this.contactChecks.has(key)) {
-                continue
-              } else {
-                this.contactChecks.add(key)
-              }
-
               const worldVerticesB = sB.getWorldVertices(
                 bodyB.position.x,
                 bodyB.position.y,
@@ -129,6 +115,7 @@ export default class World {
                 continue
               }
 
+              const key = idA * 2 ** 40 + sA.id * 2 ** 32 + idB * 2 ** 8 + sB.id
               const newContact = {
                 bodyA,
                 bodyB,
@@ -144,8 +131,6 @@ export default class World {
         }
       })
 
-      // todo Simulation Island?
-
       // Apply gravity
       this.forEachBody(body => {
         if (!body.isStatic) {
@@ -153,7 +138,7 @@ export default class World {
         }
       })
 
-      // Improves convergence
+      // Sort for deterministic
       this.contactKeys.sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
@@ -162,30 +147,22 @@ export default class World {
 
       // Prepare and warm start contacts
       this.forEachContact((newContact, key) => {
-        this.contactSolver.prepare(newContact)
+        this.contactSolver.prepare(newContact, dt)
 
         if (!this.oldContacts.has(key)) {
           return
         }
 
-        const newManifold = newContact.manifold
-        const newCount = newManifold.contactPoints.length
-
         const oldContact = this.oldContacts.get(key)
-        const oldManifold = oldContact.manifold
-        const oldCount = oldManifold.contactPoints.length
+        const newPts = newContact.manifold.contactPoints
+        const oldPts = oldContact.manifold.contactPoints
 
-        for (let i = 0; i < newCount; ++i) {
-          const newCp = newManifold.contactPoints[i]
-
-          for (let j = 0; j < oldCount; j++) {
-            const oldCp = oldManifold.contactPoints[j]
-
+        for (const newCp of newPts) {
+          for (const oldCp of oldPts) {
             if (newCp.id === oldCp.id) {
               newCp.normalImpulse = oldCp.normalImpulse
               newCp.tangentImpulse = oldCp.tangentImpulse
               newCp.persistent = true
-
               break
             }
           }
@@ -195,28 +172,27 @@ export default class World {
       })
 
       // Solve
-      let useBias = true
       for (let i = 0; i < this.iterations; ++i) {
         this.forEachContact(contact => {
-          this.contactSolver.solve(contact, invH, useBias)
+          this.contactSolver.solve(contact, invH, true)
         })
       }
 
-      // Update bodies
+      // Integrate position
       this.forEachBody(body => {
         if (body.isStatic) return
 
         body.translate(body.linearVelocity, dt)
         body.rotate(body.angularVelocity * dt)
         body.updateAABB()
+
         this.dynamicTree.updateBody(body, 5)
       })
 
-      // Relax ans store contacts
-      useBias = false
+      // Relax + store
       this.oldContacts.clear()
       this.forEachContact((contact, key) => {
-        this.contactSolver.solve(contact, invH, useBias)
+        this.contactSolver.solve(contact, invH, false)
         this.oldContacts.set(key, contact)
       })
     }

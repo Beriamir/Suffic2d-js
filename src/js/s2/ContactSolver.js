@@ -1,6 +1,6 @@
 export default class ContactSolver {
   constructor() {}
-  prepare(contact) {
+  prepare(contact, dt) {
     const {
       bodyA,
       bodyB,
@@ -12,6 +12,11 @@ export default class ContactSolver {
     const iA = bodyA.invInertia
     const iB = bodyB.invInertia
 
+    const vA = bodyA.linearVelocity
+    const vB = bodyB.linearVelocity
+    const wA = bodyA.angularVelocity
+    const wB = bodyB.angularVelocity
+
     const tangentX = -normal.y
     const tangentY = normal.x
 
@@ -22,6 +27,11 @@ export default class ContactSolver {
       const raY = cp.pointY - bodyA.position.y
       const rbX = cp.pointX - bodyB.position.x
       const rbY = cp.pointY - bodyB.position.y
+
+      const relVelX = vB.x - rbY * wB - (vA.x - raY * wA)
+      const relVelY = vB.y + rbX * wB - (vA.y + raX * wA)
+
+      cp.vn = relVelX * normal.x + relVelY * normal.y
 
       const rnA = normal.x * -raY + normal.y * raX
       const rnB = normal.x * -rbY + normal.y * rbX
@@ -48,17 +58,16 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      // Should we use soft constraint?
-      // const zeta = 1
-      // const hertz = 5
-      // const omega = 2 * Math.PI * hertz
-      // const a1 = 2 * zeta + omega * dt
-      // const a2 = dt * omega * a1
-      // const a3 = 1 / (1 + a2)
+      const zeta = 20
+      const hertz = 30
+      const omega = 2 * Math.PI * hertz
+      const a1 = 2 * zeta + omega * dt
+      const a2 = dt * omega * a1
+      const a3 = 1 / (1 + a2)
 
-      // cp.biasCoeff = omega / a1
-      // cp.massCoeff = a2 * a3
-      // cp.impulseCoeff = a3
+      cp.biasCoeff = omega / a1
+      cp.massCoeff = a2 * a3
+      cp.impulseCoeff = a3
     }
   }
   warmStart(contact) {
@@ -116,17 +125,9 @@ export default class ContactSolver {
     const tangentX = -normal.y
     const tangentY = normal.x
 
-    const slop = 0.2
-    const beta = 0.1
-    const maxBaumgarte = 100
     const restitutionThreashold = 1
-
-    const restitution =
-      bodyA.restitution < bodyB.restitution
-        ? bodyA.restitution
-        : bodyB.restitution
-    const friction =
-      bodyA.friction < bodyB.friction ? bodyA.friction : bodyB.friction
+    const restitution = Math.min(bodyA.restitution, bodyB.restitution)
+    const friction = Math.min(bodyA.friction, bodyB.friction)
 
     for (let i = 0; i < contactPoints.length; ++i) {
       const cp = contactPoints[i]
@@ -136,18 +137,28 @@ export default class ContactSolver {
       const vn = relVelX * normal.x + relVelY * normal.y
 
       let bias = 0
+      let massScale = 1
+      let impulseScale = 0
 
       if (useBias) {
-        bias = Math.max(-cp.overlap - slop, 0) * beta * invH
+        const slop = 0.2
 
-        if (bias > maxBaumgarte) {
-          bias = maxBaumgarte
-        }
+        bias = Math.max(-cp.overlap - slop, 0) * cp.biasCoeff
+        massScale = cp.massCoeff
+        impulseScale = cp.impulseCoeff
       }
 
-      bias += restitution * Math.max(vn - restitutionThreashold, 0)
+      let restitutionBias = 0
 
-      let impulse = (-vn + bias) * cp.effNormalMass
+      if (cp.vn < -restitutionThreashold) {
+        restitutionBias = -restitution * cp.vn
+      }
+
+      const velBias = Math.max(bias, restitutionBias)
+      let impulse =
+        -cp.effNormalMass * massScale * (vn - velBias) -
+        cp.normalImpulse * impulseScale
+
       const oldImpulse = cp.normalImpulse
       const newImpulse = Math.max(oldImpulse + impulse, 0)
 
@@ -191,8 +202,6 @@ export default class ContactSolver {
       wB += cp.rtB * lambda * iB
     }
 
-    bodyA.linearVelocity.copy(vA)
-    bodyB.linearVelocity.copy(vB)
     bodyA.angularVelocity = wA
     bodyB.angularVelocity = wB
   }

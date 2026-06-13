@@ -1,6 +1,16 @@
 export default class Decomposer {
   constructor() {}
 
+  createConcaveShape(numPoints = 12, radius = 100) {
+    const points = []
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2
+      const r = radius * (0.4 + Math.random() * 0.6)
+      points.push(Math.cos(angle) * r, Math.sin(angle) * r)
+    }
+    return new Float32Array(points)
+  }
+
   decompose(polygon, pieces = []) {
     const n = polygon.length
 
@@ -180,7 +190,7 @@ export default class Decomposer {
         return this.decompose(steinerPoly, pieces)
       }
 
-      if (startIndex === endIndex) return
+      if (startIndex === endIndex) return pieces
 
       for (let i = startIndex; ; i = (i + 2) % n) {
         polyA.push(polygon[i], polygon[i + 1])
@@ -195,10 +205,11 @@ export default class Decomposer {
       if (polyA.length >= 6) this.decompose(polyA, pieces)
       if (polyB.length >= 6) this.decompose(polyB, pieces)
 
-      return
+      return pieces
     }
 
     pieces.push(polygon)
+    return pieces
   }
 
   distanceSq(uX, uY, vX, vY) {
