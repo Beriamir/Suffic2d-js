@@ -1,6 +1,5 @@
 export default class ContactSolver {
   constructor() {}
-
   prepare(contact) {
     const {
       bodyA,
@@ -62,7 +61,6 @@ export default class ContactSolver {
       // cp.impulseCoeff = a3
     }
   }
-
   warmStart(contact) {
     const {
       bodyA,
@@ -98,7 +96,6 @@ export default class ContactSolver {
       bodyB.angularVelocity += cp.rtB * cp.tangentImpulse * iB
     }
   }
-
   solve(contact, invH, useBias = false) {
     const {
       bodyA,

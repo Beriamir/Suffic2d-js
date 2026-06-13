@@ -45,7 +45,7 @@ export default class World {
     this.bodies.length = 0
   }
   createBody(body) {
-    this.dynamicTree.insertBody(body)
+    this.dynamicTree.insertBody(body, 5)
     this.bodies.push(body)
     body.index = this.bodies.length - 1
   }
@@ -209,7 +209,7 @@ export default class World {
         body.translate(body.linearVelocity, dt)
         body.rotate(body.angularVelocity * dt)
         body.updateAABB()
-        this.dynamicTree.updateBody(body)
+        this.dynamicTree.updateBody(body, 5)
       })
 
       // Relax ans store contacts

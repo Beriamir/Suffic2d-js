@@ -1,11 +1,13 @@
 import s2 from './s2/s2.module.js'
 import Graphics from './Graphics.js'
+import Decomposer from './Decomposer.js'
 import dat from './lib/dat.gui.mjs'
 
 document.addEventListener('DOMContentLoaded', _ => {
   const canvas = document.getElementById('canvas')
   const guiEl = document.getElementById('gui')
 
+  const decomposer = new Decomposer()
   const gfx = new Graphics(canvas, {
     //
   }).setSize(800, 800)
@@ -64,6 +66,20 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   guiEl.appendChild(gui.domElement)
 
+  function randomConvexVertices(count, min = 50, max = min) {
+    const vertices = new Float32Array(count * 2)
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2
+      const radius = min + Math.random() * (max - min)
+
+      vertices[i * 2] = radius * Math.cos(angle)
+      vertices[i * 2 + 1] = radius * Math.sin(angle)
+    }
+
+    return vertices
+  }
+
   function setup() {
     world.clear()
 
@@ -95,6 +111,36 @@ document.addEventListener('DOMContentLoaded', _ => {
     )
 
     world.createBody(ground)
+
+    // const polygons = []
+    // const pieces = []
+
+    // for (let i = 0; i < 1; i++) {
+    //   const width = 50
+    //   const height = 50
+
+    //   polygons.push(randomConvexVertices(10, 40, 50))
+    // }
+
+    // for (const polygon of polygons) {
+    //   const x = Math.random() * canvas.width
+    //   const y = Math.random() * canvas.height * 0.5
+    //   const body = new s2.RigidBody(x, y, 0, {
+    //     restitution: 0.1,
+    //     friction: 0.3
+    //   })
+
+    //   pieces.length = 0
+    //   decomposer.decompose(polygon, pieces)
+
+    //   for (const piece of pieces) {
+    //     const shape = new s2.Polygon(piece, {})
+
+    //     body.createFixture(shape)
+    //   }
+
+    //   world.createBody(body)
+    // }
 
     const size = 30
     const rows = 20
@@ -171,7 +217,7 @@ document.addEventListener('DOMContentLoaded', _ => {
       })
     }
 
-    world.forEachContact(contact => {
+    world.forEachContact((contact, key) => {
       const {
         bodyA,
         bodyB,

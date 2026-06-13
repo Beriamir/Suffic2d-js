@@ -270,6 +270,12 @@ export default class Collision {
 
         let dot = this._vectors[a].x * perpX + this._vectors[a].y * perpY
 
+        if (dot < 0) {
+          dot = -dot
+          perpX = -perpX
+          perpY = -perpY
+        }
+
         if (dot < minDot) {
           minDot = dot
           dir.set(perpX, perpY)
