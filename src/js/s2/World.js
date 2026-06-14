@@ -5,20 +5,19 @@ import Collision from './Collision.js'
 import ContactSolver from './ContactSolver.js'
 
 export default class World {
-  constructor(options = {}) {
+  constructor(option = {}) {
     this.bodies = []
     this.nearby = []
-    this.dynamicTree = new DynamicTree()
-    this.collision = new Collision()
-    this.contactSolver = new ContactSolver()
-
     this.contactKeys = []
     this.newContacts = new Map()
     this.oldContacts = new Map()
+    this.contactSolver = new ContactSolver()
+    this.dynamicTree = new DynamicTree()
+    this.collision = new Collision()
 
-    this.gravity = options.gravity ?? new Vector()
-    this.substeps = options.substeps ?? 2
-    this.iterations = options.iterations ?? 4
+    this.gravity = option.gravity ?? new Vector()
+    this.substeps = option.substeps ?? 2
+    this.iterations = option.iterations ?? 4
   }
   forEachBody(callback) {
     for (let i = 0; i < this.bodies.length; ++i) {
@@ -44,16 +43,23 @@ export default class World {
     this.bodies.length = 0
   }
   createBody(body) {
+    if (this.bodies[body.index]) return
+
     this.dynamicTree.insertBody(body, 5)
     this.bodies.push(body)
     body.index = this.bodies.length - 1
   }
   destroyBody(body) {
-    this.dynamicTree.removeBody(body)
     const index = body.index
+
+    if (!this.bodies[index]) return
+
     const last = this.bodies.length - 1
+
+    this.dynamicTree.removeBody(body)
     this.bodies[index] = this.bodies[last]
     this.bodies[index].index = index
+    this.bodies[last].index = -1
     this.bodies.pop()
   }
   simulate(dt) {
@@ -62,12 +68,8 @@ export default class World {
     const invH = 1 / dt
 
     for (let substep = 0; substep < this.substeps; ++substep) {
-      // Reset
       this.contactKeys.length = 0
       this.newContacts.clear()
-      this.forEachBody(body => {
-        body.contactKeys.clear()
-      })
 
       // Collision detection
       this.forEachBody(bodyA => {
@@ -122,8 +124,6 @@ export default class World {
                 manifold
               }
 
-              bodyA.contactKeys.add(key)
-              bodyB.contactKeys.add(key)
               this.contactKeys.push(key)
               this.newContacts.set(key, newContact)
             }
@@ -131,14 +131,12 @@ export default class World {
         }
       })
 
-      // Apply gravity
       this.forEachBody(body => {
         if (!body.isStatic) {
           body.linearVelocity.addMulV(this.gravity, dt)
         }
       })
 
-      // Sort for deterministic
       this.contactKeys.sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
@@ -171,14 +169,12 @@ export default class World {
         this.contactSolver.warmStart(newContact)
       })
 
-      // Solve
       for (let i = 0; i < this.iterations; ++i) {
         this.forEachContact(contact => {
           this.contactSolver.solve(contact, invH, true)
         })
       }
 
-      // Integrate position
       this.forEachBody(body => {
         if (body.isStatic) return
 

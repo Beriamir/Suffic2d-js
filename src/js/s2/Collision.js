@@ -147,7 +147,9 @@ export default class Collision {
       )
     }
 
-    const maxProj = ref.edge[0] * normal.x + ref.edge[1] * normal.y
+    const proj0 = ref.edge[0] * normal.x + ref.edge[1] * normal.y
+    const proj1 = ref.edge[2] * normal.x + ref.edge[3] * normal.y
+    const maxProj = Math.max(proj0, proj1)
 
     for (let i = 0; i < finalClipping.count; i += 2) {
       const pointId = i >> 1
@@ -156,11 +158,10 @@ export default class Collision {
       const minProj = pointX * normal.x + pointY * normal.y
 
       contactPoints.push({
-        // id: `${ref.id}-${inc.id}-${pointId}`,
         id: (ref.id << 16) | (inc.id << 8) | pointId,
         pointX,
         pointY,
-        overlap: minProj - maxProj
+        overlap: maxProj - minProj
       })
     }
 

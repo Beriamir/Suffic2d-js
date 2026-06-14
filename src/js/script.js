@@ -67,11 +67,11 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   function createPyramid(world, options = {}) {
     const {
-      rows = 5,
-      boxSize = 30,
+      rows = 15,
+      boxSize = 40,
       spacing = 0,
       centerX = canvas.width / 2,
-      bottomY = canvas.height - 80,
+      bottomY = canvas.height,
       restitution = 0.0,
       friction = 0.3
     } = options
@@ -149,18 +149,18 @@ document.addEventListener('DOMContentLoaded', _ => {
     /*
     const polygons = []
     for (let i = 0; i < 10; i++) {
-      polygons.push(decomposer.createConcaveShape(12, 50))
+      polygons.push(decomposer.createConcaveShape(12, 80))
     }
 
-    for (const polygon of polygons) {
+    for (const polygon of Object.values(polygons)) {
       const x = Math.random() * canvas.width
       const y = Math.random() * canvas.height * 0.5
       const body = new s2.RigidBody(x, y, 0, {
-        restitution: 0.0,
+        restitution: 0.1,
         friction: 0.3
       })
 
-      for (const piece of decomposer.decompose(polygon)) {
+      for (const piece of decomposer.decompose(polygon, [])) {
         body.createFixture(new s2.Polygon(piece, {}))
       }
 
@@ -179,6 +179,8 @@ document.addEventListener('DOMContentLoaded', _ => {
   }
 
   function render(gfx, dt) {
+    const debugColor = 'lightgray'
+
     gfx.clear(0, 0, canvas.width, canvas.height)
     world.forEachBody(body => {
       const { position, cos, sin } = body
@@ -188,15 +190,20 @@ document.addEventListener('DOMContentLoaded', _ => {
           offsetX: s.offset.x,
           offsetY: s.offset.y,
           vertices: s.vertices,
-          fillColor: s.fillColor,
-          strokeColor: s.strokeColor,
+          fillColor: body.isSleeping ? 'gray' : s.fillColor,
+          strokeColor: body.isSleeping ? 'dimgray' : s.strokeColor,
           wireframe: debugs.wireframe,
           noStroke: !debugs.wireframe
         })
+
+        if (debugs.aabb) {
+          gfx.drawAABB(body.aabb, {
+            strokeColor: debugColor,
+            wireframe: true
+          })
+        }
       }
     })
-
-    const debugColor = 'lightgray'
 
     if (debugs.bvh) {
       world.traverseTree(node => {

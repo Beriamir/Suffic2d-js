@@ -58,8 +58,8 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      const zeta = 20
-      const hertz = 30
+      const zeta = 45
+      const hertz = 60
       const omega = 2 * Math.PI * hertz
       const a1 = 2 * zeta + omega * dt
       const a2 = dt * omega * a1
@@ -125,7 +125,7 @@ export default class ContactSolver {
     const tangentX = -normal.y
     const tangentY = normal.x
 
-    const restitutionThreashold = 1
+    const restitutionThreashold = 1e-3
     const restitution = Math.min(bodyA.restitution, bodyB.restitution)
     const friction = Math.min(bodyA.friction, bodyB.friction)
 
@@ -143,7 +143,7 @@ export default class ContactSolver {
       if (useBias) {
         const slop = 0.2
 
-        bias = Math.max(-cp.overlap - slop, 0) * cp.biasCoeff
+        bias = Math.max(cp.overlap - slop, 0) * cp.biasCoeff
         massScale = cp.massCoeff
         impulseScale = cp.impulseCoeff
       }

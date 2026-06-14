@@ -18,10 +18,10 @@ export default class RigidBody {
 
     this.isStatic = options.isStatic ?? false
     this.isSensor = options.isSensor ?? false
-    this.sleeping = options.sleeping ?? false
+    this.isSleeping = options.isSleeping ?? false
 
-    this.restitution = options.restitution ?? 0
-    this.friction = options.friction ?? 0
+    this.restitution = options.restitution ?? 0.1
+    this.friction = options.friction ?? 0.3
     this.density = 0
     this.area = 0
     this.mass = 0
@@ -32,7 +32,6 @@ export default class RigidBody {
 
     this.fixtures = []
     this.anchors = []
-    this.contactKeys = new Set()
     this.aabb = new AABB()
   }
   createFixture(shape) {

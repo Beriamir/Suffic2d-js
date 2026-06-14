@@ -3,11 +3,14 @@ export default class Decomposer {
 
   createConcaveShape(numPoints = 12, radius = 100) {
     const points = []
+
     for (let i = 0; i < numPoints; i++) {
       const angle = (i / numPoints) * Math.PI * 2
       const r = radius * (0.4 + Math.random() * 0.6)
+
       points.push(Math.cos(angle) * r, Math.sin(angle) * r)
     }
+
     return new Float32Array(points)
   }
 
