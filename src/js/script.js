@@ -65,6 +65,22 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   guiEl.appendChild(gui.domElement)
 
+  // canvas.addEventListener('pointerdown', event => {
+  //   const { clientX, clientY } = event
+
+  //   const size = 20
+
+  //   const body = new s2.RigidBody(clientX, clientY, 0, {
+  //     restitution: 0.0
+  //   }).createFixture(
+  //     new s2.Polygon(
+  //       new Float32Array([-size, -size, size, -size, size, size, -size, size])
+  //     )
+  //   )
+
+  //   world.createBody(body)
+  // })
+
   function createPyramid(world, options = {}) {
     const {
       rows = 15,
@@ -90,6 +106,51 @@ document.addEventListener('DOMContentLoaded', _ => {
 
         world.createBody(
           new s2.RigidBody(x, y, 0, { restitution, friction }).createFixture(
+            new s2.Polygon(
+              new Float32Array([
+                -halfSize,
+                -halfSize,
+                halfSize,
+                -halfSize,
+                halfSize,
+                halfSize,
+                -halfSize,
+                halfSize
+              ])
+            )
+          )
+        )
+      }
+    }
+  }
+
+  function createStack(world, options = {}) {
+    const {
+      columns = 1,
+      rows = 20,
+      boxSize = 40,
+      spacing = 0,
+      centerX = canvas.width / 2,
+      bottomY = canvas.height,
+      restitution = 0.0,
+      friction = 0.3
+    } = options
+
+    const halfSize = boxSize / 2
+    const step = boxSize + spacing
+    const startX = centerX - ((columns - 1) * step) / 2
+
+    for (let col = 0; col < columns; ++col) {
+      const x = startX + col * step
+
+      for (let row = 0; row < rows; ++row) {
+        const y = bottomY - halfSize - row * step
+
+        world.createBody(
+          new s2.RigidBody(x, y, 0, {
+            restitution,
+            friction
+          }).createFixture(
             new s2.Polygon(
               new Float32Array([
                 -halfSize,
@@ -142,8 +203,20 @@ document.addEventListener('DOMContentLoaded', _ => {
     createPyramid(world, {
       rows: 15,
       boxSize: 40,
-      spacing: 2,
-      bottomY: canvas.height - height
+      spacing: 4,
+      bottomY: canvas.height - height,
+      restitution: 0.0,
+      friction: 0.3
+    })
+    createStack(world, {
+      columns: 0,
+      rows: 20,
+      boxSize: 40,
+      spacing: 4,
+      centerX: canvas.width / 2,
+      bottomY: canvas.height - height,
+      restitution: 0.0,
+      friction: 0.3
     })
 
     /*

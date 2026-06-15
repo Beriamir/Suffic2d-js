@@ -64,14 +64,12 @@ export default class World {
   }
   simulate(dt) {
     dt /= this.substeps
-
     const invH = 1 / dt
 
-    for (let substep = 0; substep < this.substeps; ++substep) {
+    for (let step = 0; step < this.substeps; ++step) {
+      // Collision detection
       this.contactKeys.length = 0
       this.newContacts.clear()
-
-      // Collision detection
       this.forEachBody(bodyA => {
         this.nearby.length = 0
         this.dynamicTree.queryAABB(bodyA.aabb, this.nearby)
@@ -130,17 +128,16 @@ export default class World {
           }
         }
       })
+      this.contactKeys.sort((a, b) => {
+        if (a < b) return -1
+        if (a > b) return 1
+        return 0
+      })
 
       this.forEachBody(body => {
         if (!body.isStatic) {
           body.linearVelocity.addMulV(this.gravity, dt)
         }
-      })
-
-      this.contactKeys.sort((a, b) => {
-        if (a < b) return -1
-        if (a > b) return 1
-        return 0
       })
 
       // Prepare and warm start contacts
