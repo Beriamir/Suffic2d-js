@@ -1,5 +1,10 @@
 export default class ContactSolver {
-  constructor() {}
+  constructor(option = {}) {
+    this.zeta = option.zeta ?? 50
+    this.hertz = option.hertz ?? 60
+    this.slop = option.slop ?? 0.2
+    this.restitutionThreashold = option.restitutionThreashold ?? 1
+  }
   prepare(contact, dt) {
     const {
       bodyA,
@@ -60,10 +65,8 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      const zeta = 50
-      const hertz = 60
-      const omega = 2 * Math.PI * hertz
-      const a1 = 2 * zeta + omega * dt
+      const omega = 2 * Math.PI * this.hertz
+      const a1 = 2 * this.zeta + omega * dt
       const a2 = dt * omega * a1
       const a3 = 1 / (1 + a2)
 
@@ -178,7 +181,6 @@ export default class ContactSolver {
     const tangentX = -normal.y
     const tangentY = normal.x
 
-    const restitutionThreashold = 1
     const restitution = Math.min(bodyA.restitution, bodyB.restitution)
     const friction = Math.min(bodyA.friction, bodyB.friction)
 
@@ -194,16 +196,14 @@ export default class ContactSolver {
       let impulseScale = 0
 
       if (useBias) {
-        const slop = 0.2
-
-        bias = Math.max(cp.overlap - slop, 0) * cp.biasCoeff
+        bias = Math.max(cp.overlap - this.slop, 0) * cp.biasCoeff
         massScale = cp.massCoeff
         impulseScale = cp.impulseCoeff
       }
 
       let restitutionBias = 0
 
-      if (cp.vn < -restitutionThreashold) {
+      if (cp.vn < -this.restitutionThreashold) {
         restitutionBias = -restitution * cp.vn
       }
 
@@ -245,13 +245,11 @@ export default class ContactSolver {
       let impulseScale2 = 0
 
       if (useBias) {
-        const slop = 0.2
-
-        bias1 = Math.max(cp1.overlap - slop, 0) * cp1.biasCoeff
+        bias1 = Math.max(cp1.overlap - this.slop, 0) * cp1.biasCoeff
         massScale1 = cp1.massCoeff
         impulseScale1 = cp1.impulseCoeff
 
-        bias2 = Math.max(cp2.overlap - slop, 0) * cp2.biasCoeff
+        bias2 = Math.max(cp2.overlap - this.slop, 0) * cp2.biasCoeff
         massScale2 = cp2.massCoeff
         impulseScale2 = cp2.impulseCoeff
       }
@@ -259,11 +257,11 @@ export default class ContactSolver {
       let restitutionBias1 = 0
       let restitutionBias2 = 0
 
-      if (cp1.vn < -restitutionThreashold) {
+      if (cp1.vn < -this.restitutionThreashold) {
         restitutionBias1 = -restitution * cp1.vn
       }
 
-      if (cp2.vn < -restitutionThreashold) {
+      if (cp2.vn < -this.restitutionThreashold) {
         restitutionBias2 = -restitution * cp2.vn
       }
 
