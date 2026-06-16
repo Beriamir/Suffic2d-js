@@ -1,13 +1,11 @@
 import s2 from './s2/s2.module.js'
 import Graphics from './Graphics.js'
-import Decomposer from './Decomposer.js'
 import dat from './lib/dat.gui.mjs'
 
 document.addEventListener('DOMContentLoaded', _ => {
   const canvas = document.getElementById('canvas')
   const guiEl = document.getElementById('gui')
 
-  const decomposer = new Decomposer()
   const gfx = new Graphics(canvas, {}).setSize(800, 800)
   const gui = new dat.GUI({
     autoPlace: false,
@@ -218,31 +216,6 @@ document.addEventListener('DOMContentLoaded', _ => {
       restitution: 0.0,
       friction: 0.3
     })
-
-    /*
-    const polygons = []
-    for (let i = 0; i < 10; i++) {
-      polygons.push(decomposer.createConcaveShape(12, 80))
-    }
-
-    for (const polygon of Object.values(polygons)) {
-      const x = Math.random() * canvas.width
-      const y = Math.random() * canvas.height * 0.5
-      const body = new s2.RigidBody(x, y, 0, {
-        restitution: 0.0,
-        friction: 0.3
-      })
-
-      const peices = []
-      decomposer.decompose(polygon, peices)
-
-      for (const piece of peices) {
-        body.createFixture(new s2.Polygon(piece, {}))
-      }
-
-      world.createBody(body)
-    }
-    */
   }
 
   function simulate(dt) {
