@@ -7,6 +7,7 @@ import Vertices from './Vertices.js'
 import Collision from './Collision.js'
 import ContactSolver from './ContactSolver.js'
 import DynamicTree from './DynamicTree.js'
+import Pool from './Pool.js'
 
 export default {
   Vector,
@@ -17,5 +18,6 @@ export default {
   Vertices,
   Collision,
   ContactSolver,
-  DynamicTree
+  DynamicTree,
+  Pool
 }

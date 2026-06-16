@@ -5,23 +5,34 @@ import Collision from './Collision.js'
 import ContactSolver from './ContactSolver.js'
 
 export default class World {
+  #_bodies
+  #_contactKeys
+  #_newContacts
+  #_oldContacts
+  #_contactSolver
+  #_dynamicTree
+  #_collision
+  #_nearby
   constructor(option = {}) {
-    this.bodies = []
-    this.nearby = []
-    this.contactKeys = []
-    this.newContacts = new Map()
-    this.oldContacts = new Map()
-    this.contactSolver = new ContactSolver()
-    this.dynamicTree = new DynamicTree()
-    this.collision = new Collision()
+    this.#_bodies = []
+    this.#_contactKeys = []
+    this.#_newContacts = new Map()
+    this.#_oldContacts = new Map()
+    this.#_contactSolver = new ContactSolver()
+    this.#_dynamicTree = new DynamicTree()
+    this.#_collision = new Collision()
+    this.#_nearby = []
 
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
     this.iterations = option.iterations ?? 4
   }
+  get totalBody() {
+    return this.#_bodies.length
+  }
   forEachBody(callback) {
-    for (let i = 0; i < this.bodies.length; ++i) {
-      const body = this.bodies[i]
+    for (let i = 0; i < this.#_bodies.length; ++i) {
+      const body = this.#_bodies[i]
 
       if (callback(body, i)) {
         break
@@ -29,38 +40,38 @@ export default class World {
     }
   }
   forEachContact(callback) {
-    for (const key of this.contactKeys) {
-      callback(this.newContacts.get(key), key)
+    for (const key of this.#_contactKeys) {
+      callback(this.#_newContacts.get(key), key)
     }
   }
   traverseTree(callback) {
-    this.dynamicTree.traverse(callback)
+    this.#_dynamicTree.traverse(callback)
   }
   clear() {
     this.forEachBody(body => {
-      this.dynamicTree.removeBody(body)
+      this.#_dynamicTree.removeBody(body)
     })
-    this.bodies.length = 0
+    this.#_bodies.length = 0
   }
-  createBody(body) {
-    if (this.bodies[body.index]) return
+  createBody(body, margin = 10) {
+    if (this.#_bodies[body.index]) return
 
-    this.dynamicTree.insertBody(body, 5)
-    this.bodies.push(body)
-    body.index = this.bodies.length - 1
+    this.#_dynamicTree.insertBody(body, margin)
+    this.#_bodies.push(body)
+    body.index = this.#_bodies.length - 1
   }
   destroyBody(body) {
     const index = body.index
 
-    if (!this.bodies[index]) return
+    if (!this.#_bodies[index]) return
 
-    const last = this.bodies.length - 1
+    const last = this.#_bodies.length - 1
 
-    this.dynamicTree.removeBody(body)
-    this.bodies[index] = this.bodies[last]
-    this.bodies[index].index = index
-    this.bodies[last].index = -1
-    this.bodies.pop()
+    this.#_dynamicTree.removeBody(body)
+    this.#_bodies[index] = this.#_bodies[last]
+    this.#_bodies[index].index = index
+    this.#_bodies[last].index = -1
+    this.#_bodies.pop()
   }
   simulate(dt) {
     dt /= this.substeps
@@ -68,13 +79,13 @@ export default class World {
 
     for (let step = 0; step < this.substeps; ++step) {
       // Collision detection
-      this.contactKeys.length = 0
-      this.newContacts.clear()
+      this.#_contactKeys.length = 0
+      this.#_newContacts.clear()
       this.forEachBody(bodyA => {
-        this.nearby.length = 0
-        this.dynamicTree.queryAABB(bodyA.aabb, this.nearby)
+        this.#_nearby.length = 0
+        this.#_dynamicTree.queryAABB(bodyA.aabb, this.#_nearby)
 
-        for (const bodyB of this.nearby) {
+        for (const bodyB of this.#_nearby) {
           const idA = bodyA.id
           const idB = bodyB.id
 
@@ -106,7 +117,7 @@ export default class World {
                 continue
               }
 
-              const manifold = this.collision.detect(
+              const manifold = this.#_collision.detect(
                 worldVerticesA,
                 worldVerticesB
               )
@@ -122,33 +133,33 @@ export default class World {
                 manifold
               }
 
-              this.contactKeys.push(key)
-              this.newContacts.set(key, newContact)
+              this.#_contactKeys.push(key)
+              this.#_newContacts.set(key, newContact)
             }
           }
         }
       })
-      this.contactKeys.sort((a, b) => {
+      this.#_contactKeys.sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
         return 0
       })
 
+      // Apply gravity
       this.forEachBody(body => {
         if (!body.isStatic) {
           body.linearVelocity.addMulV(this.gravity, dt)
         }
       })
 
-      // Prepare and warm start contacts
       this.forEachContact((newContact, key) => {
-        this.contactSolver.prepare(newContact, dt)
+        this.#_contactSolver.prepare(newContact, dt)
 
-        if (!this.oldContacts.has(key)) {
+        if (!this.#_oldContacts.has(key)) {
           return
         }
 
-        const oldContact = this.oldContacts.get(key)
+        const oldContact = this.#_oldContacts.get(key)
         const newPts = newContact.manifold.contactPoints
         const oldPts = oldContact.manifold.contactPoints
 
@@ -163,12 +174,12 @@ export default class World {
           }
         }
 
-        this.contactSolver.warmStart(newContact)
+        this.#_contactSolver.warmStart(newContact)
       })
 
       for (let i = 0; i < this.iterations; ++i) {
         this.forEachContact(contact => {
-          this.contactSolver.solve(contact, invH, true)
+          this.#_contactSolver.solve(contact, invH, true)
         })
       }
 
@@ -179,14 +190,14 @@ export default class World {
         body.rotate(body.angularVelocity * dt)
         body.updateAABB()
 
-        this.dynamicTree.updateBody(body, 5)
+        this.#_dynamicTree.updateBody(body, 10)
       })
 
       // Relax + store
-      this.oldContacts.clear()
+      this.#_oldContacts.clear()
       this.forEachContact((contact, key) => {
-        this.contactSolver.solve(contact, invH, false)
-        this.oldContacts.set(key, contact)
+        this.#_contactSolver.solve(contact, invH, false)
+        this.#_oldContacts.set(key, contact)
       })
     }
   }

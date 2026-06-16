@@ -2,9 +2,9 @@ import Vector from './Vector.js'
 import AABB from './AABB.js'
 
 export default class RigidBody {
-  static uid = 0
+  static #_uid = 0
   constructor(x, y, rot, options = {}) {
-    this.id = RigidBody.uid++
+    this.id = RigidBody.#_uid++
     this.type = 'rigid'
 
     this.position = new Vector(x, y)

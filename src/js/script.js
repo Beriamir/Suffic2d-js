@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', _ => {
 
   const perimetersFol = gui.addFolder('Perimeters')
   perimetersFol.add(world, 'substeps', 1, 10, 1).name('SUB STEPS')
-  perimetersFol.add(world, 'iterations', 1, 10, 1).name('ITERATIONS')
+  perimetersFol.add(world, 'iterations', 1, 10, 1).name('Iterations')
 
   statsFol.open()
   debugsFol.open()
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', _ => {
     })
     createStack(world, {
       columns: 0,
-      rows: 20,
+      rows: 0,
       boxSize: 40,
       spacing: 4,
       centerX: canvas.width / 2,
@@ -229,11 +229,14 @@ document.addEventListener('DOMContentLoaded', _ => {
       const x = Math.random() * canvas.width
       const y = Math.random() * canvas.height * 0.5
       const body = new s2.RigidBody(x, y, 0, {
-        restitution: 0.1,
+        restitution: 0.0,
         friction: 0.3
       })
 
-      for (const piece of decomposer.decompose(polygon, [])) {
+      const peices = []
+      decomposer.decompose(polygon, peices)
+
+      for (const piece of peices) {
         body.createFixture(new s2.Polygon(piece, {}))
       }
 
@@ -268,15 +271,17 @@ document.addEventListener('DOMContentLoaded', _ => {
           wireframe: debugs.wireframe,
           noStroke: !debugs.wireframe
         })
-
-        if (debugs.aabb) {
-          gfx.drawAABB(body.aabb, {
-            strokeColor: debugColor,
-            wireframe: true
-          })
-        }
       }
     })
+
+    if (debugs.aabb) {
+      world.forEachBody(body => {
+        gfx.drawAABB(body.aabb, {
+          strokeColor: debugColor,
+          wireframe: true
+        })
+      })
+    }
 
     if (debugs.bvh) {
       world.traverseTree(node => {
@@ -293,22 +298,6 @@ document.addEventListener('DOMContentLoaded', _ => {
         bodyB,
         manifold: { normal, overlap, polytope, contactPoints, ref, inc }
       } = contact
-
-      if (debugs.aabb) {
-        for (const s of bodyA.fixtures) {
-          gfx.drawAABB(s.aabb, {
-            strokeColor: debugColor,
-            wireframe: true
-          })
-        }
-
-        for (const s of bodyB.fixtures) {
-          gfx.drawAABB(s.aabb, {
-            strokeColor: debugColor,
-            wireframe: true
-          })
-        }
-      }
 
       const originX = canvas.width * 0.5
       const originY = canvas.height * 0.5
@@ -401,7 +390,7 @@ document.addEventListener('DOMContentLoaded', _ => {
         render(gfx, dt)
 
         stats.fps = 1 / dt
-        stats.bodies = world.bodies.length
+        stats.bodies = world.totalBody
         stats.joints = 0
       }
 

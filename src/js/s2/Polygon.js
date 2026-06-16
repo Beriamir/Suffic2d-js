@@ -3,9 +3,9 @@ import Vertices from './Vertices.js'
 import AABB from './AABB.js'
 
 export default class Polygon {
-  static uid = 0
+  static #_uid = 0
   constructor(vertices, options = {}) {
-    this.id = Polygon.uid++
+    this.id = Polygon.#_uid++
     this.type = 'polygon'
     this.vertices = vertices // local
     this.worldVertices = new Float32Array(vertices)

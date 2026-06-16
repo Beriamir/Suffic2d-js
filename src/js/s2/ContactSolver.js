@@ -1,9 +1,13 @@
 export default class ContactSolver {
+  #_zeta
+  #_hertz
+  #_slop
+  #_restitutionThreashold
   constructor(option = {}) {
-    this.zeta = option.zeta ?? 50
-    this.hertz = option.hertz ?? 60
-    this.slop = option.slop ?? 0.2
-    this.restitutionThreashold = option.restitutionThreashold ?? 1
+    this.#_zeta = option.zeta ?? 35
+    this.#_hertz = option.hertz ?? 60
+    this.#_slop = option.slop ?? 0.2
+    this.#_restitutionThreashold = option.restitutionThreashold ?? 1
   }
   prepare(contact, dt) {
     const {
@@ -24,7 +28,6 @@ export default class ContactSolver {
 
     const tangentX = -normal.y
     const tangentY = normal.x
-
     const contactCount = contactPoints.length
 
     for (let i = 0; i < contactCount; ++i) {
@@ -37,8 +40,6 @@ export default class ContactSolver {
 
       const relVelX = vB.x - rbY * wB - (vA.x - raY * wA)
       const relVelY = vB.y + rbX * wB - (vA.y + raX * wA)
-
-      cp.vn = relVelX * normal.x + relVelY * normal.y
 
       const rnA = normal.x * -raY + normal.y * raX
       const rnB = normal.x * -rbY + normal.y * rbX
@@ -53,6 +54,8 @@ export default class ContactSolver {
       cp.rbX = rbX
       cp.rbY = rbY
 
+      cp.vn = relVelX * normal.x + relVelY * normal.y
+
       cp.rnA = rnA
       cp.rnB = rnB
       cp.rtA = rtA
@@ -65,8 +68,8 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      const omega = 2 * Math.PI * this.hertz
-      const a1 = 2 * this.zeta + omega * dt
+      const omega = 2 * Math.PI * this.#_hertz
+      const a1 = 2 * this.#_zeta + omega * dt
       const a2 = dt * omega * a1
       const a3 = 1 / (1 + a2)
 
@@ -196,14 +199,14 @@ export default class ContactSolver {
       let impulseScale = 0
 
       if (useBias) {
-        bias = Math.max(cp.overlap - this.slop, 0) * cp.biasCoeff
+        bias = Math.max(cp.overlap - this.#_slop, 0) * cp.biasCoeff
         massScale = cp.massCoeff
         impulseScale = cp.impulseCoeff
       }
 
       let restitutionBias = 0
 
-      if (cp.vn < -this.restitutionThreashold) {
+      if (cp.vn < -this.#_restitutionThreashold) {
         restitutionBias = -restitution * cp.vn
       }
 
@@ -245,11 +248,11 @@ export default class ContactSolver {
       let impulseScale2 = 0
 
       if (useBias) {
-        bias1 = Math.max(cp1.overlap - this.slop, 0) * cp1.biasCoeff
+        bias1 = Math.max(cp1.overlap - this.#_slop, 0) * cp1.biasCoeff
         massScale1 = cp1.massCoeff
         impulseScale1 = cp1.impulseCoeff
 
-        bias2 = Math.max(cp2.overlap - this.slop, 0) * cp2.biasCoeff
+        bias2 = Math.max(cp2.overlap - this.#_slop, 0) * cp2.biasCoeff
         massScale2 = cp2.massCoeff
         impulseScale2 = cp2.impulseCoeff
       }
@@ -257,11 +260,11 @@ export default class ContactSolver {
       let restitutionBias1 = 0
       let restitutionBias2 = 0
 
-      if (cp1.vn < -this.restitutionThreashold) {
+      if (cp1.vn < -this.#_restitutionThreashold) {
         restitutionBias1 = -restitution * cp1.vn
       }
 
-      if (cp2.vn < -this.restitutionThreashold) {
+      if (cp2.vn < -this.#_restitutionThreashold) {
         restitutionBias2 = -restitution * cp2.vn
       }
 
@@ -297,16 +300,16 @@ export default class ContactSolver {
           const P2X = dY * normal.x
           const P2Y = dY * normal.y
 
+          vA.x -= (P1X + P2X) * mA
+          vA.y -= (P1Y + P2Y) * mA
+          vB.x += (P1X + P2X) * mB
+          vB.y += (P1Y + P2Y) * mB
           wA -=
             (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
             iA
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
           wB +=
             (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
             iB
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
 
           // Accumulate
           cp1.normalImpulse = xX
@@ -334,16 +337,16 @@ export default class ContactSolver {
           const P2X = dY * normal.x
           const P2Y = dY * normal.y
 
+          vA.x -= (P1X + P2X) * mA
+          vA.y -= (P1Y + P2Y) * mA
+          vB.x += (P1X + P2X) * mB
+          vB.y += (P1Y + P2Y) * mB
           wA -=
             (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
             iA
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
           wB +=
             (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
             iB
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
 
           // Accumulate
           cp1.normalImpulse = xX
@@ -371,16 +374,16 @@ export default class ContactSolver {
           const P2X = dY * normal.x
           const P2Y = dY * normal.y
 
+          vA.x -= (P1X + P2X) * mA
+          vA.y -= (P1Y + P2Y) * mA
+          vB.x += (P1X + P2X) * mB
+          vB.y += (P1Y + P2Y) * mB
           wA -=
             (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
             iA
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
           wB +=
             (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
             iB
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
 
           // Accumulate
           cp1.normalImpulse = xX
@@ -407,16 +410,16 @@ export default class ContactSolver {
           const P2X = dY * normal.x
           const P2Y = dY * normal.y
 
+          vA.x -= (P1X + P2X) * mA
+          vA.y -= (P1Y + P2Y) * mA
+          vB.x += (P1X + P2X) * mB
+          vB.y += (P1Y + P2Y) * mB
           wA -=
             (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
             iA
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
           wB +=
             (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
             iB
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
 
           // Accumulate
           cp1.normalImpulse = xX

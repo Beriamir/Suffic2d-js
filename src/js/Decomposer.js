@@ -1,3 +1,5 @@
+// === PolygonDecomposer class (flattened-array version, no external helpers) ===
+
 export default class Decomposer {
   constructor() {}
 
@@ -14,269 +16,310 @@ export default class Decomposer {
     return new Float32Array(points)
   }
 
-  decompose(polygon, pieces = []) {
-    const n = polygon.length
-
-    for (let i = 0; i < n; i += 2) {
-      const prevI = (i - 2 + n) % n
-      const reflexI = i
-      const nextI = (i + 2) % n
-
-      const prevX = polygon[prevI]
-      const prevY = polygon[prevI + 1]
-      const reflexX = polygon[reflexI]
-      const reflexY = polygon[reflexI + 1]
-      const nextX = polygon[nextI]
-      const nextY = polygon[nextI + 1]
-
-      const prevDirX = reflexX - prevX
-      const prevDirY = reflexY - prevY
-      const nextDirX = nextX - reflexX
-      const nextDirY = nextY - reflexY
-
-      if (!this.isReflex(prevDirX, prevDirY, nextDirX, nextDirY)) {
-        continue
-      }
-
-      let bestX = null
-      let bestY = null
-      let bestIndex = -1
-      let bestDistSq = Infinity
-      let bestIsReflex = false
-
-      for (let j = 0; j < n; j += 2) {
-        const prevJ = (j - 2 + n) % n
-        const targetJ = j
-        const nextJ = (j + 2) % n
-
-        if (targetJ === reflexI || targetJ === prevI || targetJ === nextI) {
-          continue
-        }
-
-        const targetX = polygon[targetJ]
-        const targetY = polygon[targetJ + 1]
-
-        const midX = (reflexX + targetX) * 0.5
-        const midY = (reflexY + targetY) * 0.5
-
-        if (!this.pointInPolygon(midX, midY, polygon)) {
-          continue
-        }
-
-        let validSplit = true
-
-        for (let e = 0; e < n; e += 2) {
-          const edgeAI = e
-          const edgeBI = (e + 2) % n
-
-          if (
-            edgeAI === reflexI ||
-            edgeBI === reflexI ||
-            edgeAI === targetJ ||
-            edgeBI === targetJ
-          ) {
-            continue
-          }
-
-          const edgeAX = polygon[edgeAI]
-          const edgeAY = polygon[edgeAI + 1]
-          const edgeBX = polygon[edgeBI]
-          const edgeBY = polygon[edgeBI + 1]
-
-          const hitPoint = this.lineIntersect(
-            reflexX,
-            reflexY,
-            targetX,
-            targetY,
-            edgeAX,
-            edgeAY,
-            edgeBX,
-            edgeBY
-          )
-
-          if (!hitPoint) continue
-
-          const reflexDistSq = this.distanceSq(
-            hitPoint.x,
-            hitPoint.y,
-            reflexX,
-            reflexY
-          )
-
-          const targetDistSq = this.distanceSq(
-            hitPoint.x,
-            hitPoint.y,
-            targetX,
-            targetY
-          )
-
-          const EPS = 1e-9
-
-          if (reflexDistSq > EPS && targetDistSq > EPS) {
-            validSplit = false
-            break
-          }
-        }
-
-        if (!validSplit) continue
-
-        const prevJDirX = targetX - polygon[prevJ]
-        const prevJDirY = targetY - polygon[prevJ + 1]
-        const nextJDirX = polygon[nextJ] - targetX
-        const nextJDirY = polygon[nextJ + 1] - targetY
-
-        const targetIsReflex = this.isReflex(
-          prevJDirX,
-          prevJDirY,
-          nextJDirX,
-          nextJDirY
-        )
-
-        const splitDistSq = this.distanceSq(reflexX, reflexY, targetX, targetY)
-
-        if (
-          (targetIsReflex && !bestIsReflex) ||
-          (targetIsReflex === bestIsReflex && splitDistSq < bestDistSq)
-        ) {
-          bestX = targetX
-          bestY = targetY
-          bestIndex = targetJ
-          bestDistSq = splitDistSq
-          bestIsReflex = targetIsReflex
-        }
-      }
-
-      if (bestX === null) continue
-
-      const startIndex = reflexI
-      const endIndex = bestIndex
-
-      const polyA = []
-      const polyB = []
-
-      if (endIndex === -1) {
-        let edgeSplitIndex = -1
-
-        for (let e = 0; e < n; e += 2) {
-          const edgeAI = e
-          const edgeBI = (e + 2) % n
-
-          const ax = polygon[edgeAI]
-          const ay = polygon[edgeAI + 1]
-          const bx = polygon[edgeBI]
-          const by = polygon[edgeBI + 1]
-
-          const abX = bx - ax
-          const abY = by - ay
-
-          const asX = bestX - ax
-          const asY = bestY - ay
-
-          const cross = Math.abs(abX * asY - abY * asX)
-
-          if (cross > 1e-6) continue
-
-          const dot = abX * asX + abY * asY
-          const abLenSq = abX * abX + abY * abY
-
-          if (dot < 0 || dot > abLenSq) continue
-
-          edgeSplitIndex = e
-          break
-        }
-
-        if (edgeSplitIndex === -1) continue
-
-        const steinerPoly = [...polygon]
-        steinerPoly.splice(edgeSplitIndex + 2, 0, bestX, bestY)
-
-        return this.decompose(steinerPoly, pieces)
-      }
-
-      if (startIndex === endIndex) return pieces
-
-      for (let i = startIndex; ; i = (i + 2) % n) {
-        polyA.push(polygon[i], polygon[i + 1])
-        if (i === endIndex) break
-      }
-
-      for (let i = endIndex; ; i = (i + 2) % n) {
-        polyB.push(polygon[i], polygon[i + 1])
-        if (i === startIndex) break
-      }
-
-      if (polyA.length >= 6) this.decompose(polyA, pieces)
-      if (polyB.length >= 6) this.decompose(polyB, pieces)
-
-      return pieces
-    }
-
-    pieces.push(polygon)
-    return pieces
+  // Returns [x, y] for the vertex at the given index, with modulo wraparound.
+  // poly is a flat array: [x0, y0, x1, y1, x2, y2, ...]
+  at(poly, index) {
+    const n = poly.length / 2
+    const i = ((index % n) + n) % n
+    return [poly[i * 2], poly[i * 2 + 1]]
   }
 
-  distanceSq(uX, uY, vX, vY) {
-    const dx = vX - uX
-    const dy = vY - uY
+  sqdist(a, b) {
+    const dx = b[0] - a[0]
+    const dy = b[1] - a[1]
     return dx * dx + dy * dy
   }
 
-  isReflex(uX, uY, vX, vY) {
-    return uX * vY - uY * vX < 0
+  eq(a, b, epsilon = 1e-10) {
+    return Math.abs(a - b) <= epsilon
   }
 
-  lineIntersect(aX, aY, bX, bY, cX, cY, dX, dY) {
-    const dx1 = bX - aX
-    const dy1 = bY - aY
-    const dx2 = dX - cX
-    const dy2 = dY - cY
+  cross(o, a, b) {
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+  }
 
-    const cross = dx1 * dy2 - dy1 * dx2
-    const EPS = 1e-9
+  left(a, b, c) {
+    return this.cross(a, b, c) > 0
+  }
 
-    if (Math.abs(cross) < EPS) return null
+  leftOn(a, b, c) {
+    return this.cross(a, b, c) >= 0
+  }
 
-    const acX = cX - aX
-    const acY = cY - aY
+  right(a, b, c) {
+    return this.cross(a, b, c) < 0
+  }
 
-    const t = (acX * dy2 - acY * dx2) / cross
-    const u = (acX * dy1 - acY * dx1) / cross
+  rightOn(a, b, c) {
+    return this.cross(a, b, c) <= 0
+  }
 
-    if (t >= -EPS && t <= 1 + EPS && u >= -EPS && u <= 1 + EPS) {
-      return {
-        x: aX + dx1 * t,
-        y: aY + dy1 * t
+  // Returns [x, y] of the intersection point
+  intersection(p1, p2, q1, q2) {
+    let point = [0, 0]
+
+    const a1 = p2[1] - p1[1]
+    const b1 = p1[0] - p2[0]
+    const c1 = a1 * p1[0] + b1 * p1[1]
+
+    const a2 = q2[1] - q1[1]
+    const b2 = q1[0] - q2[0]
+    const c2 = a2 * q1[0] + b2 * q1[1]
+
+    const det = a1 * b2 - a2 * b1
+
+    if (!this.eq(det, 0)) {
+      point = [(b2 * c1 - b1 * c2) / det, (a1 * c2 - a2 * c1) / det]
+    }
+
+    return point
+  }
+
+  // Number of vertices in a flat polygon array
+  vertexCount(poly) {
+    return poly.length / 2
+  }
+
+  // Get vertex i (no wraparound) as [x, y]
+  vertexAt(poly, i) {
+    return [poly[i * 2], poly[i * 2 + 1]]
+  }
+
+  // Slice a flat array by vertex indices [startVertex, endVertex) -> flat array
+  sliceVerts(poly, startVertex, endVertex) {
+    return poly.slice(startVertex * 2, endVertex * 2)
+  }
+
+  // Push a [x, y] point onto a flat array (mutates)
+  pushVert(poly, point) {
+    poly.push(point[0], point[1])
+  }
+
+  makeCCW(poly) {
+    const n = this.vertexCount(poly)
+    let br = 0
+
+    // find bottom right point
+    for (let i = 1; i < n; ++i) {
+      const vi = this.vertexAt(poly, i)
+      const vbr = this.vertexAt(poly, br)
+      if (vi[1] < vbr[1] || (vi[1] === vbr[1] && vi[0] > vbr[0])) {
+        br = i
       }
     }
 
-    return null
+    // reverse poly if clockwise
+    if (
+      !this.left(
+        this.at(poly, br - 1),
+        this.at(poly, br),
+        this.at(poly, br + 1)
+      )
+    ) {
+      // reverse in place, keeping x/y pairs together
+      const reversed = []
+      for (let i = n - 1; i >= 0; --i) {
+        reversed.push(poly[i * 2], poly[i * 2 + 1])
+      }
+      for (let i = 0; i < poly.length; ++i) {
+        poly[i] = reversed[i]
+      }
+    }
   }
 
-  pointInPolygon(pX, pY, polygon) {
-    const n = polygon.length
-    let inside = false
-
-    for (let i = 0; i < n; i += 2) {
-      const j = (i + 2) % n
-
-      const xi = polygon[i]
-      const yi = polygon[i + 1]
-      const xj = polygon[j]
-      const yj = polygon[j + 1]
-
-      const intersect =
-        yi > pY !== yj > pY && pX < ((xj - xi) * (pY - yi)) / (yj - yi) + xi
-
-      if (intersect) inside = !inside
-    }
-
-    return inside
+  isReflex(poly, i) {
+    return this.right(
+      this.at(poly, i - 1),
+      this.at(poly, i),
+      this.at(poly, i + 1)
+    )
   }
 
-  midPoint(aX, aY, bX, bY) {
-    return {
-      x: (aX + bX) * 0.5,
-      y: (aY + bY) * 0.5
+  decompose(poly, peices = []) {
+    this.makeCCW(poly)
+
+    let upperInt = [0, 0]
+    let lowerInt = [0, 0]
+    let p = [0, 0]
+    let closestVert = [0, 0]
+
+    let upperDist, lowerDist, d, closestDist
+    let upperIndex, lowerIndex, closestIndex
+
+    let lowerPoly = []
+    let upperPoly = []
+
+    const n = this.vertexCount(poly)
+
+    for (let i = 0; i < n; ++i) {
+      if (this.isReflex(poly, i)) {
+        upperDist = Infinity
+        lowerDist = Infinity
+
+        for (let j = 0; j < n; ++j) {
+          if (
+            this.left(
+              this.at(poly, i - 1),
+              this.at(poly, i),
+              this.at(poly, j)
+            ) &&
+            this.rightOn(
+              this.at(poly, i - 1),
+              this.at(poly, i),
+              this.at(poly, j - 1)
+            )
+          ) {
+            p = this.intersection(
+              this.at(poly, i - 1),
+              this.at(poly, i),
+              this.at(poly, j),
+              this.at(poly, j - 1)
+            )
+            if (this.right(this.at(poly, i + 1), this.at(poly, i), p)) {
+              d = this.sqdist(this.vertexAt(poly, i), p)
+              if (d < lowerDist) {
+                lowerDist = d
+                lowerInt = p
+                lowerIndex = j
+              }
+            }
+          }
+          if (
+            this.left(
+              this.at(poly, i + 1),
+              this.at(poly, i),
+              this.at(poly, j + 1)
+            ) &&
+            this.rightOn(
+              this.at(poly, i + 1),
+              this.at(poly, i),
+              this.at(poly, j)
+            )
+          ) {
+            p = this.intersection(
+              this.at(poly, i + 1),
+              this.at(poly, i),
+              this.at(poly, j),
+              this.at(poly, j + 1)
+            )
+            if (this.left(this.at(poly, i - 1), this.at(poly, i), p)) {
+              d = this.sqdist(this.vertexAt(poly, i), p)
+              if (d < upperDist) {
+                upperDist = d
+                upperInt = p
+                upperIndex = j
+              }
+            }
+          }
+        }
+
+        lowerPoly = []
+        upperPoly = []
+
+        // Case 1
+        if (lowerIndex === (upperIndex + 1) % n) {
+          p = [(lowerInt[0] + upperInt[0]) / 2, (lowerInt[1] + upperInt[1]) / 2]
+
+          if (i < upperIndex) {
+            lowerPoly = [
+              ...lowerPoly,
+              ...this.sliceVerts(poly, i, upperIndex + 1)
+            ]
+            this.pushVert(lowerPoly, p)
+
+            this.pushVert(upperPoly, p)
+            if (lowerIndex !== 0) {
+              upperPoly = [
+                ...upperPoly,
+                ...this.sliceVerts(poly, lowerIndex, n)
+              ]
+            }
+            upperPoly = [...upperPoly, ...this.sliceVerts(poly, 0, i + 1)]
+          } else {
+            if (i !== 0) {
+              lowerPoly = [...lowerPoly, ...this.sliceVerts(poly, i, n)]
+            }
+            lowerPoly = [
+              ...lowerPoly,
+              ...this.sliceVerts(poly, 0, upperIndex + 1)
+            ]
+            this.pushVert(lowerPoly, p)
+
+            this.pushVert(upperPoly, p)
+            upperPoly = [
+              ...upperPoly,
+              ...this.sliceVerts(poly, lowerIndex, i + 1)
+            ]
+          }
+        } else {
+          // Case 2
+          if (lowerIndex > upperIndex) {
+            upperIndex += n
+          }
+
+          closestDist = Infinity
+
+          for (let j = lowerIndex; j <= upperIndex; ++j) {
+            if (
+              this.leftOn(
+                this.at(poly, i - 1),
+                this.at(poly, i),
+                this.at(poly, j)
+              ) &&
+              this.rightOn(
+                this.at(poly, i + 1),
+                this.at(poly, i),
+                this.at(poly, j)
+              )
+            ) {
+              d = this.sqdist(this.at(poly, i), this.at(poly, j))
+              if (d < closestDist) {
+                closestDist = d
+                closestVert = this.at(poly, j)
+                closestIndex = ((j % n) + n) % n
+              }
+            }
+          }
+
+          if (i < closestIndex) {
+            lowerPoly = [
+              ...lowerPoly,
+              ...this.sliceVerts(poly, i, closestIndex + 1)
+            ]
+            if (closestIndex !== 0) {
+              upperPoly = [
+                ...upperPoly,
+                ...this.sliceVerts(poly, closestIndex, n)
+              ]
+            }
+            upperPoly = [...upperPoly, ...this.sliceVerts(poly, 0, i + 1)]
+          } else {
+            if (i !== 0) {
+              lowerPoly = [...lowerPoly, ...this.sliceVerts(poly, i, n)]
+            }
+            lowerPoly = [
+              ...lowerPoly,
+              ...this.sliceVerts(poly, 0, closestIndex + 1)
+            ]
+            upperPoly = [
+              ...upperPoly,
+              ...this.sliceVerts(poly, closestIndex, i + 1)
+            ]
+          }
+        }
+
+        // solve smallest poly first
+        if (this.vertexCount(lowerPoly) < this.vertexCount(upperPoly)) {
+          this.decompose(lowerPoly, peices)
+          this.decompose(upperPoly, peices)
+        } else {
+          this.decompose(upperPoly, peices)
+          this.decompose(lowerPoly, peices)
+        }
+        return
+      }
     }
+
+    peices.push(poly)
   }
 }
