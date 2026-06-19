@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         rows: 15,
         boxWidth: 40,
         boxHeight: 40,
-        spacing: 2,
+        spacing: 3,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 50,
         restitution: 0.0,
@@ -64,8 +64,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 50
       })
       scenes.boxStack(world, {
-        columns: 4,
-        rows: 6,
+        columns: 6,
+        rows: 12,
         boxWidth: 60,
         boxHeight: 40,
         spacing: 10,
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 50
       })
       scenes.jenga(world, {
-        levels: 5,
+        levels: 9,
         width: 80,
         height: 20,
         centerX: canvas.width / 2,

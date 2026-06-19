@@ -4,7 +4,7 @@ export default class ContactSolver {
   #_slop
   #_restitutionThreashold
   constructor(option = {}) {
-    this.#_zeta = option.zeta ?? 10
+    this.#_zeta = option.zeta ?? 15
     this.#_hertz = option.hertz ?? 30
     this.#_slop = option.slop ?? 0.2
     this.#_restitutionThreashold = option.restitutionThreashold ?? 1
@@ -32,13 +32,9 @@ export default class ContactSolver {
     ))
 
     const omega = 2 * Math.PI * this.#_hertz
-    const a1 = 2 * this.#_zeta + omega * dt
-    const a2 = dt * omega * a1
-    const a3 = 1 / (1 + a2)
-    const biasCoeff = omega / a1
+    const alpha = 2 * this.#_zeta + omega * dt
+    const biasCoeff = omega / alpha
 
-    manifold.massCoeff = a2 * a3
-    manifold.impulseCoeff = a3
     manifold.friction = Math.min(bodyA.friction, bodyB.friction)
 
     for (let i = 0; i < contactCount; ++i) {
@@ -164,9 +160,7 @@ export default class ContactSolver {
       }
 
       const velBias = Math.max(baumgarteBias, restitutionBias)
-      let impulse =
-        -cp.effNormalMass * massScale * (vn - velBias) -
-        cp.normalImpulse * impulseScale
+      let impulse = -cp.effNormalMass * (vn - velBias)
 
       const oldImpulse = cp.normalImpulse
       const newImpulse = Math.max(oldImpulse + impulse, 0)
