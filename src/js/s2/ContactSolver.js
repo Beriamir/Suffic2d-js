@@ -120,8 +120,6 @@ export default class ContactSolver {
         tangentX,
         tangentY,
         friction,
-        massCoeff,
-        impulseCoeff,
         contactPoints,
         contactCount
       }
@@ -146,8 +144,6 @@ export default class ContactSolver {
 
       let restitutionBias = 0
       let baumgarteBias = 0
-      let massScale = 1
-      let impulseScale = 0
 
       if (cp.vn < -this.#_restitutionThreashold) {
         restitutionBias = cp.restitutionBias
@@ -155,8 +151,6 @@ export default class ContactSolver {
 
       if (useBias) {
         baumgarteBias = cp.baumgarteBias
-        massScale = massCoeff
-        impulseScale = impulseCoeff
       }
 
       const velBias = Math.max(baumgarteBias, restitutionBias)

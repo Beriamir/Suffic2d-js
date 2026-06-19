@@ -30,6 +30,54 @@ export default {
       }
     )
   },
+  highMass(world, option = {}) {
+    const {
+      smallX = innerWidth / 2,
+      smallY = innerHeight,
+      smallWidth = 40,
+      smallHeight = 40,
+      bigX = innerWidth / 2,
+      bigY = innerHeight,
+      bigWidth = 40,
+      bigHeight = 40,
+      friction = 0.3
+    } = option
+
+    const small = world.createRigidBody(smallX, smallY, 0, {
+      restitution: 0.0,
+      friction
+    })
+    const big = world.createRigidBody(bigX, bigY, 0, {
+      restitution: 0.0,
+      friction
+    })
+
+    small.createPolygon(
+      new Float32Array([
+        -smallWidth,
+        -smallHeight,
+        smallWidth,
+        -smallHeight,
+        smallWidth,
+        smallHeight,
+        -smallWidth,
+        smallHeight
+      ])
+    )
+
+    big.createPolygon(
+      new Float32Array([
+        -bigWidth,
+        -bigHeight,
+        bigWidth,
+        -bigHeight,
+        bigWidth,
+        bigHeight,
+        -bigWidth,
+        bigHeight
+      ])
+    )
+  },
   jenga(world, option = {}) {
     const {
       levels = 18,

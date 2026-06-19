@@ -92,6 +92,26 @@ document.addEventListener("DOMContentLoaded", _ => {
         restitution: 0.0,
         friction: 0.5
       })
+    },
+    highMass() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height,
+        width: canvas.width / 2,
+        height: 50
+      })
+      scenes.highMass(world, {
+        smallX: canvas.width / 2,
+        smallY: canvas.height - 80,
+        smallWidth: 20,
+        smallHeight: 20,
+        bigX: canvas.width / 2,
+        bigY: canvas.height - 230,
+        bigWidth: 100,
+        bigHeight: 100,
+        friction: 0.2
+      })
     }
   }
 
@@ -116,6 +136,7 @@ document.addEventListener("DOMContentLoaded", _ => {
   gui.add(switchScenes, "pyramid")
   gui.add(switchScenes, "boxStack")
   gui.add(switchScenes, "jenga")
+  gui.add(switchScenes, "highMass")
 
   guiEl.appendChild(gui.domElement)
 
