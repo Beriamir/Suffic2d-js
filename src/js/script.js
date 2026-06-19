@@ -1,6 +1,7 @@
 import s2 from "./s2/s2.module.js"
 import Graphics from "./Graphics.js"
 import dat from "./lib/dat.gui.mjs"
+import scenes from "./scenes.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
   const canvas = document.getElementById("canvas")
@@ -34,6 +35,66 @@ document.addEventListener("DOMContentLoaded", _ => {
     joints: 0
   }
 
+  const switchScenes = {
+    pyramid() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height,
+        width: canvas.width / 2,
+        height: 50
+      })
+      scenes.pyramid(world, {
+        rows: 15,
+        boxWidth: 40,
+        boxHeight: 40,
+        spacing: 2,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 50,
+        restitution: 0.0,
+        friction: 0.3
+      })
+    },
+    boxStack() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height,
+        width: canvas.width / 2,
+        height: 50
+      })
+      scenes.boxStack(world, {
+        columns: 4,
+        rows: 6,
+        boxWidth: 60,
+        boxHeight: 40,
+        spacing: 10,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 50,
+        restitution: 0.0,
+        friction: 0.3
+      })
+    },
+    jenga() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height,
+        width: canvas.width / 2,
+        height: 50
+      })
+      scenes.jenga(world, {
+        levels: 5,
+        width: 80,
+        height: 20,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 50,
+        restitution: 0.0,
+        friction: 0.5
+      })
+    }
+  }
+
   const statsFol = gui.addFolder("Stats")
   for (const stat of Object.keys(stats)) {
     statsFol.add(stats, stat).listen().name(stat.toUpperCase())
@@ -52,177 +113,21 @@ document.addEventListener("DOMContentLoaded", _ => {
   debugsFol.open()
   perimetersFol.open()
 
-  gui.add(
-    {
-      restart() {
-        setup()
-      }
-    },
-    "restart"
-  )
+  gui.add(switchScenes, "pyramid")
+  gui.add(switchScenes, "boxStack")
+  gui.add(switchScenes, "jenga")
 
   guiEl.appendChild(gui.domElement)
 
-  // canvas.addEventListener('pointerdown', event => {
-  //   const { clientX, clientY } = event
-
-  //   const size = 20
-
-  //   const body = new s2.RigidBody(clientX, clientY, 0, {
-  //     restitution: 0.0
-  //   }).createFixture(
-  //     new s2.Polygon(
-  //       new Float32Array([-size, -size, size, -size, size, size, -size, size])
-  //     )
-  //   )
-
-  //   world.createBody(body)
-  // })
-
-  function createPyramid(world, options = {}) {
-    const {
-      rows = 15,
-      boxSize = 40,
-      spacing = 0,
-      centerX = canvas.width / 2,
-      bottomY = canvas.height,
-      restitution = 0.0,
-      friction = 0.3
-    } = options
-
-    const halfSize = boxSize / 2
-    const step = boxSize + spacing
-
-    for (let row = 0; row < rows; ++row) {
-      const count = rows - row
-      const rowY = bottomY - halfSize - row * step
-      const rowStartX = centerX - (count * step) / 2 + step / 2
-
-      for (let col = 0; col < count; ++col) {
-        const x = rowStartX + col * step
-        const y = rowY
-
-        world.createBody(
-          new s2.RigidBody(x, y, 0, { restitution, friction }).createFixture(
-            new s2.Polygon(
-              new Float32Array([
-                -halfSize,
-                -halfSize,
-                halfSize,
-                -halfSize,
-                halfSize,
-                halfSize,
-                -halfSize,
-                halfSize
-              ])
-            )
-          )
-        )
-      }
-    }
-  }
-
-  function createStack(world, options = {}) {
-    const {
-      columns = 1,
-      rows = 20,
-      boxSize = 40,
-      spacing = 0,
-      centerX = canvas.width / 2,
-      bottomY = canvas.height,
-      restitution = 0.0,
-      friction = 0.3
-    } = options
-
-    let halfSize = boxSize / 2
-    const step = boxSize + spacing
-    const startX = centerX - ((columns - 1) * step) / 2
-
-    for (let col = 0; col < columns; ++col) {
-      const x = startX + col * step
-
-      for (let row = 0; row < rows; ++row) {
-        const y = bottomY - halfSize - row * step
-
-        world.createBody(
-          new s2.RigidBody(x, y, 0, {
-            restitution,
-            friction
-          }).createFixture(
-            new s2.Polygon(
-              new Float32Array([
-                -halfSize,
-                -halfSize,
-                halfSize,
-                -halfSize,
-                halfSize,
-                halfSize,
-                -halfSize,
-                halfSize
-              ])
-            )
-          )
-        )
-      }
-    }
-  }
-
   function setup() {
-    world.clear()
-
-    const ground = new s2.RigidBody(canvas.width / 2, canvas.height, 0, {
-      isStatic: true,
-      restitution: 1,
-      friction: 1
-    })
-    const width = canvas.width / 2
-    const height = 50
-
-    ground.createFixture(
-      new s2.Polygon(
-        new Float32Array([
-          -width,
-          -height,
-          width,
-          -height,
-          width,
-          height,
-          -width,
-          height
-        ]),
-        {
-          fillColor: "gray",
-          strokeColor: "dimgray"
-        }
-      )
-    )
-
-    world.createBody(ground)
-    createPyramid(world, {
-      rows: 0,
-      boxSize: 40,
-      spacing: 3,
-      bottomY: canvas.height - height,
-      restitution: 0.0,
-      friction: 0.3
-    })
-    createStack(world, {
-      columns: 10,
-      rows: 10,
-      boxSize: 40,
-      spacing: 4,
-      centerX: canvas.width / 2,
-      bottomY: canvas.height - height,
-      restitution: 0.0,
-      friction: 0.3
-    })
+    switchScenes.pyramid()
   }
 
   function simulate(dt) {
     world.simulate(dt)
     world.forEachBody(body => {
       if (body.position.y > canvas.height * 2) {
-        world.destroyBody(body)
+        world.destroyRigidBody(body)
       }
     })
   }
@@ -360,11 +265,12 @@ document.addEventListener("DOMContentLoaded", _ => {
       if (accu >= step) {
         accu = 0
         simulate(step)
-        render(gfx, step)
       }
 
+      render(gfx, step)
+
       stats.fps = 1 / dt
-      stats.bodies = world.totalBody
+      stats.bodies = world.bodies.length
       stats.joints = 0
 
       requestAnimationFrame(loop)

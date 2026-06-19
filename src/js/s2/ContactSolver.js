@@ -4,8 +4,8 @@ export default class ContactSolver {
   #_slop
   #_restitutionThreashold
   constructor(option = {}) {
-    this.#_zeta = option.zeta ?? 40
-    this.#_hertz = option.hertz ?? 60
+    this.#_zeta = option.zeta ?? 10
+    this.#_hertz = option.hertz ?? 30
     this.#_slop = option.slop ?? 0.2
     this.#_restitutionThreashold = option.restitutionThreashold ?? 1
   }
@@ -54,10 +54,10 @@ export default class ContactSolver {
 
       const rnA = raX * normal.y - raY * normal.x
       const rnB = rbX * normal.y - rbY * normal.x
-      const kn = mA + mB + rnA * rnA * iA + rnB * rnB * iB
-
       const rtA = raX * tangentY - raY * tangentX
       const rtB = rbX * tangentY - rbY * tangentX
+
+      const kn = mA + mB + rnA * rnA * iA + rnB * rnB * iB
       const kt = mA + mB + rtA * rtA * iA + rtB * rtB * iB
 
       cp.raX = raX

@@ -3,6 +3,7 @@ import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
 import Collision from "./Collision.js"
 import ContactSolver from "./ContactSolver.js"
+import RigidBody from "./RigidBody.js"
 
 export default class World {
   #_bodies
@@ -47,18 +48,20 @@ export default class World {
   }
   clear() {
     for (let i = 0; i < this.#_bodies.length; ++i) {
-      this.destroyBody(this.#_bodies[i])
+      this.destroyRigidBody(this.#_bodies[i])
       --i
     }
   }
-  createBody(body, margin = 10) {
-    if (body.index >= 0) return
+  createRigidBody(x, y, rot, option = {}) {
+    const body = new RigidBody(x, y, rot, option)
 
-    this.#_dynamicTree.insertBody(body, margin)
+    this.#_dynamicTree.insertBody(body, 10)
     this.#_bodies.push(body)
     body.index = this.#_bodies.length - 1
+
+    return body
   }
-  destroyBody(body) {
+  destroyRigidBody(body) {
     const index = body.index
     const last = this.#_bodies.length - 1
 
@@ -73,6 +76,8 @@ export default class World {
 
     this.#_bodies.pop()
     body.index = -1
+
+    return body.index
   }
   simulate(dt) {
     dt /= this.substeps
@@ -165,7 +170,7 @@ export default class World {
 
         for (const newCp of newPts) {
           for (const oldCp of oldPts) {
-            if (newCp.id === oldCp.id) {
+            if (newCp.id == oldCp.id) {
               newCp.normalImpulse = oldCp.normalImpulse
               newCp.tangentImpulse = oldCp.tangentImpulse
               newCp.persistent = true

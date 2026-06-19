@@ -1,11 +1,12 @@
-import Vector from './Vector.js'
-import AABB from './AABB.js'
+import Vector from "./Vector.js"
+import AABB from "./AABB.js"
+import Polygon from "./Polygon.js"
 
 export default class RigidBody {
   static #_uid = 0
   constructor(x, y, rot, options = {}) {
     this.id = RigidBody.#_uid++
-    this.type = 'rigid'
+    this.type = "rigid"
 
     this.position = new Vector(x, y)
     this.rotation = rot
@@ -126,5 +127,12 @@ export default class RigidBody {
   }
   addTorque(torque) {
     this.angularVelocity += torque
+  }
+
+  createPolygon(vertices, option = {}) {
+    const polygon = new Polygon(vertices, option)
+
+    this.createFixture(polygon)
+    return polygon
   }
 }
