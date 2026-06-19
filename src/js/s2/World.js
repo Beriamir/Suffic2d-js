@@ -1,8 +1,8 @@
-import DynamicTree from './DynamicTree.js'
-import Vector from './Vector.js'
-import Vertices from './Vertices.js'
-import Collision from './Collision.js'
-import ContactSolver from './ContactSolver.js'
+import DynamicTree from "./DynamicTree.js"
+import Vector from "./Vector.js"
+import Vertices from "./Vertices.js"
+import Collision from "./Collision.js"
+import ContactSolver from "./ContactSolver.js"
 
 export default class World {
   #_bodies
@@ -27,20 +27,18 @@ export default class World {
     this.substeps = option.substeps ?? 2
     this.iterations = option.iterations ?? 4
   }
-  get totalBody() {
-    return this.#_bodies.length
+  get bodies() {
+    return this.#_bodies
   }
   forEachBody(callback) {
     for (let i = 0; i < this.#_bodies.length; ++i) {
-      const body = this.#_bodies[i]
-
-      if (callback(body, i)) {
-        break
-      }
+      callback(this.#_bodies[i], i)
     }
   }
   forEachContact(callback) {
-    for (const key of this.#_contactKeys) {
+    for (let i = 0; i < this.#_contactKeys.length; ++i) {
+      const key = this.#_contactKeys[i]
+
       callback(this.#_newContacts.get(key), key)
     }
   }
@@ -48,13 +46,13 @@ export default class World {
     this.#_dynamicTree.traverse(callback)
   }
   clear() {
-    this.forEachBody(body => {
-      this.#_dynamicTree.removeBody(body)
-    })
-    this.#_bodies.length = 0
+    for (let i = 0; i < this.#_bodies.length; ++i) {
+      this.destroyBody(this.#_bodies[i])
+      --i
+    }
   }
   createBody(body, margin = 10) {
-    if (this.#_bodies[body.index]) return
+    if (body.index >= 0) return
 
     this.#_dynamicTree.insertBody(body, margin)
     this.#_bodies.push(body)
@@ -62,20 +60,22 @@ export default class World {
   }
   destroyBody(body) {
     const index = body.index
-
-    if (!this.#_bodies[index]) return
-
     const last = this.#_bodies.length - 1
 
+    if (index < 0 || index > last) return
+
     this.#_dynamicTree.removeBody(body)
-    this.#_bodies[index] = this.#_bodies[last]
-    this.#_bodies[index].index = index
-    this.#_bodies[last].index = -1
+
+    if (index != last) {
+      this.#_bodies[index] = this.#_bodies[last]
+      this.#_bodies[index].index = index
+    }
+
     this.#_bodies.pop()
+    body.index = -1
   }
   simulate(dt) {
     dt /= this.substeps
-    const invH = 1 / dt
 
     for (let step = 0; step < this.substeps; ++step) {
       // Collision detection
@@ -126,7 +126,7 @@ export default class World {
                 continue
               }
 
-              const key = idA * 2 ** 40 + sA.id * 2 ** 32 + idB * 2 ** 8 + sB.id
+              const key = `${idA}-${sA.id},${idB}-${sB.id}`
               const newContact = {
                 bodyA,
                 bodyB,
@@ -179,7 +179,7 @@ export default class World {
 
       for (let i = 0; i < this.iterations; ++i) {
         this.forEachContact(contact => {
-          this.#_contactSolver.solve(contact, invH, true)
+          this.#_contactSolver.solve(contact, true)
         })
       }
 
@@ -196,7 +196,7 @@ export default class World {
       // Relax + store
       this.#_oldContacts.clear()
       this.forEachContact((contact, key) => {
-        this.#_contactSolver.solve(contact, invH, false)
+        this.#_contactSolver.solve(contact, false)
         this.#_oldContacts.set(key, contact)
       })
     }

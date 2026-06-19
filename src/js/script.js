@@ -1,10 +1,10 @@
-import s2 from './s2/s2.module.js'
-import Graphics from './Graphics.js'
-import dat from './lib/dat.gui.mjs'
+import s2 from "./s2/s2.module.js"
+import Graphics from "./Graphics.js"
+import dat from "./lib/dat.gui.mjs"
 
-document.addEventListener('DOMContentLoaded', _ => {
-  const canvas = document.getElementById('canvas')
-  const guiEl = document.getElementById('gui')
+document.addEventListener("DOMContentLoaded", _ => {
+  const canvas = document.getElementById("canvas")
+  const guiEl = document.getElementById("gui")
 
   const gfx = new Graphics(canvas, {}).setSize(800, 800)
   const gui = new dat.GUI({
@@ -34,19 +34,19 @@ document.addEventListener('DOMContentLoaded', _ => {
     joints: 0
   }
 
-  const statsFol = gui.addFolder('Stats')
+  const statsFol = gui.addFolder("Stats")
   for (const stat of Object.keys(stats)) {
     statsFol.add(stats, stat).listen().name(stat.toUpperCase())
   }
 
-  const debugsFol = gui.addFolder('Debugs')
+  const debugsFol = gui.addFolder("Debugs")
   for (const key of Object.keys(debugs)) {
     debugsFol.add(debugs, key).name(key.toUpperCase())
   }
 
-  const perimetersFol = gui.addFolder('Perimeters')
-  perimetersFol.add(world, 'substeps', 1, 10, 1).name('SUB STEPS')
-  perimetersFol.add(world, 'iterations', 1, 10, 1).name('Iterations')
+  const perimetersFol = gui.addFolder("Perimeters")
+  perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
+  perimetersFol.add(world, "iterations", 1, 10, 1).name("Iterations")
 
   statsFol.open()
   debugsFol.open()
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', _ => {
         setup()
       }
     },
-    'restart'
+    "restart"
   )
 
   guiEl.appendChild(gui.domElement)
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', _ => {
       friction = 0.3
     } = options
 
-    const halfSize = boxSize / 2
+    let halfSize = boxSize / 2
     const step = boxSize + spacing
     const startX = centerX - ((columns - 1) * step) / 2
 
@@ -191,24 +191,24 @@ document.addEventListener('DOMContentLoaded', _ => {
           height
         ]),
         {
-          fillColor: 'gray',
-          strokeColor: 'dimgray'
+          fillColor: "gray",
+          strokeColor: "dimgray"
         }
       )
     )
 
     world.createBody(ground)
     createPyramid(world, {
-      rows: 15,
+      rows: 0,
       boxSize: 40,
-      spacing: 4,
+      spacing: 3,
       bottomY: canvas.height - height,
       restitution: 0.0,
       friction: 0.3
     })
     createStack(world, {
-      columns: 0,
-      rows: 0,
+      columns: 10,
+      rows: 10,
       boxSize: 40,
       spacing: 4,
       centerX: canvas.width / 2,
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', _ => {
   }
 
   function render(gfx, dt) {
-    const debugColor = 'lightgray'
+    const debugColor = "lightgray"
 
     gfx.clear(0, 0, canvas.width, canvas.height)
     world.forEachBody(body => {
@@ -239,8 +239,8 @@ document.addEventListener('DOMContentLoaded', _ => {
           offsetX: s.offset.x,
           offsetY: s.offset.y,
           vertices: s.vertices,
-          fillColor: body.isSleeping ? 'gray' : s.fillColor,
-          strokeColor: body.isSleeping ? 'dimgray' : s.strokeColor,
+          fillColor: body.isSleeping ? "gray" : s.fillColor,
+          strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
           wireframe: debugs.wireframe,
           noStroke: !debugs.wireframe
         })
@@ -287,13 +287,13 @@ document.addEventListener('DOMContentLoaded', _ => {
           wireframe: true,
           strokeColor: debugColor
         })
+        gfx.drawLine(originX, originY, 1, 0, {
+          vertices: mtv,
+          strokeColor: debugColor
+        })
         gfx.drawCircle(originX, originY, 1, 0, {
           radius: 2,
           fillColor: debugColor,
-          strokeColor: debugColor
-        })
-        gfx.drawLine(originX, originY, 1, 0, {
-          vertices: mtv,
           strokeColor: debugColor
         })
       }
@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', _ => {
   function update() {
     let last = performance.now()
     let accu = 0
-    const interval = 1 / 60
+    const step = 1 / 60
 
     const loop = () => {
       const now = performance.now()
@@ -357,15 +357,15 @@ document.addEventListener('DOMContentLoaded', _ => {
       last = now
       accu += dt
 
-      if (accu >= interval) {
+      if (accu >= step) {
         accu = 0
-        simulate(interval)
-        render(gfx, dt)
-
-        stats.fps = 1 / dt
-        stats.bodies = world.totalBody
-        stats.joints = 0
+        simulate(step)
+        render(gfx, step)
       }
+
+      stats.fps = 1 / dt
+      stats.bodies = world.totalBody
+      stats.joints = 0
 
       requestAnimationFrame(loop)
     }

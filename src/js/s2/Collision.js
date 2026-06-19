@@ -1,6 +1,6 @@
-import Vector from './Vector.js'
-import Vertices from './Vertices.js'
-import Pool from './Pool.js'
+import Vector from "./Vector.js"
+import Vertices from "./Vertices.js"
+import Pool from "./Pool.js"
 
 export default class Collision {
   #_simplex
@@ -131,7 +131,7 @@ export default class Collision {
       const minProj = pointX * normal.x + pointY * normal.y
 
       contactPoints.push({
-        id: (ref.id << 16) | (inc.id << 8) | pointId,
+        id: `${ref.id}-${inc.id},${pointId}`,
         pointX,
         pointY,
         overlap: maxProj - minProj
