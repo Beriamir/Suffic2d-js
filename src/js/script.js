@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         rows: 15,
         boxWidth: 40,
         boxHeight: 40,
-        spacing: 3,
+        spacing: 0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 50,
         restitution: 0.0,
@@ -74,6 +74,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         restitution: 0.0,
         friction: 0.3
       })
+
+      world.setSolver(s2.ContactBlockSolver)
     },
     jenga() {
       world.clear()
@@ -128,15 +130,16 @@ document.addEventListener("DOMContentLoaded", _ => {
   const perimetersFol = gui.addFolder("Perimeters")
   perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
   perimetersFol.add(world, "iterations", 1, 10, 1).name("Iterations")
+  perimetersFol.add(world, "useBlockSolver", 1, 10, 1).name("Block Solver")
 
   statsFol.open()
   debugsFol.open()
   perimetersFol.open()
 
   gui.add(switchScenes, "pyramid")
-  gui.add(switchScenes, "boxStack")
+  gui.add(switchScenes, "boxStack").name("box stacks")
   gui.add(switchScenes, "jenga")
-  gui.add(switchScenes, "highMass")
+  gui.add(switchScenes, "highMass").name("high mass")
 
   guiEl.appendChild(gui.domElement)
 

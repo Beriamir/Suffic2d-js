@@ -142,15 +142,15 @@ export default class ContactSolver {
       const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
       const vn = relVelX * normal.x + relVelY * normal.y
 
-      let restitutionBias = 0
       let baumgarteBias = 0
-
-      if (cp.vn < -this.#_restitutionThreashold) {
-        restitutionBias = cp.restitutionBias
-      }
+      let restitutionBias = 0
 
       if (useBias) {
         baumgarteBias = cp.baumgarteBias
+      }
+
+      if (cp.vn < -this.#_restitutionThreashold) {
+        restitutionBias = cp.restitutionBias
       }
 
       const velBias = Math.max(baumgarteBias, restitutionBias)

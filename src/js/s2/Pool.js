@@ -23,7 +23,7 @@ export default class Pool {
     this.#_objects[end - 1].next = this.#_freeList
     this.#_freeList = start
   }
-  pointTo(index) {
+  at(index) {
     return this.#_objects[index]
   }
   allocate() {

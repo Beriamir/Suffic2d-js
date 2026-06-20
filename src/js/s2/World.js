@@ -3,6 +3,7 @@ import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
 import Collision from "./Collision.js"
 import ContactSolver from "./ContactSolver.js"
+import BlockSolver from "./BlockSolver.js"
 import RigidBody from "./RigidBody.js"
 
 export default class World {
@@ -11,6 +12,7 @@ export default class World {
   #_newContacts
   #_oldContacts
   #_contactSolver
+  #_blockSolver
   #_dynamicTree
   #_collision
   #_nearby
@@ -20,6 +22,7 @@ export default class World {
     this.#_newContacts = new Map()
     this.#_oldContacts = new Map()
     this.#_contactSolver = new ContactSolver()
+    this.#_blockSolver = new BlockSolver()
     this.#_dynamicTree = new DynamicTree()
     this.#_collision = new Collision()
     this.#_nearby = []
@@ -27,6 +30,7 @@ export default class World {
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
     this.iterations = option.iterations ?? 4
+    this.useBlockSolver = option.useBlockSolver ?? false
   }
   get bodies() {
     return this.#_bodies
@@ -124,7 +128,8 @@ export default class World {
 
               const manifold = this.#_collision.detect(
                 worldVerticesA,
-                worldVerticesB
+                worldVerticesB,
+                Vector.sub(bodyB.position, bodyA.position)
               )
 
               if (!manifold) {
@@ -158,7 +163,11 @@ export default class World {
       })
 
       this.forEachContact((newContact, key) => {
-        this.#_contactSolver.prepare(newContact, dt)
+        if (this.useBlockSolver) {
+          this.#_blockSolver.prepare(newContact, dt)
+        } else {
+          this.#_contactSolver.prepare(newContact, dt)
+        }
 
         if (!this.#_oldContacts.has(key)) {
           return
@@ -184,7 +193,11 @@ export default class World {
 
       for (let i = 0; i < this.iterations; ++i) {
         this.forEachContact(contact => {
-          this.#_contactSolver.solve(contact, true)
+          if (this.useBlockSolver) {
+            this.#_blockSolver.solve(contact, true)
+          } else {
+            this.#_contactSolver.solve(contact, true)
+          }
         })
       }
 
@@ -201,7 +214,11 @@ export default class World {
       // Relax + store
       this.#_oldContacts.clear()
       this.forEachContact((contact, key) => {
-        this.#_contactSolver.solve(contact, false)
+        if (this.useBlockSolver) {
+          this.#_blockSolver.solve(contact, false)
+        } else {
+          this.#_contactSolver.solve(contact, false)
+        }
         this.#_oldContacts.set(key, contact)
       })
     }

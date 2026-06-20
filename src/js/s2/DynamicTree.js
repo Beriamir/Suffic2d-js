@@ -1,5 +1,5 @@
-import AABB from './AABB.js'
-import Pool from './Pool.js'
+import AABB from "./AABB.js"
+import Pool from "./Pool.js"
 
 export default class DynamicTree {
   #_nodes
@@ -31,24 +31,24 @@ export default class DynamicTree {
     }
   }
   get height() {
-    return this.#_nodes.pointTo(this.#_root).height
+    return this.#_nodes.at(this.#_root).height
   }
   get nodesSize() {
     return this.#_nodes.size
   }
   findBestSibling(node) {
     let sibling = this.#_root
-    let siblingArea = this.#_nodes.pointTo(sibling).aabb.perimeter
+    let siblingArea = this.#_nodes.at(sibling).aabb.perimeter
 
     let inheritedCost = 0
     let directCost = this.#_nodes
-      .pointTo(sibling)
-      .aabb.unionPerimeter(this.#_nodes.pointTo(node).aabb)
+      .at(sibling)
+      .aabb.unionPerimeter(this.#_nodes.at(node).aabb)
 
     let bestSibling = sibling // We need to find the best sibling
     let bestCost = directCost
 
-    while (this.#_nodes.pointTo(sibling).height > 0) {
+    while (this.#_nodes.at(sibling).height > 0) {
       const cost = directCost + inheritedCost
 
       // Remember the current best sibling
@@ -59,17 +59,17 @@ export default class DynamicTree {
 
       inheritedCost += directCost - siblingArea
 
-      const child1 = this.#_nodes.pointTo(sibling).child1
-      const child2 = this.#_nodes.pointTo(sibling).child2
+      const child1 = this.#_nodes.at(sibling).child1
+      const child2 = this.#_nodes.at(sibling).child2
 
       // How promising is child1?
-      let leaf1 = this.#_nodes.pointTo(child1).height === 0
+      let leaf1 = this.#_nodes.at(child1).height === 0
       let area1 = 0
       let lowerCost1 = Infinity
 
       const directCost1 = this.#_nodes
-        .pointTo(child1)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(node).aabb)
+        .at(child1)
+        .aabb.unionPerimeter(this.#_nodes.at(node).aabb)
 
       if (leaf1) {
         const cost1 = directCost1 + inheritedCost
@@ -79,21 +79,21 @@ export default class DynamicTree {
           bestCost = cost1
         }
       } else {
-        area1 = this.#_nodes.pointTo(child1).aabb.perimeter
+        area1 = this.#_nodes.at(child1).aabb.perimeter
         lowerCost1 =
           inheritedCost +
           directCost1 +
-          Math.min(this.#_nodes.pointTo(node).aabb.perimeter - area1, 0)
+          Math.min(this.#_nodes.at(node).aabb.perimeter - area1, 0)
       }
 
       // Is child2 better?
-      let leaf2 = this.#_nodes.pointTo(child2).height === 0
+      let leaf2 = this.#_nodes.at(child2).height === 0
       let area2 = 0
       let lowerCost2 = Infinity
 
       const directCost2 = this.#_nodes
-        .pointTo(node)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(child2).aabb)
+        .at(node)
+        .aabb.unionPerimeter(this.#_nodes.at(child2).aabb)
 
       if (leaf2) {
         const cost2 = directCost2 + inheritedCost
@@ -103,11 +103,11 @@ export default class DynamicTree {
           bestCost = cost2
         }
       } else {
-        area2 = this.#_nodes.pointTo(child2).aabb.perimeter
+        area2 = this.#_nodes.at(child2).aabb.perimeter
         lowerCost2 =
           inheritedCost +
           directCost2 +
-          Math.min(this.#_nodes.pointTo(node).aabb.perimeter - area2, 0)
+          Math.min(this.#_nodes.at(node).aabb.perimeter - area2, 0)
       }
 
       if (leaf1 && leaf2) {
@@ -120,12 +120,12 @@ export default class DynamicTree {
 
       // Tie breaker
       if (lowerCost1 === lowerCost2) {
-        const meanX = this.#_nodes.pointTo(node).aabb.meanX
-        const meanY = this.#_nodes.pointTo(node).aabb.meanY
-        const mean1X = this.#_nodes.pointTo(child1).aabb.meanX
-        const mean1Y = this.#_nodes.pointTo(child1).aabb.meanY
-        const mean2X = this.#_nodes.pointTo(child2).aabb.meanX
-        const mean2Y = this.#_nodes.pointTo(child2).aabb.meanY
+        const meanX = this.#_nodes.at(node).aabb.meanX
+        const meanY = this.#_nodes.at(node).aabb.meanY
+        const mean1X = this.#_nodes.at(child1).aabb.meanX
+        const mean1Y = this.#_nodes.at(child1).aabb.meanY
+        const mean2X = this.#_nodes.at(child2).aabb.meanX
+        const mean2Y = this.#_nodes.at(child2).aabb.meanY
 
         const dx1 = mean1X - meanX
         const dy1 = mean1Y - meanY
@@ -151,28 +151,25 @@ export default class DynamicTree {
     return bestSibling
   }
   rotate(node) {
-    if (this.#_nodes.pointTo(node).height < 2) {
+    if (this.#_nodes.at(node).height < 2) {
       return
     }
 
-    const B = this.#_nodes.pointTo(node).child1
-    const C = this.#_nodes.pointTo(node).child2
+    const B = this.#_nodes.at(node).child1
+    const C = this.#_nodes.at(node).child2
 
-    if (
-      this.#_nodes.pointTo(B).height === 0 &&
-      this.#_nodes.pointTo(C).height > 0
-    ) {
+    if (this.#_nodes.at(B).height === 0 && this.#_nodes.at(C).height > 0) {
       // B is leaf and C is internal node
-      const F = this.#_nodes.pointTo(C).child1
-      const G = this.#_nodes.pointTo(C).child2
+      const F = this.#_nodes.at(C).child1
+      const G = this.#_nodes.at(C).child2
 
-      const costBase = this.#_nodes.pointTo(C).aabb.perimeter
+      const costBase = this.#_nodes.at(C).aabb.perimeter
       const costBF = this.#_nodes
-        .pointTo(B)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(G).aabb)
+        .at(B)
+        .aabb.unionPerimeter(this.#_nodes.at(G).aabb)
       const costBG = this.#_nodes
-        .pointTo(F)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(B).aabb)
+        .at(F)
+        .aabb.unionPerimeter(this.#_nodes.at(B).aabb)
 
       if (costBase <= costBF && costBase <= costBG) {
         return
@@ -180,86 +177,58 @@ export default class DynamicTree {
 
       if (costBF < costBG) {
         // Swap B and F
-        this.#_nodes.pointTo(node).child1 = F
-        this.#_nodes.pointTo(C).child1 = B
+        this.#_nodes.at(node).child1 = F
+        this.#_nodes.at(C).child1 = B
 
-        this.#_nodes.pointTo(B).parent = C
-        this.#_nodes.pointTo(F).parent = node
+        this.#_nodes.at(B).parent = C
+        this.#_nodes.at(F).parent = node
 
         this.#_nodes
-          .pointTo(B)
-          .aabb.union(
-            this.#_nodes.pointTo(G).aabb,
-            this.#_nodes.pointTo(C).aabb
-          )
+          .at(B)
+          .aabb.union(this.#_nodes.at(G).aabb, this.#_nodes.at(C).aabb)
         this.#_nodes
-          .pointTo(F)
-          .aabb.union(
-            this.#_nodes.pointTo(C).aabb,
-            this.#_nodes.pointTo(node).aabb
-          )
+          .at(F)
+          .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(node).aabb)
 
-        this.#_nodes.pointTo(C).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(B).height,
-            this.#_nodes.pointTo(G).height
-          )
-        this.#_nodes.pointTo(node).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(F).height,
-            this.#_nodes.pointTo(C).height
-          )
+        this.#_nodes.at(C).height =
+          1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(G).height)
+        this.#_nodes.at(node).height =
+          1 + Math.max(this.#_nodes.at(F).height, this.#_nodes.at(C).height)
       } else {
         // Swap B and G
-        this.#_nodes.pointTo(node).child1 = G
-        this.#_nodes.pointTo(C).child2 = B
+        this.#_nodes.at(node).child1 = G
+        this.#_nodes.at(C).child2 = B
 
-        this.#_nodes.pointTo(B).parent = C
-        this.#_nodes.pointTo(G).parent = node
+        this.#_nodes.at(B).parent = C
+        this.#_nodes.at(G).parent = node
 
         this.#_nodes
-          .pointTo(F)
-          .aabb.union(
-            this.#_nodes.pointTo(B).aabb,
-            this.#_nodes.pointTo(C).aabb
-          )
+          .at(F)
+          .aabb.union(this.#_nodes.at(B).aabb, this.#_nodes.at(C).aabb)
         this.#_nodes
-          .pointTo(G)
-          .aabb.union(
-            this.#_nodes.pointTo(C).aabb,
-            this.#_nodes.pointTo(node).aabb
-          )
+          .at(G)
+          .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(node).aabb)
 
-        this.#_nodes.pointTo(C).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(F).height,
-            this.#_nodes.pointTo(B).height
-          )
-        this.#_nodes.pointTo(node).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(G).height,
-            this.#_nodes.pointTo(C).height
-          )
+        this.#_nodes.at(C).height =
+          1 + Math.max(this.#_nodes.at(F).height, this.#_nodes.at(B).height)
+        this.#_nodes.at(node).height =
+          1 + Math.max(this.#_nodes.at(G).height, this.#_nodes.at(C).height)
       }
     } else if (
-      this.#_nodes.pointTo(C).height === 0 &&
-      this.#_nodes.pointTo(B).height > 0
+      this.#_nodes.at(C).height === 0 &&
+      this.#_nodes.at(B).height > 0
     ) {
       // C is leaf and B is internal node
-      const D = this.#_nodes.pointTo(B).child1
-      const E = this.#_nodes.pointTo(B).child2
+      const D = this.#_nodes.at(B).child1
+      const E = this.#_nodes.at(B).child2
 
-      const costBase = this.#_nodes.pointTo(B).aabb.perimeter
+      const costBase = this.#_nodes.at(B).aabb.perimeter
       const costCE = this.#_nodes
-        .pointTo(D)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(C).aabb)
+        .at(D)
+        .aabb.unionPerimeter(this.#_nodes.at(C).aabb)
       const costCD = this.#_nodes
-        .pointTo(C)
-        .aabb.unionPerimeter(this.#_nodes.pointTo(E).aabb)
+        .at(C)
+        .aabb.unionPerimeter(this.#_nodes.at(E).aabb)
 
       if (costBase <= costCE && costBase <= costCD) {
         return
@@ -267,80 +236,52 @@ export default class DynamicTree {
 
       if (costCE < costCD) {
         // Swap C and E
-        this.#_nodes.pointTo(node).child2 = E
-        this.#_nodes.pointTo(B).child2 = C
+        this.#_nodes.at(node).child2 = E
+        this.#_nodes.at(B).child2 = C
 
-        this.#_nodes.pointTo(E).parent = node
-        this.#_nodes.pointTo(C).parent = B
+        this.#_nodes.at(E).parent = node
+        this.#_nodes.at(C).parent = B
 
         this.#_nodes
-          .pointTo(D)
-          .aabb.union(
-            this.#_nodes.pointTo(C).aabb,
-            this.#_nodes.pointTo(B).aabb
-          )
+          .at(D)
+          .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(B).aabb)
         this.#_nodes
-          .pointTo(B)
-          .aabb.union(
-            this.#_nodes.pointTo(E).aabb,
-            this.#_nodes.pointTo(node).aabb
-          )
+          .at(B)
+          .aabb.union(this.#_nodes.at(E).aabb, this.#_nodes.at(node).aabb)
 
-        this.#_nodes.pointTo(B).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(D).height,
-            this.#_nodes.pointTo(C).height
-          )
-        this.#_nodes.pointTo(node).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(B).height,
-            this.#_nodes.pointTo(E).height
-          )
+        this.#_nodes.at(B).height =
+          1 + Math.max(this.#_nodes.at(D).height, this.#_nodes.at(C).height)
+        this.#_nodes.at(node).height =
+          1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(E).height)
       } else {
         // Swap C and D
-        this.#_nodes.pointTo(node).child2 = D
-        this.#_nodes.pointTo(B).child1 = C
+        this.#_nodes.at(node).child2 = D
+        this.#_nodes.at(B).child1 = C
 
-        this.#_nodes.pointTo(D).parent = node
-        this.#_nodes.pointTo(C).parent = B
+        this.#_nodes.at(D).parent = node
+        this.#_nodes.at(C).parent = B
 
         this.#_nodes
-          .pointTo(C)
-          .aabb.union(
-            this.#_nodes.pointTo(E).aabb,
-            this.#_nodes.pointTo(B).aabb
-          )
+          .at(C)
+          .aabb.union(this.#_nodes.at(E).aabb, this.#_nodes.at(B).aabb)
         this.#_nodes
-          .pointTo(B)
-          .aabb.union(
-            this.#_nodes.pointTo(D).aabb,
-            this.#_nodes.pointTo(node).aabb
-          )
+          .at(B)
+          .aabb.union(this.#_nodes.at(D).aabb, this.#_nodes.at(node).aabb)
 
-        this.#_nodes.pointTo(B).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(C).height,
-            this.#_nodes.pointTo(E).height
-          )
-        this.#_nodes.pointTo(node).height =
-          1 +
-          Math.max(
-            this.#_nodes.pointTo(B).height,
-            this.#_nodes.pointTo(D).height
-          )
+        this.#_nodes.at(B).height =
+          1 + Math.max(this.#_nodes.at(C).height, this.#_nodes.at(E).height)
+        this.#_nodes.at(node).height =
+          1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(D).height)
       }
     } else {
       // Full swap
-      const D = this.#_nodes.pointTo(B).child1
-      const E = this.#_nodes.pointTo(B).child2
-      const F = this.#_nodes.pointTo(C).child1
-      const G = this.#_nodes.pointTo(C).child2
+      const D = this.#_nodes.at(B).child1
+      const E = this.#_nodes.at(B).child2
+      const F = this.#_nodes.at(C).child1
+      const G = this.#_nodes.at(C).child2
 
-      const areaB = this.#_nodes.pointTo(B).aabb.perimeter
-      const areaC = this.#_nodes.pointTo(C).aabb.perimeter
+      const areaB = this.#_nodes.at(B).aabb.perimeter
+      const areaC = this.#_nodes.at(C).aabb.perimeter
       const costBase = areaB + areaC
 
       let bestRotation = this.#_rotationType.NONE
@@ -348,10 +289,7 @@ export default class DynamicTree {
 
       // Cost of swapping B and F
       const costBF =
-        areaB +
-        this.#_nodes
-          .pointTo(B)
-          .aabb.unionPerimeter(this.#_nodes.pointTo(G).aabb)
+        areaB + this.#_nodes.at(B).aabb.unionPerimeter(this.#_nodes.at(G).aabb)
       if (costBF < baseCost) {
         bestRotation = this.#_rotationType.BF
         baseCost = costBF
@@ -359,10 +297,7 @@ export default class DynamicTree {
 
       // Cost of swapping B and G
       const costBG =
-        areaB +
-        this.#_nodes
-          .pointTo(F)
-          .aabb.unionPerimeter(this.#_nodes.pointTo(B).aabb)
+        areaB + this.#_nodes.at(F).aabb.unionPerimeter(this.#_nodes.at(B).aabb)
       if (costBG < baseCost) {
         bestRotation = this.#_rotationType.BG
         baseCost = costBG
@@ -370,10 +305,7 @@ export default class DynamicTree {
 
       // Cost of swapping C and E
       const costCE =
-        areaC +
-        this.#_nodes
-          .pointTo(D)
-          .aabb.unionPerimeter(this.#_nodes.pointTo(C).aabb)
+        areaC + this.#_nodes.at(D).aabb.unionPerimeter(this.#_nodes.at(C).aabb)
       if (costCE < baseCost) {
         bestRotation = this.#_rotationType.CE
         baseCost = costCE
@@ -381,10 +313,7 @@ export default class DynamicTree {
 
       // Cost of swapping C and D
       const costCD =
-        areaC +
-        this.#_nodes
-          .pointTo(C)
-          .aabb.unionPerimeter(this.#_nodes.pointTo(E).aabb)
+        areaC + this.#_nodes.at(C).aabb.unionPerimeter(this.#_nodes.at(E).aabb)
       if (costCD < baseCost) {
         bestRotation = this.#_rotationType.CD
         baseCost = costCD
@@ -396,142 +325,86 @@ export default class DynamicTree {
         }
 
         case this.#_rotationType.BF: {
-          this.#_nodes.pointTo(node).child1 = F
-          this.#_nodes.pointTo(C).child1 = B
+          this.#_nodes.at(node).child1 = F
+          this.#_nodes.at(C).child1 = B
 
-          this.#_nodes.pointTo(F).parent = node
-          this.#_nodes.pointTo(B).parent = C
+          this.#_nodes.at(F).parent = node
+          this.#_nodes.at(B).parent = C
 
           this.#_nodes
-            .pointTo(B)
-            .aabb.union(
-              this.#_nodes.pointTo(G).aabb,
-              this.#_nodes.pointTo(C).aabb
-            )
+            .at(B)
+            .aabb.union(this.#_nodes.at(G).aabb, this.#_nodes.at(C).aabb)
           this.#_nodes
-            .pointTo(F)
-            .aabb.union(
-              this.#_nodes.pointTo(C).aabb,
-              this.#_nodes.pointTo(node).aabb
-            )
+            .at(F)
+            .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(node).aabb)
 
-          this.#_nodes.pointTo(C).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(B).height,
-              this.#_nodes.pointTo(G).height
-            )
-          this.#_nodes.pointTo(node).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(F).height,
-              this.#_nodes.pointTo(C).height
-            )
+          this.#_nodes.at(C).height =
+            1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(G).height)
+          this.#_nodes.at(node).height =
+            1 + Math.max(this.#_nodes.at(F).height, this.#_nodes.at(C).height)
           break
         }
 
         case this.#_rotationType.BG: {
-          this.#_nodes.pointTo(node).child1 = G
-          this.#_nodes.pointTo(C).child2 = B
+          this.#_nodes.at(node).child1 = G
+          this.#_nodes.at(C).child2 = B
 
-          this.#_nodes.pointTo(G).parent = node
-          this.#_nodes.pointTo(B).parent = C
+          this.#_nodes.at(G).parent = node
+          this.#_nodes.at(B).parent = C
 
           this.#_nodes
-            .pointTo(F)
-            .aabb.union(
-              this.#_nodes.pointTo(B).aabb,
-              this.#_nodes.pointTo(C).aabb
-            )
+            .at(F)
+            .aabb.union(this.#_nodes.at(B).aabb, this.#_nodes.at(C).aabb)
           this.#_nodes
-            .pointTo(G)
-            .aabb.union(
-              this.#_nodes.pointTo(C).aabb,
-              this.#_nodes.pointTo(node).aabb
-            )
+            .at(G)
+            .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(node).aabb)
 
-          this.#_nodes.pointTo(C).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(F).height,
-              this.#_nodes.pointTo(B).height
-            )
-          this.#_nodes.pointTo(node).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(G).height,
-              this.#_nodes.pointTo(C).height
-            )
+          this.#_nodes.at(C).height =
+            1 + Math.max(this.#_nodes.at(F).height, this.#_nodes.at(B).height)
+          this.#_nodes.at(node).height =
+            1 + Math.max(this.#_nodes.at(G).height, this.#_nodes.at(C).height)
           break
         }
 
         case this.#_rotationType.CE: {
-          this.#_nodes.pointTo(node).child2 = E
-          this.#_nodes.pointTo(B).child2 = C
+          this.#_nodes.at(node).child2 = E
+          this.#_nodes.at(B).child2 = C
 
-          this.#_nodes.pointTo(E).parent = node
-          this.#_nodes.pointTo(C).parent = B
+          this.#_nodes.at(E).parent = node
+          this.#_nodes.at(C).parent = B
 
           this.#_nodes
-            .pointTo(D)
-            .aabb.union(
-              this.#_nodes.pointTo(C).aabb,
-              this.#_nodes.pointTo(B).aabb
-            )
+            .at(D)
+            .aabb.union(this.#_nodes.at(C).aabb, this.#_nodes.at(B).aabb)
           this.#_nodes
-            .pointTo(B)
-            .aabb.union(
-              this.#_nodes.pointTo(E).aabb,
-              this.#_nodes.pointTo(node).aabb
-            )
+            .at(B)
+            .aabb.union(this.#_nodes.at(E).aabb, this.#_nodes.at(node).aabb)
 
-          this.#_nodes.pointTo(B).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(D).height,
-              this.#_nodes.pointTo(C).height
-            )
-          this.#_nodes.pointTo(node).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(B).height,
-              this.#_nodes.pointTo(E).height
-            )
+          this.#_nodes.at(B).height =
+            1 + Math.max(this.#_nodes.at(D).height, this.#_nodes.at(C).height)
+          this.#_nodes.at(node).height =
+            1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(E).height)
           break
         }
 
         case this.#_rotationType.CD: {
-          this.#_nodes.pointTo(node).child2 = D
-          this.#_nodes.pointTo(B).child1 = C
+          this.#_nodes.at(node).child2 = D
+          this.#_nodes.at(B).child1 = C
 
-          this.#_nodes.pointTo(D).parent = node
-          this.#_nodes.pointTo(C).parent = B
+          this.#_nodes.at(D).parent = node
+          this.#_nodes.at(C).parent = B
 
           this.#_nodes
-            .pointTo(C)
-            .aabb.union(
-              this.#_nodes.pointTo(E).aabb,
-              this.#_nodes.pointTo(B).aabb
-            )
+            .at(C)
+            .aabb.union(this.#_nodes.at(E).aabb, this.#_nodes.at(B).aabb)
           this.#_nodes
-            .pointTo(B)
-            .aabb.union(
-              this.#_nodes.pointTo(D).aabb,
-              this.#_nodes.pointTo(node).aabb
-            )
+            .at(B)
+            .aabb.union(this.#_nodes.at(D).aabb, this.#_nodes.at(node).aabb)
 
-          this.#_nodes.pointTo(B).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(C).height,
-              this.#_nodes.pointTo(E).height
-            )
-          this.#_nodes.pointTo(node).height =
-            1 +
-            Math.max(
-              this.#_nodes.pointTo(B).height,
-              this.#_nodes.pointTo(D).height
-            )
+          this.#_nodes.at(B).height =
+            1 + Math.max(this.#_nodes.at(C).height, this.#_nodes.at(E).height)
+          this.#_nodes.at(node).height =
+            1 + Math.max(this.#_nodes.at(B).height, this.#_nodes.at(D).height)
           break
         }
 
@@ -545,12 +418,12 @@ export default class DynamicTree {
     const node = this.#_nodes.allocate()
 
     if (!margin) {
-      margin = this.#_nodes.pointTo(node).margin
+      margin = this.#_nodes.at(node).margin
     }
 
-    this.#_nodes.pointTo(node).aabb.copy(data.aabb)
-    this.#_nodes.pointTo(node).aabb.enlarge(margin)
-    this.#_nodes.pointTo(node).data = data
+    this.#_nodes.at(node).aabb.copy(data.aabb)
+    this.#_nodes.at(node).aabb.enlarge(margin)
+    this.#_nodes.at(node).data = data
 
     data.node = node
 
@@ -560,22 +433,22 @@ export default class DynamicTree {
     }
 
     const sibling = this.findBestSibling(node)
-    const oldParent = this.#_nodes.pointTo(sibling).parent
+    const oldParent = this.#_nodes.at(sibling).parent
     const newParent = this.#_nodes.allocate()
-    this.#_nodes.pointTo(newParent).parent = oldParent
-    this.#_nodes.pointTo(newParent).child1 = sibling
-    this.#_nodes.pointTo(newParent).child2 = node
+    this.#_nodes.at(newParent).parent = oldParent
+    this.#_nodes.at(newParent).child1 = sibling
+    this.#_nodes.at(newParent).child2 = node
 
-    this.#_nodes.pointTo(sibling).parent = newParent
-    this.#_nodes.pointTo(node).parent = newParent
+    this.#_nodes.at(sibling).parent = newParent
+    this.#_nodes.at(node).parent = newParent
 
     if (oldParent === null) {
       this.#_root = newParent
     } else {
-      if (this.#_nodes.pointTo(oldParent).child1 === sibling) {
-        this.#_nodes.pointTo(oldParent).child1 = newParent
+      if (this.#_nodes.at(oldParent).child1 === sibling) {
+        this.#_nodes.at(oldParent).child1 = newParent
       } else {
-        this.#_nodes.pointTo(oldParent).child2 = newParent
+        this.#_nodes.at(oldParent).child2 = newParent
       }
     }
 
@@ -583,27 +456,20 @@ export default class DynamicTree {
     let ancestor = newParent
 
     while (ancestor !== null) {
-      const c1 = this.#_nodes.pointTo(ancestor).child1
-      const c2 = this.#_nodes.pointTo(ancestor).child2
+      const c1 = this.#_nodes.at(ancestor).child1
+      const c2 = this.#_nodes.at(ancestor).child2
 
       this.#_nodes
-        .pointTo(c1)
-        .aabb.union(
-          this.#_nodes.pointTo(c2).aabb,
-          this.#_nodes.pointTo(ancestor).aabb
-        )
-      this.#_nodes.pointTo(ancestor).height =
-        1 +
-        Math.max(
-          this.#_nodes.pointTo(c1).height,
-          this.#_nodes.pointTo(c2).height
-        )
+        .at(c1)
+        .aabb.union(this.#_nodes.at(c2).aabb, this.#_nodes.at(ancestor).aabb)
+      this.#_nodes.at(ancestor).height =
+        1 + Math.max(this.#_nodes.at(c1).height, this.#_nodes.at(c2).height)
 
       if (this.#_rotation) {
         this.rotate(ancestor)
       }
 
-      ancestor = this.#_nodes.pointTo(ancestor).parent
+      ancestor = this.#_nodes.at(ancestor).parent
     }
   }
   removeBody(data) {
@@ -615,21 +481,21 @@ export default class DynamicTree {
       return
     }
 
-    const parent = this.#_nodes.pointTo(node).parent
-    const grandParent = this.#_nodes.pointTo(parent).parent
+    const parent = this.#_nodes.at(node).parent
+    const grandParent = this.#_nodes.at(parent).parent
     const sibling =
-      this.#_nodes.pointTo(parent).child1 === node
-        ? this.#_nodes.pointTo(parent).child2
-        : this.#_nodes.pointTo(parent).child1
+      this.#_nodes.at(parent).child1 === node
+        ? this.#_nodes.at(parent).child2
+        : this.#_nodes.at(parent).child1
 
     if (grandParent !== null) {
-      if (this.#_nodes.pointTo(grandParent).child1 === parent) {
-        this.#_nodes.pointTo(grandParent).child1 = sibling
+      if (this.#_nodes.at(grandParent).child1 === parent) {
+        this.#_nodes.at(grandParent).child1 = sibling
       } else {
-        this.#_nodes.pointTo(grandParent).child2 = sibling
+        this.#_nodes.at(grandParent).child2 = sibling
       }
 
-      this.#_nodes.pointTo(sibling).parent = grandParent
+      this.#_nodes.at(sibling).parent = grandParent
 
       this.#_nodes.deallocate(parent)
       this.#_nodes.deallocate(node)
@@ -638,31 +504,31 @@ export default class DynamicTree {
       let ancestor = grandParent
 
       while (ancestor !== null) {
-        const child1 = this.#_nodes.pointTo(ancestor).child1
-        const child2 = this.#_nodes.pointTo(ancestor).child2
+        const child1 = this.#_nodes.at(ancestor).child1
+        const child2 = this.#_nodes.at(ancestor).child2
 
-        this.#_nodes.pointTo(ancestor).aabb = this.#_nodes
-          .pointTo(child1)
+        this.#_nodes.at(ancestor).aabb = this.#_nodes
+          .at(child1)
           .aabb.union(
-            this.#_nodes.pointTo(child2).aabb,
-            this.#_nodes.pointTo(ancestor).aabb
+            this.#_nodes.at(child2).aabb,
+            this.#_nodes.at(ancestor).aabb
           )
-        this.#_nodes.pointTo(ancestor).height =
+        this.#_nodes.at(ancestor).height =
           1 +
           Math.max(
-            this.#_nodes.pointTo(child1).height,
-            this.#_nodes.pointTo(child2).height
+            this.#_nodes.at(child1).height,
+            this.#_nodes.at(child2).height
           )
 
         if (this.#_rotation) this.rotate(ancestor)
 
-        ancestor = this.#_nodes.pointTo(ancestor).parent
+        ancestor = this.#_nodes.at(ancestor).parent
       }
     } else {
-      const oldParent = this.#_nodes.pointTo(sibling).parent
+      const oldParent = this.#_nodes.at(sibling).parent
 
       this.#_root = sibling
-      this.#_nodes.pointTo(this.#_root).parent = null
+      this.#_nodes.at(this.#_root).parent = null
 
       this.#_nodes.deallocate(oldParent)
       this.#_nodes.deallocate(node)
@@ -671,7 +537,7 @@ export default class DynamicTree {
   updateBody(data, margin) {
     const node = data.node
 
-    if (!this.#_nodes.pointTo(node).aabb.contains(data.aabb)) {
+    if (!this.#_nodes.at(node).aabb.contains(data.aabb)) {
       this.removeBody(data)
       this.insertBody(data, margin)
     }
@@ -685,14 +551,14 @@ export default class DynamicTree {
 
       if (node === null) continue
 
-      if (this.#_nodes.pointTo(node).aabb.overlaps(aabb)) {
-        if (this.#_nodes.pointTo(node).height === 0) {
-          result.push(this.#_nodes.pointTo(node).data)
+      if (this.#_nodes.at(node).aabb.overlaps(aabb)) {
+        if (this.#_nodes.at(node).height === 0) {
+          result.push(this.#_nodes.at(node).data)
           continue
         }
 
-        this.#_stack.push(this.#_nodes.pointTo(node).child1)
-        this.#_stack.push(this.#_nodes.pointTo(node).child2)
+        this.#_stack.push(this.#_nodes.at(node).child1)
+        this.#_stack.push(this.#_nodes.at(node).child2)
       }
     }
 
@@ -707,9 +573,9 @@ export default class DynamicTree {
 
       if (node === null) continue
 
-      if (!callback(this.#_nodes.pointTo(node))) {
-        this.#_stack.push(this.#_nodes.pointTo(node).child1)
-        this.#_stack.push(this.#_nodes.pointTo(node).child2)
+      if (!callback(this.#_nodes.at(node))) {
+        this.#_stack.push(this.#_nodes.at(node).child1)
+        this.#_stack.push(this.#_nodes.at(node).child2)
       }
     }
   }
