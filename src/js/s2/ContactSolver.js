@@ -1,13 +1,9 @@
 export default class ContactSolver {
-  #_zeta
-  #_hertz
-  #_slop
-  #_restitutionThreashold
   constructor(option = {}) {
-    this.#_zeta = option.zeta ?? 15
-    this.#_hertz = option.hertz ?? 30
-    this.#_slop = option.slop ?? 0.2
-    this.#_restitutionThreashold = option.restitutionThreashold ?? 1
+    this.zeta = option.zeta ?? 20
+    this.hertz = option.hertz ?? 30
+    this.slop = option.slop ?? 0.2
+    this.restitutionThreashold = option.restitutionThreashold ?? 1
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -31,8 +27,8 @@ export default class ContactSolver {
       bodyB.restitution
     ))
 
-    const omega = 2 * Math.PI * this.#_hertz
-    const alpha = 2 * this.#_zeta + omega * dt
+    const omega = 2 * Math.PI * this.hertz
+    const alpha = 2 * this.zeta + omega * dt
     const biasCoeff = omega / alpha
 
     manifold.friction = Math.min(bodyA.friction, bodyB.friction)
@@ -75,7 +71,7 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      cp.baumgarteBias = Math.max(cp.overlap - this.#_slop, 0) * biasCoeff
+      cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
       cp.restitutionBias = -restitution * cp.vn
     }
   }
@@ -149,7 +145,7 @@ export default class ContactSolver {
         baumgarteBias = cp.baumgarteBias
       }
 
-      if (cp.vn < -this.#_restitutionThreashold) {
+      if (cp.vn < -this.restitutionThreashold) {
         restitutionBias = cp.restitutionBias
       }
 

@@ -7,25 +7,25 @@ import BlockSolver from "./BlockSolver.js"
 import RigidBody from "./RigidBody.js"
 
 export default class World {
-  #_bodies
-  #_contactKeys
-  #_newContacts
-  #_oldContacts
-  #_contactSolver
-  #_blockSolver
-  #_dynamicTree
-  #_collision
-  #_nearby
+  #bodies
+  #contactKeys
+  #newContacts
+  #oldContacts
+  #contactSolver
+  #blockSolver
+  #dynamicTree
+  #collision
+  #nearby
   constructor(option = {}) {
-    this.#_bodies = []
-    this.#_contactKeys = []
-    this.#_newContacts = new Map()
-    this.#_oldContacts = new Map()
-    this.#_contactSolver = new ContactSolver()
-    this.#_blockSolver = new BlockSolver()
-    this.#_dynamicTree = new DynamicTree()
-    this.#_collision = new Collision()
-    this.#_nearby = []
+    this.#bodies = []
+    this.#contactKeys = []
+    this.#newContacts = new Map()
+    this.#oldContacts = new Map()
+    this.#contactSolver = new ContactSolver()
+    this.#blockSolver = new BlockSolver()
+    this.#dynamicTree = new DynamicTree()
+    this.#collision = new Collision()
+    this.#nearby = []
 
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
@@ -33,52 +33,55 @@ export default class World {
     this.useBlockSolver = option.useBlockSolver ?? false
   }
   get bodies() {
-    return this.#_bodies
+    return this.#bodies
+  }
+  get contacts() {
+    return this.#newContacts
+  }
+  clear() {
+    for (let i = 0; i < this.#bodies.length; ++i) {
+      this.destroyRigidBody(this.#bodies[i])
+      --i
+    }
   }
   forEachBody(callback) {
-    for (let i = 0; i < this.#_bodies.length; ++i) {
-      callback(this.#_bodies[i], i)
+    for (let i = 0; i < this.#bodies.length; ++i) {
+      callback(this.#bodies[i], i)
     }
   }
   forEachContact(callback) {
-    for (let i = 0; i < this.#_contactKeys.length; ++i) {
-      const key = this.#_contactKeys[i]
+    for (let i = 0; i < this.#contactKeys.length; ++i) {
+      const key = this.#contactKeys[i]
 
-      callback(this.#_newContacts.get(key), key)
+      callback(this.#newContacts.get(key), key)
     }
   }
-  traverseTree(callback) {
-    this.#_dynamicTree.traverse(callback)
-  }
-  clear() {
-    for (let i = 0; i < this.#_bodies.length; ++i) {
-      this.destroyRigidBody(this.#_bodies[i])
-      --i
-    }
+  forEachNode(callback) {
+    this.#dynamicTree.traverse(callback)
   }
   createRigidBody(x, y, rot, option = {}) {
     const body = new RigidBody(x, y, rot, option)
 
-    this.#_dynamicTree.insertBody(body, 10)
-    this.#_bodies.push(body)
-    body.index = this.#_bodies.length - 1
+    this.#dynamicTree.insertBody(body, 10)
+    this.#bodies.push(body)
+    body.index = this.#bodies.length - 1
 
     return body
   }
   destroyRigidBody(body) {
     const index = body.index
-    const last = this.#_bodies.length - 1
+    const last = this.#bodies.length - 1
 
     if (index < 0 || index > last) return
 
-    this.#_dynamicTree.removeBody(body)
+    this.#dynamicTree.removeBody(body)
 
     if (index != last) {
-      this.#_bodies[index] = this.#_bodies[last]
-      this.#_bodies[index].index = index
+      this.#bodies[index] = this.#bodies[last]
+      this.#bodies[index].index = index
     }
 
-    this.#_bodies.pop()
+    this.#bodies.pop()
     body.index = -1
 
     return body.index
@@ -88,14 +91,18 @@ export default class World {
 
     for (let step = 0; step < this.substeps; ++step) {
       // Collision detection
-      this.#_contactKeys.length = 0
-      this.#_newContacts.clear()
-      this.forEachBody(bodyA => {
-        this.#_nearby.length = 0
-        this.#_dynamicTree.queryAABB(bodyA.aabb, this.#_nearby)
+      this.#contactKeys.length = 0
+      this.#newContacts.clear()
 
-        for (const bodyB of this.#_nearby) {
-          const idA = bodyA.id
+      for (let i = 0; i < this.#bodies.length; ++i) {
+        const bodyA = this.#bodies[i]
+        const idA = bodyA.id
+
+        this.#nearby.length = 0
+        this.#dynamicTree.queryAABB(bodyA.aabb, this.#nearby)
+
+        for (let j = 0; j < this.#nearby.length; ++j) {
+          const bodyB = this.#nearby[j]
           const idB = bodyB.id
 
           if (idA >= idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
@@ -103,32 +110,31 @@ export default class World {
           }
 
           for (const sA of bodyA.fixtures) {
-            const worldVerticesA = sA.getWorldVertices(
+            sA.updateWorldVertices(
               bodyA.position.x,
               bodyA.position.y,
               bodyA.cos,
               bodyA.sin
             )
-
-            Vertices.getAABB(worldVerticesA, sA.aabb)
+            sA.updateAABB()
 
             for (const sB of bodyB.fixtures) {
-              const worldVerticesB = sB.getWorldVertices(
+              sB.updateWorldVertices(
                 bodyB.position.x,
                 bodyB.position.y,
                 bodyB.cos,
                 bodyB.sin
               )
-
-              Vertices.getAABB(worldVerticesB, sB.aabb)
+              sB.updateAABB()
 
               if (!sA.aabb.overlaps(sB.aabb)) {
                 continue
               }
 
-              const manifold = this.#_collision.detect(
-                worldVerticesA,
-                worldVerticesB,
+              // Narrowphase
+              const manifold = this.#collision.detect(
+                sA.worldVertices,
+                sB.worldVertices,
                 Vector.sub(bodyB.position, bodyA.position)
               )
 
@@ -143,37 +149,43 @@ export default class World {
                 manifold
               }
 
-              this.#_contactKeys.push(key)
-              this.#_newContacts.set(key, newContact)
+              this.#contactKeys.push(key)
+              this.#newContacts.set(key, newContact)
             }
           }
         }
-      })
-      this.#_contactKeys.sort((a, b) => {
+      }
+      this.#contactKeys.sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
         return 0
       })
 
       // Apply gravity
-      this.forEachBody(body => {
+      for (let i = 0; i < this.#bodies.length; ++i) {
+        const body = this.#bodies[i]
+
         if (!body.isStatic) {
           body.linearVelocity.addMulV(this.gravity, dt)
         }
-      })
+      }
 
-      this.forEachContact((newContact, key) => {
+      // Prepare and warm start
+      for (let i = 0; i < this.#contactKeys.length; ++i) {
+        const key = this.#contactKeys[i]
+        const newContact = this.#newContacts.get(key)
+
         if (this.useBlockSolver) {
-          this.#_blockSolver.prepare(newContact, dt)
+          this.#blockSolver.prepare(newContact, dt)
         } else {
-          this.#_contactSolver.prepare(newContact, dt)
+          this.#contactSolver.prepare(newContact, dt)
         }
 
-        if (!this.#_oldContacts.has(key)) {
-          return
+        if (!this.#oldContacts.has(key)) {
+          continue
         }
 
-        const oldContact = this.#_oldContacts.get(key)
+        const oldContact = this.#oldContacts.get(key)
         const newPts = newContact.manifold.contactPoints
         const oldPts = oldContact.manifold.contactPoints
 
@@ -188,39 +200,53 @@ export default class World {
           }
         }
 
-        this.#_contactSolver.warmStart(newContact)
-      })
-
-      for (let i = 0; i < this.iterations; ++i) {
-        this.forEachContact(contact => {
-          if (this.useBlockSolver) {
-            this.#_blockSolver.solve(contact, true)
-          } else {
-            this.#_contactSolver.solve(contact, true)
-          }
-        })
+        if (this.useBlockSolver) {
+          this.#blockSolver.warmStart(newContact)
+        } else {
+          this.#contactSolver.warmStart(newContact)
+        }
       }
 
-      this.forEachBody(body => {
-        if (body.isStatic) return
+      // PGS Solve
+      for (let i = 0; i < this.iterations; ++i) {
+        for (let j = 0; j < this.#contactKeys.length; ++j) {
+          const contact = this.#newContacts.get(this.#contactKeys[j])
+
+          if (this.useBlockSolver) {
+            this.#blockSolver.solve(contact, true)
+          } else {
+            this.#contactSolver.solve(contact, true)
+          }
+        }
+      }
+
+      // Update position and broadphase
+      for (let i = 0; i < this.#bodies.length; ++i) {
+        const body = this.#bodies[i]
+
+        if (body.isStatic) continue
 
         body.translate(body.linearVelocity, dt)
         body.rotate(body.angularVelocity * dt)
         body.updateAABB()
 
-        this.#_dynamicTree.updateBody(body, 10)
-      })
+        this.#dynamicTree.updateBody(body, 10)
+      }
 
       // Relax + store
-      this.#_oldContacts.clear()
-      this.forEachContact((contact, key) => {
+      this.#oldContacts.clear()
+      for (let i = 0; i < this.#contactKeys.length; ++i) {
+        const key = this.#contactKeys[i]
+        const contact = this.#newContacts.get(key)
+
         if (this.useBlockSolver) {
-          this.#_blockSolver.solve(contact, false)
+          this.#blockSolver.solve(contact, false)
         } else {
-          this.#_contactSolver.solve(contact, false)
+          this.#contactSolver.solve(contact, false)
         }
-        this.#_oldContacts.set(key, contact)
-      })
+
+        this.#oldContacts.set(key, contact)
+      }
     }
   }
 }

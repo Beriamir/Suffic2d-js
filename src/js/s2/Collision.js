@@ -2,51 +2,48 @@ import Vector from "./Vector.js"
 import Pool from "./Pool.js"
 
 export default class Collision {
-  #_simplex
-  #_vectors
+  #simplex
+  #vectors
   constructor() {
-    this.#_simplex = []
-    this.#_vectors = new Pool(() => new Vector(), 16)
-  }
-  get vectorsSize() {
-    return this.#_vectors.size
+    this.#simplex = []
+    this.#vectors = new Pool(() => new Vector(), 16)
   }
   detect(vertsA, vertsB, dir) {
     if (dir.isZero()) {
       dir.set(1, 0)
     }
 
-    this.#_simplex.length = 0
-    this.#_simplex.push(this.#_getSupportPoint(vertsA, vertsB, dir))
+    this.#simplex.length = 0
+    this.#simplex.push(this.#getSupportPoint(vertsA, vertsB, dir))
     dir.negate()
 
     while (true) {
-      const support = this.#_getSupportPoint(vertsA, vertsB, dir)
+      const support = this.#getSupportPoint(vertsA, vertsB, dir)
 
-      if (this.#_vectors.at(support).dot(dir) <= 0) {
-        this.#_vectors.deallocate(support)
-        for (let i = 0; i < this.#_simplex.length; ++i) {
-          this.#_vectors.deallocate(this.#_simplex[i])
+      if (this.#vectors.at(support).dot(dir) <= 0) {
+        this.#vectors.deallocate(support)
+        for (let i = 0; i < this.#simplex.length; ++i) {
+          this.#vectors.deallocate(this.#simplex[i])
         }
 
         return null
       }
 
-      this.#_simplex.push(support)
+      this.#simplex.push(support)
 
-      if (this.#_simplex.length === 2) {
-        this.#_handleLineSimplex(this.#_simplex, dir)
+      if (this.#simplex.length === 2) {
+        this.#handleLineSimplex(this.#simplex, dir)
         continue
       }
 
-      if (this.#_handleTriangleSimplex(this.#_simplex, dir)) {
-        const { normal, overlap, polytope } = this.#_EPA(
+      if (this.#handleTriangleSimplex(this.#simplex, dir)) {
+        const { normal, overlap, polytope } = this.#EPA(
           vertsA,
           vertsB,
-          this.#_simplex,
+          this.#simplex,
           dir
         )
-        const { ref, inc, contactPoints } = this.#_getContactPoints(
+        const { ref, inc, contactPoints } = this.#getContactPoints(
           vertsA,
           vertsB,
           normal
@@ -63,14 +60,14 @@ export default class Collision {
       }
     }
   }
-  #_getContactPoints(vertsA, vertsB, normal, contactPoints = []) {
-    const ref = this.#_bestEdge(vertsA, normal.x, normal.y)
-    const inc = this.#_bestEdge(vertsB, -normal.x, -normal.y)
+  #getContactPoints(vertsA, vertsB, normal, contactPoints = []) {
+    const ref = this.#bestEdge(vertsA, normal.x, normal.y)
+    const inc = this.#bestEdge(vertsB, -normal.x, -normal.y)
 
     const edgeDirX = ref.edge[2] - ref.edge[0]
     const edgeDirY = ref.edge[3] - ref.edge[1]
 
-    const firstClipping = this.#_clipEdge(
+    const firstClipping = this.#clipEdge(
       inc.edge,
       ref.edge[0],
       ref.edge[1],
@@ -82,7 +79,7 @@ export default class Collision {
     let secondClipping = firstClipping
 
     if (firstClipping.count > 1) {
-      secondClipping = this.#_clipEdge(
+      secondClipping = this.#clipEdge(
         firstClipping.points,
         ref.edge[2],
         ref.edge[3],
@@ -95,7 +92,7 @@ export default class Collision {
     let finalClipping = secondClipping
 
     if (secondClipping.count > 1) {
-      finalClipping = this.#_clipEdge(
+      finalClipping = this.#clipEdge(
         secondClipping.points,
         ref.edge[0],
         ref.edge[1],
@@ -129,7 +126,7 @@ export default class Collision {
       contactPoints
     }
   }
-  #_clipEdge(inc, startX, startY, dirX, dirY, isClip = false) {
+  #clipEdge(inc, startX, startY, dirX, dirY, isClip = false) {
     const points = new Float32Array(4)
     const d0 = startX * dirX + startY * dirY
     const u0 = inc[0] * dirX + inc[1] * dirY - d0
@@ -158,7 +155,7 @@ export default class Collision {
 
     return { points, count }
   }
-  #_bestEdge(vertices, dx, dy) {
+  #bestEdge(vertices, dx, dy) {
     let bestDot = -Infinity
     let index = 0
 
@@ -209,7 +206,7 @@ export default class Collision {
 
     return { edge, id }
   }
-  #_EPA(vertsA, vertsB, simplex, dir) {
+  #EPA(vertsA, vertsB, simplex, dir) {
     while (true) {
       let minDot = Infinity
       let index = 0
@@ -220,15 +217,16 @@ export default class Collision {
         const a = simplex[i]
         const b = simplex[j]
 
-        let perpX = -(this.#_vectors.at(b).y - this.#_vectors.at(a).y)
-        let perpY = this.#_vectors.at(b).x - this.#_vectors.at(a).x
+        let perpX = -(this.#vectors.at(b).y - this.#vectors.at(a).y)
+        let perpY = this.#vectors.at(b).x - this.#vectors.at(a).x
 
-        const invMag = 1 / Math.sqrt(perpX * perpX + perpY * perpY)
+        const mag = Math.sqrt(perpX * perpX + perpY * perpY)
+        const invMag = 1 / mag
+
         perpX *= invMag
         perpY *= invMag
 
-        let dot =
-          this.#_vectors.at(a).x * perpX + this.#_vectors.at(a).y * perpY
+        let dot = this.#vectors.at(a).x * perpX + this.#vectors.at(a).y * perpY
 
         if (dot < 0) {
           dot = -dot
@@ -243,8 +241,8 @@ export default class Collision {
         }
       }
 
-      const support = this.#_getSupportPoint(vertsA, vertsB, dir)
-      const dot = this.#_vectors.at(support).dot(dir)
+      const support = this.#getSupportPoint(vertsA, vertsB, dir)
+      const dot = this.#vectors.at(support).dot(dir)
 
       if (dot - minDot <= 1e-3) {
         const polytope = new Float32Array(simplex.length << 1)
@@ -252,13 +250,13 @@ export default class Collision {
         for (let i = 0; i < simplex.length; ++i) {
           const v = simplex[i]
 
-          polytope[i << 1] = this.#_vectors.at(v).x
-          polytope[(i << 1) + 1] = this.#_vectors.at(v).y
+          polytope[i << 1] = this.#vectors.at(v).x
+          polytope[(i << 1) + 1] = this.#vectors.at(v).y
 
-          this.#_vectors.deallocate(v)
+          this.#vectors.deallocate(v)
         }
 
-        this.#_vectors.deallocate(support)
+        this.#vectors.deallocate(support)
 
         return {
           normal: dir,
@@ -270,120 +268,120 @@ export default class Collision {
       simplex.splice(index, 0, support)
     }
   }
-  #_handleTriangleSimplex(simplex, dir) {
+  #handleTriangleSimplex(simplex, dir) {
     const [c, b, a] = simplex
 
-    const ab = this.#_vectors.allocate()
-    const ac = this.#_vectors.allocate()
-    const ao = this.#_vectors.allocate()
-    const abPerp = this.#_vectors.allocate()
-    const acPerp = this.#_vectors.allocate()
+    const ab = this.#vectors.allocate()
+    const ac = this.#vectors.allocate()
+    const ao = this.#vectors.allocate()
+    const abPerp = this.#vectors.allocate()
+    const acPerp = this.#vectors.allocate()
 
-    this.#_vectors
+    this.#vectors
       .at(ab)
       .set(
-        this.#_vectors.at(b).x - this.#_vectors.at(a).x,
-        this.#_vectors.at(b).y - this.#_vectors.at(a).y
+        this.#vectors.at(b).x - this.#vectors.at(a).x,
+        this.#vectors.at(b).y - this.#vectors.at(a).y
       )
-    this.#_vectors
+    this.#vectors
       .at(ac)
       .set(
-        this.#_vectors.at(c).x - this.#_vectors.at(a).x,
-        this.#_vectors.at(c).y - this.#_vectors.at(a).y
+        this.#vectors.at(c).x - this.#vectors.at(a).x,
+        this.#vectors.at(c).y - this.#vectors.at(a).y
       )
-    this.#_vectors.at(ao).copy(this.#_vectors.at(a)).negate()
+    this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
 
-    this.#_tripleProduct(
-      this.#_vectors.at(ac),
-      this.#_vectors.at(ab),
-      this.#_vectors.at(ab),
-      this.#_vectors.at(abPerp)
+    this.#tripleProduct(
+      this.#vectors.at(ac),
+      this.#vectors.at(ab),
+      this.#vectors.at(ab),
+      this.#vectors.at(abPerp)
     )
-    this.#_tripleProduct(
-      this.#_vectors.at(ab),
-      this.#_vectors.at(ac),
-      this.#_vectors.at(ac),
-      this.#_vectors.at(acPerp)
+    this.#tripleProduct(
+      this.#vectors.at(ab),
+      this.#vectors.at(ac),
+      this.#vectors.at(ac),
+      this.#vectors.at(acPerp)
     )
 
-    if (this.#_vectors.at(abPerp).isZero()) {
-      this.#_vectors.at(abPerp).copy(this.#_vectors.at(ab)).perp()
+    if (this.#vectors.at(abPerp).isZero()) {
+      this.#vectors.at(abPerp).copy(this.#vectors.at(ab)).perp()
     }
 
-    if (this.#_vectors.at(acPerp).isZero()) {
-      this.#_vectors.at(acPerp).copy(this.#_vectors.at(ac)).perp()
+    if (this.#vectors.at(acPerp).isZero()) {
+      this.#vectors.at(acPerp).copy(this.#vectors.at(ac)).perp()
     }
 
-    if (this.#_vectors.at(abPerp).dot(this.#_vectors.at(ao)) >= 0) {
+    if (this.#vectors.at(abPerp).dot(this.#vectors.at(ao)) >= 0) {
       simplex.length = 2
       simplex[0] = b
       simplex[1] = a
-      dir.copy(this.#_vectors.at(abPerp))
+      dir.copy(this.#vectors.at(abPerp))
 
-      this.#_vectors.deallocate(c)
-      this.#_vectors.deallocate(ab)
-      this.#_vectors.deallocate(ac)
-      this.#_vectors.deallocate(ao)
-      this.#_vectors.deallocate(abPerp)
-      this.#_vectors.deallocate(acPerp)
+      this.#vectors.deallocate(c)
+      this.#vectors.deallocate(ab)
+      this.#vectors.deallocate(ac)
+      this.#vectors.deallocate(ao)
+      this.#vectors.deallocate(abPerp)
+      this.#vectors.deallocate(acPerp)
       return false
     }
 
-    if (this.#_vectors.at(acPerp).dot(this.#_vectors.at(ao)) >= 0) {
+    if (this.#vectors.at(acPerp).dot(this.#vectors.at(ao)) >= 0) {
       simplex.length = 2
       simplex[0] = c
       simplex[1] = a
-      dir.copy(this.#_vectors.at(acPerp))
+      dir.copy(this.#vectors.at(acPerp))
 
-      this.#_vectors.deallocate(b)
-      this.#_vectors.deallocate(ab)
-      this.#_vectors.deallocate(ac)
-      this.#_vectors.deallocate(ao)
-      this.#_vectors.deallocate(abPerp)
-      this.#_vectors.deallocate(acPerp)
+      this.#vectors.deallocate(b)
+      this.#vectors.deallocate(ab)
+      this.#vectors.deallocate(ac)
+      this.#vectors.deallocate(ao)
+      this.#vectors.deallocate(abPerp)
+      this.#vectors.deallocate(acPerp)
       return false
     }
 
-    this.#_vectors.deallocate(ab)
-    this.#_vectors.deallocate(ac)
-    this.#_vectors.deallocate(ao)
-    this.#_vectors.deallocate(abPerp)
-    this.#_vectors.deallocate(acPerp)
+    this.#vectors.deallocate(ab)
+    this.#vectors.deallocate(ac)
+    this.#vectors.deallocate(ao)
+    this.#vectors.deallocate(abPerp)
+    this.#vectors.deallocate(acPerp)
     return true
   }
-  #_handleLineSimplex(simplex, dir) {
+  #handleLineSimplex(simplex, dir) {
     const [b, a] = simplex
 
-    const ab = this.#_vectors.allocate()
-    const ao = this.#_vectors.allocate()
-    const abPerp = this.#_vectors.allocate()
+    const ab = this.#vectors.allocate()
+    const ao = this.#vectors.allocate()
+    const abPerp = this.#vectors.allocate()
 
-    this.#_vectors
+    this.#vectors
       .at(ab)
       .set(
-        this.#_vectors.at(b).x - this.#_vectors.at(a).x,
-        this.#_vectors.at(b).y - this.#_vectors.at(a).y
+        this.#vectors.at(b).x - this.#vectors.at(a).x,
+        this.#vectors.at(b).y - this.#vectors.at(a).y
       )
-    this.#_vectors.at(ao).copy(this.#_vectors.at(a)).negate()
+    this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
 
-    this.#_tripleProduct(
-      this.#_vectors.at(ab),
-      this.#_vectors.at(ao),
-      this.#_vectors.at(ab),
-      this.#_vectors.at(abPerp)
+    this.#tripleProduct(
+      this.#vectors.at(ab),
+      this.#vectors.at(ao),
+      this.#vectors.at(ab),
+      this.#vectors.at(abPerp)
     )
 
-    if (this.#_vectors.at(abPerp).isZero()) {
-      this.#_vectors.at(abPerp).copy(this.#_vectors.at(ab)).perp()
+    if (this.#vectors.at(abPerp).isZero()) {
+      this.#vectors.at(abPerp).copy(this.#vectors.at(ab)).perp()
     }
 
-    dir.copy(this.#_vectors.at(abPerp))
+    dir.copy(this.#vectors.at(abPerp))
 
-    this.#_vectors.deallocate(ab)
-    this.#_vectors.deallocate(ao)
-    this.#_vectors.deallocate(abPerp)
+    this.#vectors.deallocate(ab)
+    this.#vectors.deallocate(ao)
+    this.#vectors.deallocate(abPerp)
   }
-  #_tripleProduct(u, v, w, out = new Vector()) {
+  #tripleProduct(u, v, w, out = new Vector()) {
     const dotWU = w.dot(u)
     const dotWV = w.dot(v)
 
@@ -391,7 +389,7 @@ export default class Collision {
     out.y = v.y * dotWU - u.y * dotWV
     return out
   }
-  #_getSupportPoint(vertsA, vertsB, dir) {
+  #getSupportPoint(vertsA, vertsB, dir) {
     let maxDotA = -Infinity
     let indexA = 0
 
@@ -416,10 +414,10 @@ export default class Collision {
       }
     }
 
-    const point = this.#_vectors.allocate()
+    const point = this.#vectors.allocate()
 
-    this.#_vectors.at(point).x = vertsA[indexA] - vertsB[indexB]
-    this.#_vectors.at(point).y = vertsA[indexA + 1] - vertsB[indexB + 1]
+    this.#vectors.at(point).x = vertsA[indexA] - vertsB[indexB]
+    this.#vectors.at(point).y = vertsA[indexA + 1] - vertsB[indexB + 1]
     return point
   }
 }

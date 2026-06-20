@@ -1,51 +1,51 @@
 export default class Pool {
-  #_create
-  #_objects
-  #_freeList
+  #create
+  #objects
+  #freeList
   constructor(create, capacity = 16) {
-    this.#_create = create
-    this.#_objects = []
-    this.#_freeList = -1
-    this.#_grow(capacity)
+    this.#create = create
+    this.#objects = []
+    this.#freeList = -1
+    this.#grow(capacity)
   }
   get size() {
-    return this.#_objects.length
+    return this.#objects.length
   }
-  #_grow(capacity) {
-    const start = this.#_objects.length
+  #grow(capacity) {
+    const start = this.#objects.length
     const end = start + capacity
 
     for (let i = start; i < end; ++i) {
-      this.#_objects[i] = this.#_create()
-      this.#_objects[i].next = i + 1
+      this.#objects[i] = this.#create()
+      this.#objects[i].next = i + 1
     }
 
-    this.#_objects[end - 1].next = this.#_freeList
-    this.#_freeList = start
+    this.#objects[end - 1].next = this.#freeList
+    this.#freeList = start
   }
   at(index) {
-    return this.#_objects[index]
+    return this.#objects[index]
   }
   allocate() {
-    if (this.#_freeList < 0) {
-      this.#_grow(this.#_objects.length)
+    if (this.#freeList < 0) {
+      this.#grow(this.#objects.length)
     }
 
-    const index = this.#_freeList
+    const index = this.#freeList
 
-    this.#_freeList = this.#_objects[index].next
-    this.#_objects[index].next = -1
-    this.#_objects[index].allocated = true
+    this.#freeList = this.#objects[index].next
+    this.#objects[index].next = -1
+    this.#objects[index].allocated = true
 
     return index
   }
   deallocate(index) {
-    if (!this.#_objects[index].allocated) {
+    if (!this.#objects[index].allocated) {
       return
     }
 
-    this.#_objects[index].next = this.#_freeList
-    this.#_objects[index].allocated = false
-    this.#_freeList = index
+    this.#objects[index].next = this.#freeList
+    this.#objects[index].allocated = false
+    this.#freeList = index
   }
 }

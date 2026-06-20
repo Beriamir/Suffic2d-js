@@ -35,6 +35,43 @@ document.addEventListener("DOMContentLoaded", _ => {
     joints: 0
   }
 
+  // 60 FPS recording
+  const stream = canvas.captureStream(60)
+  const recorder = new MediaRecorder(stream, {
+    mimeType: "video/webm"
+  })
+  const chunks = []
+
+  recorder.ondataavailable = e => {
+    chunks.push(e.data)
+  }
+
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, {
+      type: "video/webm"
+    })
+
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "simulation.webm"
+    a.click()
+  }
+
+  const recordings = {
+    start() {
+      recorder.start()
+    },
+    stop() {
+      recorder.stop()
+    }
+  }
+  const recordFol = gui.addFolder("Recordings")
+
+  recordFol.add(recordings, "start")
+  recordFol.add(recordings, "stop")
+
   const switchScenes = {
     pyramid() {
       world.clear()
@@ -48,7 +85,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         rows: 15,
         boxWidth: 40,
         boxHeight: 40,
-        spacing: 0,
+        spacing: 3,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 50,
         restitution: 0.0,
@@ -64,18 +101,16 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 50
       })
       scenes.boxStack(world, {
-        columns: 6,
+        columns: 1,
         rows: 12,
-        boxWidth: 60,
-        boxHeight: 40,
+        boxWidth: 50,
+        boxHeight: 50,
         spacing: 10,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 50,
         restitution: 0.0,
         friction: 0.3
       })
-
-      world.setSolver(s2.ContactBlockSolver)
     },
     jenga() {
       world.clear()
@@ -86,7 +121,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 50
       })
       scenes.jenga(world, {
-        levels: 9,
+        levels: 13,
         width: 80,
         height: 20,
         centerX: canvas.width / 2,
@@ -186,7 +221,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     }
 
     if (debugs.bvh) {
-      world.traverseTree(node => {
+      world.forEachNode(node => {
         gfx.drawAABB(node.aabb, {
           strokeColor: debugColor,
           wireframe: true

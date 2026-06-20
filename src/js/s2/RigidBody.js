@@ -3,9 +3,9 @@ import AABB from "./AABB.js"
 import Polygon from "./Polygon.js"
 
 export default class RigidBody {
-  static #_uid = 0
+  static #uid = 0
   constructor(x, y, rot, options = {}) {
-    this.id = RigidBody.#_uid++
+    this.id = RigidBody.#uid++
     this.type = "rigid"
 
     this.position = new Vector(x, y)

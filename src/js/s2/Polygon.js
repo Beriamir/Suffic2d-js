@@ -1,12 +1,12 @@
-import Vector from './Vector.js'
-import Vertices from './Vertices.js'
-import AABB from './AABB.js'
+import Vector from "./Vector.js"
+import Vertices from "./Vertices.js"
+import AABB from "./AABB.js"
 
 export default class Polygon {
-  static #_uid = 0
+  static #uid = 0
   constructor(vertices, options = {}) {
-    this.id = Polygon.#_uid++
-    this.type = 'polygon'
+    this.id = Polygon.#uid++
+    this.type = "polygon"
     this.vertices = vertices // local
     this.worldVertices = new Float32Array(vertices)
     this.offset = options.offset ?? new Vector()
@@ -34,7 +34,7 @@ export default class Polygon {
 
     this.aabb = new AABB()
   }
-  getWorldVertices(x, y, cos, sin) {
+  updateWorldVertices(x, y, cos, sin) {
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.offset.x + this.vertices[i]
       const y0 = this.offset.y + this.vertices[i + 1]
@@ -44,6 +44,21 @@ export default class Polygon {
     }
 
     return this.worldVertices
+  }
+  updateAABB() {
+    this.aabb.set(Infinity, Infinity, -Infinity, -Infinity)
+
+    for (let i = 0; i < this.worldVertices.length; i += 2) {
+      const x0 = this.worldVertices[i]
+      const y0 = this.worldVertices[i + 1]
+
+      if (x0 < this.aabb.minX) this.aabb.minX = x0
+      if (y0 < this.aabb.minY) this.aabb.minY = y0
+      if (x0 > this.aabb.maxX) this.aabb.maxX = x0
+      if (y0 > this.aabb.maxY) this.aabb.maxY = y0
+    }
+
+    return this.aabb
   }
   rotate(angle) {
     this.rotation += angle

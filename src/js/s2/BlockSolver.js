@@ -1,13 +1,9 @@
 export default class BlockSolver {
-  #_zeta
-  #_hertz
-  #_slop
-  #_restitutionThreashold
   constructor(option = {}) {
-    this.#_zeta = option.zeta ?? 15
-    this.#_hertz = option.hertz ?? 30
-    this.#_slop = option.slop ?? 0.2
-    this.#_restitutionThreashold = option.restitutionThreashold ?? 1
+    this.zeta = option.zeta ?? 20
+    this.hertz = option.hertz ?? 30
+    this.slop = option.slop ?? 0.2
+    this.restitutionThreashold = option.restitutionThreashold ?? 1
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -31,8 +27,8 @@ export default class BlockSolver {
       bodyB.restitution
     ))
 
-    const omega = 2 * Math.PI * this.#_hertz
-    const alpha = 2 * this.#_zeta + omega * dt
+    const omega = 2 * Math.PI * this.hertz
+    const alpha = 2 * this.zeta + omega * dt
     const biasCoeff = omega / alpha
 
     manifold.friction = Math.min(bodyA.friction, bodyB.friction)
@@ -75,7 +71,7 @@ export default class BlockSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      cp.baumgarteBias = Math.max(cp.overlap - this.#_slop, 0) * biasCoeff
+      cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
       cp.restitutionBias = -restitution * cp.vn
     }
 
@@ -95,20 +91,17 @@ export default class BlockSolver {
       const kMaxConditionNumber = 1000
       const det = kn11 * kn22 - kn12 * kn12
 
-      manifold.kn = { a: 0, b: 0, c: 0, d: 0 }
-      manifold.invkn = { a: 0, b: 0, c: 0, d: 0 }
-
       if (kn11 * kn11 < kMaxConditionNumber * det) {
-        manifold.kn.a = kn11
-        manifold.kn.b = kn12
-        manifold.kn.c = kn12
-        manifold.kn.d = kn22
+        manifold.knA = kn11
+        manifold.knB = kn12
+        manifold.knC = kn12
+        manifold.knD = kn22
 
         const invDet = 1 / det
-        manifold.invkn.a = kn22 * invDet
-        manifold.invkn.b = -kn12 * invDet
-        manifold.invkn.c = -kn12 * invDet
-        manifold.invkn.d = kn11 * invDet
+        manifold.invknA = kn22 * invDet
+        manifold.invknB = -kn12 * invDet
+        manifold.invknC = -kn12 * invDet
+        manifold.invknD = kn11 * invDet
       } else {
         const cp = cp1.overlap > cp2.overlap ? cp1 : cp2
 
@@ -161,8 +154,14 @@ export default class BlockSolver {
         friction,
         contactPoints,
         contactCount,
-        kn,
-        invkn
+        knA,
+        knB,
+        knC,
+        knD,
+        invknA,
+        invknB,
+        invknC,
+        invknD
       }
     } = contact
 
@@ -190,7 +189,7 @@ export default class BlockSolver {
         baumgarteBias = cp.baumgarteBias
       }
 
-      if (cp.vn < -this.#_restitutionThreashold) {
+      if (cp.vn < -this.restitutionThreashold) {
         restitutionBias = cp.restitutionBias
       }
 
@@ -232,11 +231,11 @@ export default class BlockSolver {
       let restitutionBias1 = 0
       let restitutionBias2 = 0
 
-      if (cp1.vn < -this.#_restitutionThreashold) {
+      if (cp1.vn < -this.restitutionThreashold) {
         restitutionBias1 = cp1.restitutionBias
       }
 
-      if (cp2.vn < -this.#_restitutionThreashold) {
+      if (cp2.vn < -this.restitutionThreashold) {
         restitutionBias2 = cp2.restitutionBias
       }
 
@@ -251,13 +250,13 @@ export default class BlockSolver {
       const aX = cp1.normalImpulse
       const aY = cp2.normalImpulse
 
-      bX -= kn.a * aX + kn.b * aY
-      bY -= kn.c * aX + kn.d * aY
+      bX -= knA * aX + knB * aY
+      bY -= knC * aX + knD * aY
 
       while (true) {
         // New impulse
-        let xX = -(invkn.a * bX + invkn.b * bY)
-        let xY = -(invkn.c * bX + invkn.d * bY)
+        let xX = -(invknA * bX + invknB * bY)
+        let xY = -(invknC * bX + invknD * bY)
 
         // Case 1
         // Both points active
@@ -296,7 +295,7 @@ export default class BlockSolver {
         xX = -cp1.effNormalMass * bX
         xY = 0
         vn1 = 0
-        vn2 = kn.b * xX + bY
+        vn2 = knB * xX + bY
 
         if (xX >= 0 && vn2 >= 0) {
           // Incremental
@@ -332,7 +331,7 @@ export default class BlockSolver {
         // Point 2 active
         xX = 0
         xY = -cp2.effNormalMass * bY
-        vn1 = kn.c * xY + bX
+        vn1 = knC * xY + bX
         vn2 = 0
 
         if (xY >= 0 && vn1 >= 0) {
