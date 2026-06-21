@@ -165,7 +165,6 @@ document.addEventListener("DOMContentLoaded", _ => {
   const perimetersFol = gui.addFolder("Perimeters")
   perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
   perimetersFol.add(world, "iterations", 1, 10, 1).name("Iterations")
-  perimetersFol.add(world, "useBlockSolver", 1, 10, 1).name("Block Solver")
 
   statsFol.open()
   debugsFol.open()
@@ -184,18 +183,18 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   function simulate(dt) {
     world.simulate(dt)
-    world.forEachBody(body => {
+    for (const body of world.bodies) {
       if (body.position.y > canvas.height * 2) {
         world.destroyRigidBody(body)
       }
-    })
+    }
   }
 
   function render(gfx, dt) {
     const debugColor = "lightgray"
 
     gfx.clear(0, 0, canvas.width, canvas.height)
-    world.forEachBody(body => {
+    for (const body of world.bodies) {
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
@@ -209,19 +208,19 @@ document.addEventListener("DOMContentLoaded", _ => {
           noStroke: !debugs.wireframe
         })
       }
-    })
+    }
 
     if (debugs.aabb) {
-      world.forEachBody(body => {
+      for (const body of world.bodies) {
         gfx.drawAABB(body.aabb, {
           strokeColor: debugColor,
           wireframe: true
         })
-      })
+      }
     }
 
     if (debugs.bvh) {
-      world.forEachNode(node => {
+      world.dynamicTree.traverse(node => {
         gfx.drawAABB(node.aabb, {
           strokeColor: debugColor,
           wireframe: true
@@ -229,7 +228,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       })
     }
 
-    world.forEachContact((contact, key) => {
+    for (const key of world.contactKeys) {
+      const contact = world.contacts.get(key)
       const {
         bodyA,
         bodyB,
@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", _ => {
           })
         }
       }
-    })
+    }
   }
 
   function update() {

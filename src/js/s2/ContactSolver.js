@@ -4,6 +4,7 @@ export default class ContactSolver {
     this.hertz = option.hertz ?? 30
     this.slop = option.slop ?? 0.2
     this.restitutionThreashold = option.restitutionThreashold ?? 1
+    this.enableBlock = option.enableBlock ?? true
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -74,6 +75,42 @@ export default class ContactSolver {
       cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
       cp.restitutionBias = -restitution * cp.vn
     }
+
+    if (this.enableBlock && contactCount == 2) {
+      const cp1 = contactPoints[0]
+      const cp2 = contactPoints[1]
+
+      const rn1A = cp1.rnA
+      const rn1B = cp1.rnB
+      const rn2A = cp2.rnA
+      const rn2B = cp2.rnB
+
+      const kn11 = mA + mB + rn1A * rn1A * iA + rn1B * rn1B * iB
+      const kn22 = mA + mB + rn2A * rn2A * iA + rn2B * rn2B * iB
+      const kn12 = mA + mB + rn1A * rn2A * iA + rn1B * rn2B * iB
+
+      const kMaxConditionNumber = 1000
+      const det = kn11 * kn22 - kn12 * kn12
+
+      if (kn11 * kn11 < kMaxConditionNumber * det) {
+        manifold.knA = kn11
+        manifold.knB = kn12
+        manifold.knC = kn12
+        manifold.knD = kn22
+
+        const invDet = 1 / det
+        manifold.invknA = kn22 * invDet
+        manifold.invknB = -kn12 * invDet
+        manifold.invknC = -kn12 * invDet
+        manifold.invknD = kn11 * invDet
+      } else {
+        const cp = cp1.overlap > cp2.overlap ? cp1 : cp2
+
+        contactPoints.length = 1
+        contactPoints[0] = cp
+        manifold.contactCount = 1
+      }
+    }
   }
   warmStart(contact) {
     const {
@@ -108,18 +145,15 @@ export default class ContactSolver {
     }
   }
   solve(contact, useBias = false) {
+    const { bodyA, bodyB, manifold } = contact
     const {
-      bodyA,
-      bodyB,
-      manifold: {
-        normal,
-        tangentX,
-        tangentY,
-        friction,
-        contactPoints,
-        contactCount
-      }
-    } = contact
+      normal,
+      tangentX,
+      tangentY,
+      friction,
+      contactPoints,
+      contactCount
+    } = manifold
 
     const mA = bodyA.invMass
     const mB = bodyB.invMass
@@ -131,37 +165,286 @@ export default class ContactSolver {
     let wA = bodyA.angularVelocity
     let wB = bodyB.angularVelocity
 
-    for (let i = 0; i < contactCount; ++i) {
-      const cp = contactPoints[i]
+    if (!this.enableBlock) {
+      for (let i = 0; i < contactCount; ++i) {
+        const cp = contactPoints[i]
 
-      const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
-      const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
-      const vn = relVelX * normal.x + relVelY * normal.y
+        const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
+        const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
+        const vn = relVelX * normal.x + relVelY * normal.y
 
-      let baumgarteBias = 0
-      let restitutionBias = 0
+        let baumgarteBias = 0
+        let restitutionBias = 0
 
-      if (useBias) {
-        baumgarteBias = cp.baumgarteBias
+        if (useBias) {
+          baumgarteBias = cp.baumgarteBias
+        }
+
+        if (cp.vn < -this.restitutionThreashold) {
+          restitutionBias = cp.restitutionBias
+        }
+
+        const velBias = Math.max(baumgarteBias, restitutionBias)
+        let impulse = -cp.effNormalMass * (vn - velBias)
+
+        const oldImpulse = cp.normalImpulse
+        const newImpulse = Math.max(oldImpulse + impulse, 0)
+
+        cp.normalImpulse = newImpulse
+        impulse = newImpulse - oldImpulse
+
+        vA.subMulV(normal, impulse * mA)
+        vB.addMulV(normal, impulse * mB)
+        wA -= cp.rnA * impulse * iA
+        wB += cp.rnB * impulse * iB
       }
+    } else {
+      const { knA, knB, knC, knD, invknA, invknB, invknC, invknD } = manifold
 
-      if (cp.vn < -this.restitutionThreashold) {
-        restitutionBias = cp.restitutionBias
+      if (contactCount == 1) {
+        const cp = contactPoints[0]
+
+        const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
+        const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
+        const vn = relVelX * normal.x + relVelY * normal.y
+
+        let baumgarteBias = 0
+        let restitutionBias = 0
+
+        if (useBias) {
+          baumgarteBias = cp.baumgarteBias
+        }
+
+        if (cp.vn < -this.restitutionThreashold) {
+          restitutionBias = cp.restitutionBias
+        }
+
+        const velBias = Math.max(baumgarteBias, restitutionBias)
+        let impulse = -cp.effNormalMass * (vn - velBias)
+
+        const oldImpulse = cp.normalImpulse
+        const newImpulse = Math.max(oldImpulse + impulse, 0)
+
+        cp.normalImpulse = newImpulse
+        impulse = newImpulse - oldImpulse
+
+        vA.subMulV(normal, impulse * mA)
+        vB.addMulV(normal, impulse * mB)
+        wA -= cp.rnA * impulse * iA
+        wB += cp.rnB * impulse * iB
+      } else if (contactCount == 2) {
+        // Block
+        const cp1 = contactPoints[0]
+        const cp2 = contactPoints[1]
+
+        // v + (w x r)
+        const rv1X = vB.x - cp1.rbY * wB - (vA.x - cp1.raY * wA)
+        const rv1Y = vB.y + cp1.rbX * wB - (vA.y + cp1.raX * wA)
+        const rv2X = vB.x - cp2.rbY * wB - (vA.x - cp2.raY * wA)
+        const rv2Y = vB.y + cp2.rbX * wB - (vA.y + cp2.raX * wA)
+
+        let vn1 = rv1X * normal.x + rv1Y * normal.y
+        let vn2 = rv2X * normal.x + rv2Y * normal.y
+
+        let baumgarteBias1 = 0
+        let baumgarteBias2 = 0
+
+        if (useBias) {
+          baumgarteBias1 = cp1.baumgarteBias
+          baumgarteBias2 = cp2.baumgarteBias
+        }
+
+        let restitutionBias1 = 0
+        let restitutionBias2 = 0
+
+        if (cp1.vn < -this.restitutionThreashold) {
+          restitutionBias1 = cp1.restitutionBias
+        }
+
+        if (cp2.vn < -this.restitutionThreashold) {
+          restitutionBias2 = cp2.restitutionBias
+        }
+
+        const vBias1 = Math.max(baumgarteBias1, restitutionBias1)
+        const vBias2 = Math.max(baumgarteBias2, restitutionBias2)
+
+        // Compute rhs
+        let bX = vn1 - vBias1
+        let bY = vn2 - vBias2
+
+        // Old impulse
+        const aX = cp1.normalImpulse
+        const aY = cp2.normalImpulse
+
+        bX -= knA * aX + knB * aY
+        bY -= knC * aX + knD * aY
+
+        while (true) {
+          // New impulse
+          let xX = -(invknA * bX + invknB * bY)
+          let xY = -(invknC * bX + invknD * bY)
+
+          // Case 1
+          // Both points active
+          if (xX >= 0 && xY >= 0) {
+            // Incremental
+            const dX = xX - aX
+            const dY = xY - aY
+
+            // Apply
+            const P1X = dX * normal.x
+            const P1Y = dX * normal.y
+            const P2X = dY * normal.x
+            const P2Y = dY * normal.y
+
+            vA.x -= (P1X + P2X) * mA
+            vA.y -= (P1Y + P2Y) * mA
+            vB.x += (P1X + P2X) * mB
+            vB.y += (P1Y + P2Y) * mB
+            wA -=
+              (cp1.raX * P1Y -
+                cp1.raY * P1X +
+                (cp2.raX * P2Y - cp2.raY * P2X)) *
+              iA
+            wB +=
+              (cp1.rbX * P1Y -
+                cp1.rbY * P1X +
+                (cp2.rbX * P2Y - cp2.rbY * P2X)) *
+              iB
+
+            // Accumulate
+            cp1.normalImpulse = xX
+            cp2.normalImpulse = xY
+
+            break
+          }
+
+          // Case 2
+          // Point 1 active
+          // Point 2 inactive
+          xX = -cp1.effNormalMass * bX
+          xY = 0
+          vn1 = 0
+          vn2 = knB * xX + bY
+
+          if (xX >= 0 && vn2 >= 0) {
+            // Incremental
+            const dX = xX - aX
+            const dY = xY - aY
+
+            // Apply
+            const P1X = dX * normal.x
+            const P1Y = dX * normal.y
+            const P2X = dY * normal.x
+            const P2Y = dY * normal.y
+
+            vA.x -= (P1X + P2X) * mA
+            vA.y -= (P1Y + P2Y) * mA
+            vB.x += (P1X + P2X) * mB
+            vB.y += (P1Y + P2Y) * mB
+            wA -=
+              (cp1.raX * P1Y -
+                cp1.raY * P1X +
+                (cp2.raX * P2Y - cp2.raY * P2X)) *
+              iA
+            wB +=
+              (cp1.rbX * P1Y -
+                cp1.rbY * P1X +
+                (cp2.rbX * P2Y - cp2.rbY * P2X)) *
+              iB
+
+            // Accumulate
+            cp1.normalImpulse = xX
+            cp2.normalImpulse = xY
+
+            break
+          }
+
+          // Case 3
+          // Point 1 inactive
+          // Point 2 active
+          xX = 0
+          xY = -cp2.effNormalMass * bY
+          vn1 = knC * xY + bX
+          vn2 = 0
+
+          if (xY >= 0 && vn1 >= 0) {
+            // Incremental
+            const dX = xX - aX
+            const dY = xY - aY
+
+            // Apply
+            const P1X = dX * normal.x
+            const P1Y = dX * normal.y
+            const P2X = dY * normal.x
+            const P2Y = dY * normal.y
+
+            vA.x -= (P1X + P2X) * mA
+            vA.y -= (P1Y + P2Y) * mA
+            vB.x += (P1X + P2X) * mB
+            vB.y += (P1Y + P2Y) * mB
+            wA -=
+              (cp1.raX * P1Y -
+                cp1.raY * P1X +
+                (cp2.raX * P2Y - cp2.raY * P2X)) *
+              iA
+            wB +=
+              (cp1.rbX * P1Y -
+                cp1.rbY * P1X +
+                (cp2.rbX * P2Y - cp2.rbY * P2X)) *
+              iB
+
+            // Accumulate
+            cp1.normalImpulse = xX
+            cp2.normalImpulse = xY
+
+            break
+          }
+
+          // Case 4
+          // Both points inactive
+          xX = 0
+          xY = 0
+          vn1 = bX
+          vn2 = bY
+
+          if (vn1 >= 0 && vn2 >= 0) {
+            // Incremental
+            const dX = xX - aX
+            const dY = xY - aY
+
+            // Apply
+            const P1X = dX * normal.x
+            const P1Y = dX * normal.y
+            const P2X = dY * normal.x
+            const P2Y = dY * normal.y
+
+            vA.x -= (P1X + P2X) * mA
+            vA.y -= (P1Y + P2Y) * mA
+            vB.x += (P1X + P2X) * mB
+            vB.y += (P1Y + P2Y) * mB
+            wA -=
+              (cp1.raX * P1Y -
+                cp1.raY * P1X +
+                (cp2.raX * P2Y - cp2.raY * P2X)) *
+              iA
+            wB +=
+              (cp1.rbX * P1Y -
+                cp1.rbY * P1X +
+                (cp2.rbX * P2Y - cp2.rbY * P2X)) *
+              iB
+
+            // Accumulate
+            cp1.normalImpulse = xX
+            cp2.normalImpulse = xY
+
+            break
+          }
+
+          // "No solution, give up. This is hit sometimes, but it doesn't seem to matter."
+          break
+        }
       }
-
-      const velBias = Math.max(baumgarteBias, restitutionBias)
-      let impulse = -cp.effNormalMass * (vn - velBias)
-
-      const oldImpulse = cp.normalImpulse
-      const newImpulse = Math.max(oldImpulse + impulse, 0)
-
-      cp.normalImpulse = newImpulse
-      impulse = newImpulse - oldImpulse
-
-      vA.subMulV(normal, impulse * mA)
-      vB.addMulV(normal, impulse * mB)
-      wA -= cp.rnA * impulse * iA
-      wB += cp.rnB * impulse * iB
     }
 
     for (let i = 0; i < contactCount; ++i) {

@@ -3,26 +3,23 @@ import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
 import Collision from "./Collision.js"
 import ContactSolver from "./ContactSolver.js"
-import BlockSolver from "./BlockSolver.js"
 import RigidBody from "./RigidBody.js"
 
 export default class World {
   #bodies
+  #contacts
   #contactKeys
-  #newContacts
-  #oldContacts
+  #contactsOld
   #contactSolver
-  #blockSolver
   #dynamicTree
   #collision
   #nearby
   constructor(option = {}) {
     this.#bodies = []
+    this.#contacts = new Map()
     this.#contactKeys = []
-    this.#newContacts = new Map()
-    this.#oldContacts = new Map()
+    this.#contactsOld = new Map()
     this.#contactSolver = new ContactSolver()
-    this.#blockSolver = new BlockSolver()
     this.#dynamicTree = new DynamicTree()
     this.#collision = new Collision()
     this.#nearby = []
@@ -30,35 +27,31 @@ export default class World {
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
     this.iterations = option.iterations ?? 4
-    this.useBlockSolver = option.useBlockSolver ?? false
   }
+
   get bodies() {
     return this.#bodies
   }
   get contacts() {
-    return this.#newContacts
+    return this.#contacts
   }
+  get contactKeys() {
+    return this.#contactKeys
+  }
+  get contactSolver() {
+    return this.#contactSolver
+  }
+  get dynamicTree() {
+    return this.#dynamicTree
+  }
+
   clear() {
     for (let i = 0; i < this.#bodies.length; ++i) {
       this.destroyRigidBody(this.#bodies[i])
       --i
     }
   }
-  forEachBody(callback) {
-    for (let i = 0; i < this.#bodies.length; ++i) {
-      callback(this.#bodies[i], i)
-    }
-  }
-  forEachContact(callback) {
-    for (let i = 0; i < this.#contactKeys.length; ++i) {
-      const key = this.#contactKeys[i]
 
-      callback(this.#newContacts.get(key), key)
-    }
-  }
-  forEachNode(callback) {
-    this.#dynamicTree.traverse(callback)
-  }
   createRigidBody(x, y, rot, option = {}) {
     const body = new RigidBody(x, y, rot, option)
 
@@ -68,6 +61,7 @@ export default class World {
 
     return body
   }
+
   destroyRigidBody(body) {
     const index = body.index
     const last = this.#bodies.length - 1
@@ -86,13 +80,14 @@ export default class World {
 
     return body.index
   }
+
   simulate(dt) {
     dt /= this.substeps
 
     for (let step = 0; step < this.substeps; ++step) {
       // Collision detection
+      this.#contacts.clear()
       this.#contactKeys.length = 0
-      this.#newContacts.clear()
 
       for (let i = 0; i < this.#bodies.length; ++i) {
         const bodyA = this.#bodies[i]
@@ -149,8 +144,8 @@ export default class World {
                 manifold
               }
 
+              this.#contacts.set(key, newContact)
               this.#contactKeys.push(key)
-              this.#newContacts.set(key, newContact)
             }
           }
         }
@@ -173,19 +168,15 @@ export default class World {
       // Prepare and warm start
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
-        const newContact = this.#newContacts.get(key)
+        const newContact = this.#contacts.get(key)
 
-        if (this.useBlockSolver) {
-          this.#blockSolver.prepare(newContact, dt)
-        } else {
-          this.#contactSolver.prepare(newContact, dt)
-        }
+        this.#contactSolver.prepare(newContact, dt)
 
-        if (!this.#oldContacts.has(key)) {
+        if (!this.#contactsOld.has(key)) {
           continue
         }
 
-        const oldContact = this.#oldContacts.get(key)
+        const oldContact = this.#contactsOld.get(key)
         const newPts = newContact.manifold.contactPoints
         const oldPts = oldContact.manifold.contactPoints
 
@@ -200,23 +191,15 @@ export default class World {
           }
         }
 
-        if (this.useBlockSolver) {
-          this.#blockSolver.warmStart(newContact)
-        } else {
-          this.#contactSolver.warmStart(newContact)
-        }
+        this.#contactSolver.warmStart(newContact)
       }
 
       // PGS Solve
       for (let i = 0; i < this.iterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
-          const contact = this.#newContacts.get(this.#contactKeys[j])
+          const contact = this.#contacts.get(this.#contactKeys[j])
 
-          if (this.useBlockSolver) {
-            this.#blockSolver.solve(contact, true)
-          } else {
-            this.#contactSolver.solve(contact, true)
-          }
+          this.#contactSolver.solve(contact, true)
         }
       }
 
@@ -234,18 +217,13 @@ export default class World {
       }
 
       // Relax + store
-      this.#oldContacts.clear()
+      this.#contactsOld.clear()
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
-        const contact = this.#newContacts.get(key)
+        const contact = this.#contacts.get(key)
 
-        if (this.useBlockSolver) {
-          this.#blockSolver.solve(contact, false)
-        } else {
-          this.#contactSolver.solve(contact, false)
-        }
-
-        this.#oldContacts.set(key, contact)
+        this.#contactSolver.solve(contact, false)
+        this.#contactsOld.set(key, contact)
       }
     }
   }

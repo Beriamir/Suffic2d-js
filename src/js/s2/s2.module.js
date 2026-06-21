@@ -6,7 +6,6 @@ import World from './World.js'
 import Vertices from './Vertices.js'
 import Collision from './Collision.js'
 import ContactSolver from './ContactSolver.js'
-import BlockSolver from './BlockSolver.js'
 import DynamicTree from './DynamicTree.js'
 import Pool from './Pool.js'
 
@@ -19,7 +18,6 @@ export default {
   Vertices,
   Collision,
   ContactSolver,
-  BlockSolver,
   DynamicTree,
   Pool
 }
