@@ -209,8 +209,8 @@ export default class World {
 
         if (body.isStatic) continue
 
-        body.translate(body.linearVelocity, dt)
-        body.rotate(body.angularVelocity * dt)
+        body.position.addMulV(body.linearVelocity, dt)
+        body.rotation += body.angularVelocity * dt
         body.updateAABB()
 
         this.#dynamicTree.updateBody(body, 10)

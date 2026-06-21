@@ -4,7 +4,7 @@ export default class ContactSolver {
     this.hertz = option.hertz ?? 30
     this.slop = option.slop ?? 0.2
     this.restitutionThreashold = option.restitutionThreashold ?? 1
-    this.enableBlock = option.enableBlock ?? true
+    this.enableBlock = option.enableBlock ?? false
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -268,13 +268,12 @@ export default class ContactSolver {
         const vBias1 = Math.max(baumgarteBias1, restitutionBias1)
         const vBias2 = Math.max(baumgarteBias2, restitutionBias2)
 
+        const aX = cp1.normalImpulse
+        const aY = cp2.normalImpulse
+
         // Compute rhs
         let bX = vn1 - vBias1
         let bY = vn2 - vBias2
-
-        // Old impulse
-        const aX = cp1.normalImpulse
-        const aY = cp2.normalImpulse
 
         bX -= knA * aX + knB * aY
         bY -= knC * aX + knD * aY
