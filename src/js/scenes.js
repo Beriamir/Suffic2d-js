@@ -206,5 +206,23 @@ export default {
         )
       }
     }
+  },
+  restitution(world, option = {}) {
+    const {
+      startX = innerWidth / 2 - 300,
+      startY = 100,
+      spacing = 120
+    } = option
+
+    const values = [0, 0.25, 0.5, 0.75, 0.9]
+
+    for (let i = 0; i < values.length; i++) {
+      const body = world.createRigidBody(startX + i * spacing, startY, 0, {
+        restitution: values[i],
+        friction: 0
+      })
+
+      body.createPolygon(new Float32Array([-25, -25, 25, -25, 25, 25, -25, 25]))
+    }
   }
 }

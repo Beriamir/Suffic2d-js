@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     gravity: { x: 0, y: 1000 * 0.981 },
     substeps: 2,
     iterations: 4,
-    enableBlock: false
+    enableBlock: true
   })
 
   const debugs = {
@@ -150,6 +150,20 @@ document.addEventListener("DOMContentLoaded", _ => {
         bigHeight: 100,
         friction: 0.2
       })
+    },
+    restitution() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height,
+        width: canvas.width / 2,
+        height: 50
+      })
+      scenes.restitution(world, {
+        startX: canvas.width / 2 - 300,
+        startY: canvas.height / 2,
+        spacing: 120
+      })
     }
   }
 
@@ -175,6 +189,7 @@ document.addEventListener("DOMContentLoaded", _ => {
   gui.add(switchScenes, "boxStack").name("box stacks")
   gui.add(switchScenes, "jenga")
   gui.add(switchScenes, "highMass").name("high mass")
+  gui.add(switchScenes, "restitution").name("restitution")
 
   guiEl.appendChild(gui.domElement)
 

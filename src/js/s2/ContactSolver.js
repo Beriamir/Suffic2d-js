@@ -73,7 +73,8 @@ export default class ContactSolver {
       cp.persistent = false
 
       cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
-      cp.restitutionBias = -restitution * cp.vn * biasCoeff
+      cp.restitutionBias =
+        -restitution * Math.min(cp.vn, -this.restitutionThreashold)
     }
 
     if (this.enableBlock && contactCount == 2) {
