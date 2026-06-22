@@ -8,7 +8,7 @@ export default class Collision {
     this.#simplex = []
     this.#vectors = new Pool(() => new Vector(), 16)
   }
-  detect(vertsA, vertsB, dir) {
+  detect(vertsA, vertsB, dir, manifold = {}) {
     if (dir.isZero()) {
       dir.set(1, 0)
     }
@@ -37,30 +37,15 @@ export default class Collision {
       }
 
       if (this.#handleTriangleSimplex(this.#simplex, dir)) {
-        const { normal, overlap, polytope } = this.#EPA(
-          vertsA,
-          vertsB,
-          this.#simplex,
-          dir
-        )
-        const { ref, inc, contactPoints } = this.#getContactPoints(
-          vertsA,
-          vertsB,
-          normal
-        )
+        this.#EPA(vertsA, vertsB, this.#simplex, dir, manifold)
+        this.#getContactPoints(vertsA, vertsB, manifold)
 
-        return {
-          normal,
-          overlap,
-          polytope,
-          ref,
-          inc,
-          contactPoints
-        }
+        return manifold
       }
     }
   }
-  #getContactPoints(vertsA, vertsB, normal, contactPoints = []) {
+  #getContactPoints(vertsA, vertsB, manifold) {
+    const normal = manifold.normal
     const ref = this.#bestEdge(vertsA, normal.x, normal.y)
     const inc = this.#bestEdge(vertsB, -normal.x, -normal.y)
 
@@ -106,13 +91,17 @@ export default class Collision {
     const proj1 = ref.edge[2] * normal.x + ref.edge[3] * normal.y
     const maxProj = Math.max(proj0, proj1)
 
+    manifold.contactPoints = []
+    manifold.ref = ref
+    manifold.inc = inc
+
     for (let i = 0; i < finalClipping.count; i += 2) {
       const pointId = i >> 1
       const pointX = finalClipping.points[i]
       const pointY = finalClipping.points[i + 1]
       const minProj = pointX * normal.x + pointY * normal.y
 
-      contactPoints.push({
+      manifold.contactPoints.push({
         id: `${ref.id}-${inc.id},${pointId}`,
         pointX,
         pointY,
@@ -120,11 +109,7 @@ export default class Collision {
       })
     }
 
-    return {
-      ref,
-      inc,
-      contactPoints
-    }
+    return manifold
   }
   #clipEdge(inc, startX, startY, dirX, dirY, isClip = false) {
     const points = new Float32Array(4)
@@ -206,7 +191,7 @@ export default class Collision {
 
     return { edge, id }
   }
-  #EPA(vertsA, vertsB, simplex, dir) {
+  #EPA(vertsA, vertsB, simplex, dir, manifold = {}) {
     while (true) {
       let minDot = Infinity
       let index = 0
@@ -245,24 +230,22 @@ export default class Collision {
       const dot = this.#vectors.at(support).dot(dir)
 
       if (dot - minDot <= 1e-3) {
-        const polytope = new Float32Array(simplex.length << 1)
+        manifold.polytope = new Float32Array(simplex.length << 1)
+        manifold.normal = dir
+        manifold.overlap = minDot
 
         for (let i = 0; i < simplex.length; ++i) {
           const v = simplex[i]
 
-          polytope[i << 1] = this.#vectors.at(v).x
-          polytope[(i << 1) + 1] = this.#vectors.at(v).y
+          manifold.polytope[i << 1] = this.#vectors.at(v).x
+          manifold.polytope[(i << 1) + 1] = this.#vectors.at(v).y
 
           this.#vectors.deallocate(v)
         }
 
         this.#vectors.deallocate(support)
 
-        return {
-          normal: dir,
-          overlap: minDot,
-          polytope
-        }
+        return manifold
       }
 
       simplex.splice(index, 0, support)

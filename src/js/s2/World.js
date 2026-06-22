@@ -19,7 +19,7 @@ export default class World {
     this.#contacts = new Map()
     this.#contactKeys = []
     this.#contactsOld = new Map()
-    this.#contactSolver = new ContactSolver()
+    this.#contactSolver = new ContactSolver(option)
     this.#dynamicTree = new DynamicTree()
     this.#collision = new Collision()
     this.#nearby = []
@@ -194,7 +194,7 @@ export default class World {
         this.#contactSolver.warmStart(newContact)
       }
 
-      // PGS Solve
+      // Solve
       for (let i = 0; i < this.iterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
           const contact = this.#contacts.get(this.#contactKeys[j])

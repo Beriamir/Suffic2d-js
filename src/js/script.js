@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", _ => {
   const world = new s2.World({
     gravity: { x: 0, y: 1000 * 0.981 },
     substeps: 2,
-    iterations: 4
+    iterations: 4,
+    enableBlock: false
   })
 
   const debugs = {
@@ -183,7 +184,9 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   function simulate(dt) {
     world.simulate(dt)
-    for (const body of world.bodies) {
+    for (let i = 0; i < world.bodies.length; ++i) {
+      const body = world.bodies[i]
+
       if (body.position.y > canvas.height * 2) {
         world.destroyRigidBody(body)
       }
@@ -194,7 +197,8 @@ document.addEventListener("DOMContentLoaded", _ => {
     const debugColor = "lightgray"
 
     gfx.clear(0, 0, canvas.width, canvas.height)
-    for (const body of world.bodies) {
+    for (let i = 0; i < world.bodies.length; ++i) {
+      const body = world.bodies[i]
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
@@ -211,7 +215,8 @@ document.addEventListener("DOMContentLoaded", _ => {
     }
 
     if (debugs.aabb) {
-      for (const body of world.bodies) {
+      for (let i = 0; i < world.bodies.length; ++i) {
+        const body = world.bodies[i]
         gfx.drawAABB(body.aabb, {
           strokeColor: debugColor,
           wireframe: true
@@ -228,7 +233,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       })
     }
 
-    for (const key of world.contactKeys) {
+    for (let i = 0; i < world.contactKeys.length; ++i) {
+      const key = world.contactKeys[i]
       const contact = world.contacts.get(key)
       const {
         bodyA,
@@ -324,9 +330,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       if (accu >= step) {
         accu = 0
         simulate(step)
+        render(gfx, step)
       }
-
-      render(gfx, step)
 
       stats.fps = 1 / dt
       stats.bodies = world.bodies.length

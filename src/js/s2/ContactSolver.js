@@ -4,7 +4,7 @@ export default class ContactSolver {
     this.hertz = option.hertz ?? 30
     this.slop = option.slop ?? 0.2
     this.restitutionThreashold = option.restitutionThreashold ?? 1
-    this.enableBlock = option.enableBlock ?? false
+    this.enableBlock = option.enableBlock ?? true
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -73,7 +73,7 @@ export default class ContactSolver {
       cp.persistent = false
 
       cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
-      cp.restitutionBias = -restitution * cp.vn
+      cp.restitutionBias = -restitution * cp.vn * biasCoeff
     }
 
     if (this.enableBlock && contactCount == 2) {
