@@ -4,9 +4,7 @@ import Vertices from "./Vertices.js"
 import ContactSolver from "./ContactSolver.js"
 import RigidBody from "./RigidBody.js"
 import Circle from "./Circle.js"
-import CollideCircleCircle from "./CollideCircleCircle.js"
-import CollidePolygonCircle from "./CollidePolygonCircle.js"
-import CollidePolygonPolygon from "./CollidePolygonPolygon.js"
+import Collider from "./Collider.js"
 
 export default class World {
   #bodies
@@ -16,10 +14,7 @@ export default class World {
   #contactSolver
   #dynamicTree
   #nearby
-
-  #collideCircleCircle
-  #collidePolygonCircle
-  #collidePolygonPolygon
+  #collider
   constructor(option = {}) {
     this.#bodies = []
     this.#contacts = new Map()
@@ -28,10 +23,7 @@ export default class World {
     this.#contactSolver = new ContactSolver(option)
     this.#dynamicTree = new DynamicTree()
     this.#nearby = []
-
-    this.#collideCircleCircle = new CollideCircleCircle()
-    this.#collidePolygonCircle = new CollidePolygonCircle()
-    this.#collidePolygonPolygon = new CollidePolygonPolygon()
+    this.#collider = new Collider()
 
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
@@ -110,59 +102,34 @@ export default class World {
           const bodyB = this.#nearby[j]
           const idB = bodyB.id
 
-          if (idA >= idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
+          if (idA === idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
             continue
           }
 
           for (const sA of bodyA.fixtures) {
             for (const sB of bodyB.fixtures) {
-              // Narrowphase
-              // TODO: Use a dispatcher?
-              let manifold = null
+              const key =
+                idA < idB
+                  ? `${idA}-${sA.id},${idB}-${sB.id}`
+                  : `${idB}-${sB.id},${idA}-${sA.id}`
 
-              if (sA.type === "circle" && sB.type === "circle") {
-                manifold = this.#collideCircleCircle.collide(
-                  bodyA,
-                  sA,
-                  bodyB,
-                  sB
-                )
-              } else if (sA.type === "circle" && sB.type === "polygon") {
-                manifold = this.#collidePolygonCircle.collide(
-                  bodyB,
-                  sB,
-                  bodyA,
-                  sA
-                )
-              } else if (sA.type === "polygon" && sB.type === "circle") {
-                manifold = this.#collidePolygonCircle.collide(
-                  bodyA,
-                  sA,
-                  bodyB,
-                  sB
-                )
-              } else if (sA.type === "polygon" && sB.type === "polygon") {
-                manifold = this.#collidePolygonPolygon.collide(
-                  bodyA,
-                  sA,
-                  bodyB,
-                  sB
-                )
+              if (this.#contacts.has(key)) {
+                continue
               }
+
+              // Narrowphase
+              const manifold = this.#collider.collide(bodyA, sA, bodyB, sB)
 
               if (!manifold) {
                 continue
               }
 
-              const key = `${idA}-${sA.id},${idB}-${sB.id}`
-              const newContact = {
+              this.#contactKeys.push(key)
+              this.#contacts.set(key, {
                 bodyA,
                 bodyB,
                 manifold
-              }
-
-              this.#contacts.set(key, newContact)
-              this.#contactKeys.push(key)
+              })
             }
           }
         }

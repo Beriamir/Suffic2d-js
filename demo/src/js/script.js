@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         columns: 4,
         rows: 12,
         radius: 25,
-        spacing: 5,
+        spacing: 0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 75,
         restitution: 0.0,
