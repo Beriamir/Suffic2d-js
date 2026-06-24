@@ -30,91 +30,6 @@ export default {
       }
     )
   },
-  highMass(world, option = {}) {
-    const {
-      smallX = innerWidth / 2,
-      smallY = innerHeight,
-      smallWidth = 40,
-      smallHeight = 40,
-      bigX = innerWidth / 2,
-      bigY = innerHeight,
-      bigWidth = 40,
-      bigHeight = 40,
-      friction = 0.3
-    } = option
-
-    const small = world.createRigidBody(smallX, smallY, 0, {
-      restitution: 0.0,
-      friction
-    })
-    const big = world.createRigidBody(bigX, bigY, 0, {
-      restitution: 0.0,
-      friction
-    })
-
-    small.createPolygon(
-      new Float32Array([
-        -smallWidth,
-        -smallHeight,
-        smallWidth,
-        -smallHeight,
-        smallWidth,
-        smallHeight,
-        -smallWidth,
-        smallHeight
-      ])
-    )
-
-    big.createPolygon(
-      new Float32Array([
-        -bigWidth,
-        -bigHeight,
-        bigWidth,
-        -bigHeight,
-        bigWidth,
-        bigHeight,
-        -bigWidth,
-        bigHeight
-      ])
-    )
-  },
-  jenga(world, option = {}) {
-    const {
-      levels = 18,
-      width = 80,
-      height = 20,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight,
-      restitution = 0.0,
-      friction = 0.3,
-      gap = 0.5
-    } = option
-
-    const hw = width / 2
-    const hh = height / 2
-    const blockSpacing = width + gap
-    let y = bottomY - hh
-
-    for (let level = 0; level < levels; ++level) {
-      const horizontal = (level & 1) === 0
-
-      if (level > 0) y -= height * 3
-
-      for (let block = -1; block <= 1; ++block) {
-        const offset = block * blockSpacing
-        const body = world.createRigidBody(
-          centerX + offset,
-          y,
-          horizontal ? 0 : Math.PI * 0.5,
-          { restitution, friction }
-        )
-
-        body.createPolygon(
-          new Float32Array([-hw, -hh, hw, -hh, hw, hh, -hw, hh])
-        )
-      }
-    }
-  },
   pyramid(world, option = {}) {
     const {
       rows = 15,
@@ -207,6 +122,78 @@ export default {
       }
     }
   },
+  circleStack(world, option = {}) {
+    const {
+      columns = 1,
+      rows = 20,
+      radius = 40,
+      spacing = 0,
+      centerX = innerWidth * 0.5,
+      bottomY = innerHeight,
+      restitution = 0.0,
+      friction = 0.3
+    } = option
+
+    const colStep = radius * 2 + spacing
+    const rowStep = radius * 2 + spacing
+    const startX = centerX - (columns - 1) * colStep * 0.5
+
+    for (let col = 0; col < columns; ++col) {
+      const x = startX + col * colStep
+
+      for (let row = 0; row < rows; ++row) {
+        const y = bottomY - radius - row * rowStep
+
+        const body = world.createRigidBody(x, y, 0, {
+          restitution,
+          friction,
+          isStatic: row === 0
+        })
+
+        body.createCircle(radius, {
+          fillColor: row === 0 ? "gray" : null,
+          strokeColor: row === 0 ? "dimgray" : null
+        })
+      }
+    }
+  },
+  jenga(world, option = {}) {
+    const {
+      levels = 18,
+      width = 80,
+      height = 20,
+      centerX = innerWidth * 0.5,
+      bottomY = innerHeight,
+      restitution = 0.0,
+      friction = 0.3,
+      gap = 0.5
+    } = option
+
+    const hw = width / 2
+    const hh = height / 2
+    const blockSpacing = width + gap
+    let y = bottomY - hh
+
+    for (let level = 0; level < levels; ++level) {
+      const horizontal = (level & 1) === 0
+
+      if (level > 0) y -= height * 3
+
+      for (let block = -1; block <= 1; ++block) {
+        const offset = block * blockSpacing
+        const body = world.createRigidBody(
+          centerX + offset,
+          y,
+          horizontal ? 0 : Math.PI * 0.5,
+          { restitution, friction }
+        )
+
+        body.createPolygon(
+          new Float32Array([-hw, -hh, hw, -hh, hw, hh, -hw, hh])
+        )
+      }
+    }
+  },
   restitution(world, option = {}) {
     const {
       startX = innerWidth / 2 - 300,
@@ -214,15 +201,59 @@ export default {
       spacing = 120
     } = option
 
-    const values = [0, 0.25, 0.5, 0.75, 0.9]
+    const values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     for (let i = 0; i < values.length; i++) {
       const body = world.createRigidBody(startX + i * spacing, startY, 0, {
         restitution: values[i],
-        friction: 0
+        friction: 0.3
       })
 
-      body.createPolygon(new Float32Array([-25, -25, 25, -25, 25, 25, -25, 25]))
+      body.createPolygon(new Float32Array([-20, -40, 20, -40, 20, 40, -20, 40]))
+    }
+  },
+  friction(world, option) {
+    const {
+      startX = innerWidth / 2 - 300,
+      startY = 100,
+      spacing = 120,
+      rampX = 500,
+      rampY = 600,
+      rampWidth = innerWidth,
+      rampHeight = 10
+    } = option
+    const values = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+
+    const ramp = world.createRigidBody(rampX, rampY, 0.3, {
+      isStatic: true,
+      restitution: 1,
+      friction: 1
+    })
+
+    ramp.createPolygon(
+      new Float32Array([
+        -rampWidth,
+        -rampHeight,
+        rampWidth,
+        -rampHeight,
+        rampWidth,
+        rampHeight,
+        -rampWidth,
+        rampHeight
+      ]),
+      {
+        fillColor: "gray",
+        strokeColor: "dimgray"
+      }
+    )
+
+    for (let i = 0; i < values.length; i++) {
+      const body = world.createRigidBody(startX + i * spacing, startY, 0, {
+        restitution: 0,
+        friction: values[i]
+      })
+
+      body.createPolygon(new Float32Array([-20, -20, 20, -20, 20, 20, -20, 20]))
     }
   }
 }

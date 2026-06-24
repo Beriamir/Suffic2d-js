@@ -4,6 +4,7 @@ import Vertices from "./Vertices.js"
 import Collision from "./Collision.js"
 import ContactSolver from "./ContactSolver.js"
 import RigidBody from "./RigidBody.js"
+import Circle from "./Circle.js"
 
 export default class World {
   #bodies
@@ -85,14 +86,15 @@ export default class World {
     dt /= this.substeps
 
     for (let step = 0; step < this.substeps; ++step) {
-      // Collision detection
       this.#contacts.clear()
       this.#contactKeys.length = 0
 
+      // Collision detection
       for (let i = 0; i < this.#bodies.length; ++i) {
         const bodyA = this.#bodies[i]
         const idA = bodyA.id
 
+        // Broadphase
         this.#nearby.length = 0
         this.#dynamicTree.queryAABB(bodyA.aabb, this.#nearby)
 
@@ -105,33 +107,21 @@ export default class World {
           }
 
           for (const sA of bodyA.fixtures) {
-            sA.updateWorldVertices(
-              bodyA.position.x,
-              bodyA.position.y,
-              bodyA.cos,
-              bodyA.sin
-            )
-            sA.updateAABB()
-
             for (const sB of bodyB.fixtures) {
-              sB.updateWorldVertices(
-                bodyB.position.x,
-                bodyB.position.y,
-                bodyB.cos,
-                bodyB.sin
-              )
-              sB.updateAABB()
-
-              if (!sA.aabb.overlaps(sB.aabb)) {
-                continue
-              }
-
               // Narrowphase
-              const manifold = this.#collision.detect(
-                sA.worldVertices,
-                sB.worldVertices,
-                Vector.sub(bodyB.position, bodyA.position)
-              )
+              // TODO: Use a dispatcher?
+              let manifold = null
+
+              if (sA.type === "circle" && sB.type === "circle") {
+                manifold = this.#collision.circleToCircle(bodyA, sA, bodyB, sB)
+              } else if (sA.type === "polygon" && sB.type === "polygon") {
+                manifold = this.#collision.polygonToPolygon(
+                  bodyA,
+                  sA,
+                  bodyB,
+                  sB
+                )
+              }
 
               if (!manifold) {
                 continue
@@ -156,7 +146,8 @@ export default class World {
         return 0
       })
 
-      // Apply gravity
+      // TODO: Simulation Island?
+
       for (let i = 0; i < this.#bodies.length; ++i) {
         const body = this.#bodies[i]
 
@@ -207,12 +198,25 @@ export default class World {
       for (let i = 0; i < this.#bodies.length; ++i) {
         const body = this.#bodies[i]
 
-        if (body.isStatic) continue
+        if (!body.isStatic) {
+          body.position.addMulV(body.linearVelocity, dt)
+          body.rotation += body.angularVelocity * dt
 
-        body.position.addMulV(body.linearVelocity, dt)
-        body.rotation += body.angularVelocity * dt
-        body.updateAABB()
+          for (let j = 0; j < body.fixtures.length; ++j) {
+            const s = body.fixtures[j]
 
+            s.updateWorldVertices(
+              body.position.x,
+              body.position.y,
+              body.cos,
+              body.sin
+            )
+          }
+
+          body.updateAABB()
+        }
+
+        // TODO: Avoid inserting shapeless bodies into the tree?
         this.#dynamicTree.updateBody(body, 10)
       }
 

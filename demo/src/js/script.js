@@ -1,19 +1,19 @@
-import s2 from "./s2/s2.module.js"
-import Graphics from "./Graphics.js"
-import dat from "./lib/dat.gui.mjs"
+import s2 from "../../../src/js/suffic2d.js"
+import Graphics from "../../../lib/Graphics.js"
+import dat from "../../../lib/dat.gui.mjs"
 import scenes from "./scenes.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
   const canvas = document.getElementById("canvas")
   const guiEl = document.getElementById("gui")
 
-  const gfx = new Graphics(canvas, {}).setSize(800, 800)
+  const gfx = new Graphics(canvas, {}).setSize(1600, 900)
   const gui = new dat.GUI({
     autoPlace: false,
     hideable: true
   })
   const world = new s2.World({
-    gravity: { x: 0, y: 1000 * 0.981 },
+    gravity: { x: 0, y: 1000 },
     substeps: 2,
     iterations: 4,
     enableBlock: true
@@ -36,51 +36,14 @@ document.addEventListener("DOMContentLoaded", _ => {
     joints: 0
   }
 
-  // 60 FPS recording
-  const stream = canvas.captureStream(60)
-  const recorder = new MediaRecorder(stream, {
-    mimeType: "video/webm"
-  })
-  const chunks = []
-
-  recorder.ondataavailable = e => {
-    chunks.push(e.data)
-  }
-
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, {
-      type: "video/webm"
-    })
-
-    const url = URL.createObjectURL(blob)
-
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "simulation.webm"
-    a.click()
-  }
-
-  const recordings = {
-    start() {
-      recorder.start()
-    },
-    stop() {
-      recorder.stop()
-    }
-  }
-  const recordFol = gui.addFolder("Recordings")
-
-  recordFol.add(recordings, "start")
-  recordFol.add(recordings, "stop")
-
   const switchScenes = {
     pyramid() {
       world.clear()
       scenes.spawnGround(world, {
         x: canvas.width / 2,
-        y: canvas.height,
-        width: canvas.width / 2,
-        height: 50
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
       })
       scenes.pyramid(world, {
         rows: 15,
@@ -88,7 +51,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         boxHeight: 40,
         spacing: 0,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 50,
+        bottomY: canvas.height - 75,
         restitution: 0.0,
         friction: 0.3
       })
@@ -97,18 +60,37 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.clear()
       scenes.spawnGround(world, {
         x: canvas.width / 2,
-        y: canvas.height,
-        width: canvas.width / 2,
-        height: 50
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
       })
       scenes.boxStack(world, {
-        columns: 1,
+        columns: 4,
         rows: 12,
         boxWidth: 50,
         boxHeight: 50,
-        spacing: 10,
+        spacing: 0,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 50,
+        bottomY: canvas.height - 75,
+        restitution: 0.0,
+        friction: 0.3
+      })
+    },
+    circleStack() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
+      })
+      scenes.circleStack(world, {
+        columns: 4,
+        rows: 12,
+        radius: 25,
+        spacing: 0,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 75,
         restitution: 0.0,
         friction: 0.3
       })
@@ -117,52 +99,48 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.clear()
       scenes.spawnGround(world, {
         x: canvas.width / 2,
-        y: canvas.height,
-        width: canvas.width / 2,
-        height: 50
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
       })
       scenes.jenga(world, {
         levels: 13,
         width: 80,
         height: 20,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 50,
+        bottomY: canvas.height - 75,
         restitution: 0.0,
         friction: 0.5
-      })
-    },
-    highMass() {
-      world.clear()
-      scenes.spawnGround(world, {
-        x: canvas.width / 2,
-        y: canvas.height,
-        width: canvas.width / 2,
-        height: 50
-      })
-      scenes.highMass(world, {
-        smallX: canvas.width / 2,
-        smallY: canvas.height - 80,
-        smallWidth: 20,
-        smallHeight: 20,
-        bigX: canvas.width / 2,
-        bigY: canvas.height - 230,
-        bigWidth: 100,
-        bigHeight: 100,
-        friction: 0.2
       })
     },
     restitution() {
       world.clear()
       scenes.spawnGround(world, {
         x: canvas.width / 2,
-        y: canvas.height,
-        width: canvas.width / 2,
-        height: 50
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
       })
       scenes.restitution(world, {
-        startX: canvas.width / 2 - 300,
-        startY: canvas.height / 2,
+        startX: canvas.width * 0.2,
+        startY: canvas.height / 2 - 25,
         spacing: 120
+      })
+    },
+    friction() {
+      world.clear()
+      scenes.spawnGround(world, {
+        x: canvas.width / 2,
+        y: canvas.height - 50,
+        width: canvas.width * 0.4,
+        height: 25
+      })
+      scenes.friction(world, {
+        startX: canvas.width * 0.1,
+        startY: canvas.height / 2 - 25,
+        spacing: 60,
+        rampWidth: canvas.width * 0.25,
+        rampHeight: 10
       })
     }
   }
@@ -181,15 +159,16 @@ document.addEventListener("DOMContentLoaded", _ => {
   perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
   perimetersFol.add(world, "iterations", 1, 10, 1).name("Iterations")
 
-  statsFol.open()
-  debugsFol.open()
-  perimetersFol.open()
+  // statsFol.open()
+  // debugsFol.open()
+  // perimetersFol.open()
 
   gui.add(switchScenes, "pyramid")
   gui.add(switchScenes, "boxStack").name("box stacks")
+  gui.add(switchScenes, "circleStack").name("circle stacks")
   gui.add(switchScenes, "jenga")
-  gui.add(switchScenes, "highMass").name("high mass")
   gui.add(switchScenes, "restitution").name("restitution")
+  gui.add(switchScenes, "friction").name("friction")
 
   guiEl.appendChild(gui.domElement)
 
@@ -217,15 +196,34 @@ document.addEventListener("DOMContentLoaded", _ => {
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
-        gfx.drawPolygon(position.x, position.y, cos, sin, {
-          offsetX: s.offset.x,
-          offsetY: s.offset.y,
-          vertices: s.vertices,
-          fillColor: body.isSleeping ? "gray" : s.fillColor,
-          strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
-          wireframe: debugs.wireframe,
-          noStroke: !debugs.wireframe
-        })
+        switch (s.type) {
+          case "polygon":
+            gfx.drawPolygon(position.x, position.y, cos, sin, {
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
+              vertices: s.vertices,
+              fillColor: body.isSleeping ? "gray" : s.fillColor,
+              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              wireframe: debugs.wireframe,
+              noStroke: !debugs.wireframe
+            })
+            break
+
+          case "circle":
+            gfx.drawCircle(position.x, position.y, cos, sin, {
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
+              radius: s.radius,
+              fillColor: body.isSleeping ? "gray" : s.fillColor,
+              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              wireframe: debugs.wireframe,
+              noStroke: !debugs.wireframe
+            })
+            break
+
+          default:
+            break
+        }
       }
     }
 
@@ -254,7 +252,17 @@ document.addEventListener("DOMContentLoaded", _ => {
       const {
         bodyA,
         bodyB,
-        manifold: { normal, overlap, polytope, contactPoints, ref, inc }
+        manifold: {
+          normal,
+          overlap,
+          polytope,
+          dirX,
+          dirY,
+          radius,
+          contactPoints,
+          ref,
+          inc
+        }
       } = contact
 
       const originX = canvas.width * 0.5
@@ -267,11 +275,20 @@ document.addEventListener("DOMContentLoaded", _ => {
       mtv[3] = normal.y * overlap
 
       if (debugs.epa) {
-        gfx.drawPolygon(originX, originY, 1, 0, {
-          vertices: polytope,
-          wireframe: true,
-          strokeColor: debugColor
-        })
+        if (polytope) {
+          gfx.drawPolygon(originX, originY, 1, 0, {
+            vertices: polytope,
+            wireframe: true,
+            strokeColor: debugColor
+          })
+        } else {
+          gfx.drawCircle(originX + dirX, originY + dirY, 1, 0, {
+            radius: radius,
+            wireframe: true,
+            noLine: true,
+            strokeColor: debugColor
+          })
+        }
         gfx.drawLine(originX, originY, 1, 0, {
           vertices: mtv,
           strokeColor: debugColor
@@ -283,14 +300,14 @@ document.addEventListener("DOMContentLoaded", _ => {
         })
       }
 
-      if (debugs.ref) {
+      if (debugs.ref && ref) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: ref.edge,
           strokeColor: debugColor
         })
       }
 
-      if (debugs.inc) {
+      if (debugs.inc && inc) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: inc.edge,
           strokeColor: debugColor

@@ -1,10 +1,10 @@
 export default class ContactSolver {
   constructor(option = {}) {
-    this.zeta = option.zeta ?? 20
+    this.zeta = option.zeta ?? 10
     this.hertz = option.hertz ?? 30
-    this.slop = option.slop ?? 0.2
-    this.restitutionThreashold = option.restitutionThreashold ?? 1
-    this.enableBlock = option.enableBlock ?? true
+    this.baumgarteSlop = option.baumgarteSlop ?? 0.2
+    this.restitutionSlop = option.restitutionSlop ?? 20
+    this.enableBlock = option.enableBlock ?? false
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -72,9 +72,9 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      cp.baumgarteBias = Math.max(cp.overlap - this.slop, 0) * biasCoeff
-      cp.restitutionBias =
-        -restitution * Math.min(cp.vn, -this.restitutionThreashold)
+      cp.baumgarteBias =
+        Math.max(cp.overlap - this.baumgarteSlop, 0) * biasCoeff
+      cp.restitutionBias = -restitution * cp.vn
     }
 
     if (this.enableBlock && contactCount == 2) {
@@ -90,6 +90,7 @@ export default class ContactSolver {
       const kn22 = mA + mB + rn2A * rn2A * iA + rn2B * rn2B * iB
       const kn12 = mA + mB + rn1A * rn2A * iA + rn1B * rn2B * iB
 
+      // Ensure a reasonable condition number. - Erin
       const kMaxConditionNumber = 1000
       const det = kn11 * kn22 - kn12 * kn12
 
@@ -105,6 +106,7 @@ export default class ContactSolver {
         manifold.invknC = -kn12 * invDet
         manifold.invknD = kn11 * invDet
       } else {
+        // The constraints are redundant, just use one. - Erin
         const cp = cp1.overlap > cp2.overlap ? cp1 : cp2
 
         contactPoints.length = 1
@@ -151,6 +153,7 @@ export default class ContactSolver {
       normal,
       tangentX,
       tangentY,
+      restitution,
       friction,
       contactPoints,
       contactCount
@@ -181,8 +184,8 @@ export default class ContactSolver {
           baumgarteBias = cp.baumgarteBias
         }
 
-        if (cp.vn < -this.restitutionThreashold) {
-          restitutionBias = cp.restitutionBias
+        if (cp.vn < -this.restitutionSlop) {
+          restitutionBias = cp.restitutionBias - vn * restitution
         }
 
         const velBias = Math.max(baumgarteBias, restitutionBias)
@@ -216,8 +219,8 @@ export default class ContactSolver {
           baumgarteBias = cp.baumgarteBias
         }
 
-        if (cp.vn < -this.restitutionThreashold) {
-          restitutionBias = cp.restitutionBias
+        if (cp.vn < -this.restitutionSlop) {
+          restitutionBias = cp.restitutionBias - vn * restitution
         }
 
         const velBias = Math.max(baumgarteBias, restitutionBias)
@@ -258,12 +261,12 @@ export default class ContactSolver {
         let restitutionBias1 = 0
         let restitutionBias2 = 0
 
-        if (cp1.vn < -this.restitutionThreashold) {
-          restitutionBias1 = cp1.restitutionBias
+        if (cp1.vn < -this.restitutionSlop) {
+          restitutionBias1 = cp1.restitutionBias - vn1 * restitution
         }
 
-        if (cp2.vn < -this.restitutionThreashold) {
-          restitutionBias2 = cp2.restitutionBias
+        if (cp2.vn < -this.restitutionSlop) {
+          restitutionBias2 = cp2.restitutionBias - vn2 * restitution
         }
 
         const vBias1 = Math.max(baumgarteBias1, restitutionBias1)
@@ -272,7 +275,7 @@ export default class ContactSolver {
         const aX = cp1.normalImpulse
         const aY = cp2.normalImpulse
 
-        // Compute rhs
+        // Compute the right hand side b
         let bX = vn1 - vBias1
         let bY = vn2 - vBias2
 
@@ -441,7 +444,7 @@ export default class ContactSolver {
             break
           }
 
-          // "No solution, give up. This is hit sometimes, but it doesn't seem to matter."
+          // No solution, give up. This is hit sometimes, but it doesn't seem to matter. - Erin
           break
         }
       }

@@ -1,6 +1,7 @@
 import Vector from "./Vector.js"
 import AABB from "./AABB.js"
 import Polygon from "./Polygon.js"
+import Circle from './Circle.js'
 
 export default class RigidBody {
   #rot
@@ -54,6 +55,12 @@ export default class RigidBody {
 
     this.fixtures.push(shape)
     shape.index = this.fixtures.length - 1
+    shape.updateWorldVertices(
+      this.position.x,
+      this.position.y,
+      this.cos,
+      this.sin
+    )
 
     this.updateMass()
     this.updateAABB()
@@ -133,25 +140,16 @@ export default class RigidBody {
   }
 
   updateAABB() {
-    const aabb = this.aabb
-    const cos = this.cos
-    const sin = this.sin
-
-    aabb.set(Infinity, Infinity, -Infinity, -Infinity)
+    this.aabb.set(Infinity, Infinity, -Infinity, -Infinity)
 
     for (const s of this.fixtures) {
-      for (let i = 0; i < s.vertices.length; i += 2) {
-        const x0 = s.offset.x + s.vertices[i]
-        const y0 = s.offset.y + s.vertices[i + 1]
-        const x1 = this.position.x + (x0 * cos - y0 * sin)
-        const y1 = this.position.y + (x0 * sin + y0 * cos)
-
-        if (x1 < aabb.minX) aabb.minX = x1
-        if (y1 < aabb.minY) aabb.minY = y1
-        if (x1 > aabb.maxX) aabb.maxX = x1
-        if (y1 > aabb.maxY) aabb.maxY = y1
-      }
+      if (s.aabb.minX < this.aabb.minX) this.aabb.minX = s.aabb.minX
+      if (s.aabb.minY < this.aabb.minY) this.aabb.minY = s.aabb.minY
+      if (s.aabb.maxX > this.aabb.maxX) this.aabb.maxX = s.aabb.maxX
+      if (s.aabb.maxY > this.aabb.maxY) this.aabb.maxY = s.aabb.maxY
     }
+
+    return this.aabb
   }
 
   createPolygon(vertices, option = {}) {
@@ -159,5 +157,12 @@ export default class RigidBody {
 
     this.createFixture(polygon)
     return polygon
+  }
+
+  createCircle(radius, option = {}) {
+    const circle = new Circle(radius, option)
+
+    this.createFixture(circle)
+    return circle
   }
 }

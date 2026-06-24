@@ -3,6 +3,7 @@ import Vertices from "./Vertices.js"
 import AABB from "./AABB.js"
 
 export default class Polygon {
+  #rot
   static #uid = 0
   constructor(vertices, options = {}) {
     this.id = Polygon.#uid++
@@ -10,17 +11,11 @@ export default class Polygon {
     this.vertices = vertices // local
     this.worldVertices = new Float32Array(vertices)
     this.offset = options.offset ?? new Vector()
-    this.rotation = options.rotation ?? 0
-    this.cos = Math.cos(this.rotation)
-    this.sin = Math.sin(this.rotation)
+    this.#rot = options.rotation ?? 0
+    this.cos = Math.cos(this.#rot)
+    this.sin = Math.sin(this.#rot)
 
-    for (let i = 0; i < this.vertices.length; i += 2) {
-      const x0 = this.vertices[i]
-      const y0 = this.vertices[i + 1]
-
-      this.vertices[i] = x0 * this.cos - y0 * this.sin
-      this.vertices[i + 1] = x0 * this.sin + y0 * this.cos
-    }
+    Vertices.rotate(this.vertices, this.cos, this.sin)
 
     this.density = options.density ?? 1
     this.thickness = options.thickness ?? 1
@@ -34,6 +29,16 @@ export default class Polygon {
 
     this.aabb = new AABB()
   }
+
+  set rotation(value) {
+    this.#rot = value
+    this.cos = Math.cos(this.#rot)
+    this.sin = Math.sin(this.#rot)
+  }
+  get rotation() {
+    return this.#rot
+  }
+
   updateWorldVertices(x, y, cos, sin) {
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.offset.x + this.vertices[i]
@@ -42,9 +47,9 @@ export default class Polygon {
       this.worldVertices[i] = x + (x0 * cos - y0 * sin)
       this.worldVertices[i + 1] = y + (x0 * sin + y0 * cos)
     }
-
-    return this.worldVertices
+    this.updateAABB()
   }
+
   updateAABB() {
     this.aabb.set(Infinity, Infinity, -Infinity, -Infinity)
 
@@ -59,21 +64,5 @@ export default class Polygon {
     }
 
     return this.aabb
-  }
-  rotate(angle) {
-    this.rotation += angle
-    this.cos = Math.cos(this.rotation)
-    this.sin = Math.sin(this.rotation)
-
-    for (let i = 0; i < this.vertices.length; i += 2) {
-      const x0 = this.vertices[i]
-      const y0 = this.vertices[i + 1]
-
-      this.vertices[i] = x0 * this.cos - y0 * this.sin
-      this.vertices[i + 1] = x0 * this.sin + y0 * this.cos
-    }
-  }
-  translate(vector, s = 1) {
-    this.offset.addMulV(vector, s)
   }
 }

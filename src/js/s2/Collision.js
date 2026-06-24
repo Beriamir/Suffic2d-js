@@ -8,23 +8,99 @@ export default class Collision {
     this.#simplex = []
     this.#vectors = new Pool(() => new Vector(), 16)
   }
-  detect(vertsA, vertsB, dir, manifold = {}) {
-    if (dir.isZero()) {
-      dir.set(1, 0)
+
+  circleToCircle(bodyA, sA, bodyB, sB, manifold = {}) {
+    if (!sA.aabb.overlaps(sB.aabb)) {
+      return null
+    }
+
+    const dir = this.#vectors.allocate()
+
+    this.#vectors.at(dir).x = bodyB.position.x - bodyA.position.x
+    this.#vectors.at(dir).y = bodyB.position.y - bodyA.position.y
+
+    const magSq = this.#vectors.at(dir).magSq()
+    const radii = sA.radius + sB.radius
+
+    if (magSq == 0 || magSq >= radii * radii) {
+      this.#vectors.deallocate(dir)
+
+      return null
+    }
+
+    // polytope
+    manifold.dirX = this.#vectors.at(dir).x
+    manifold.dirY = this.#vectors.at(dir).y
+    manifold.radius = radii
+
+    const distance = Math.sqrt(magSq)
+    const invDistance = 1 / distance
+    const normal = Vector.scale(this.#vectors.at(dir), invDistance)
+    const overlap = radii - distance
+
+    manifold.normal = normal
+    manifold.overlap = overlap
+    manifold.contactPoints = [
+      {
+        id: `${sA.id}-${sB.id},0`,
+        pointX: bodyA.position.x + normal.x * sA.radius,
+        pointY: bodyA.position.y + normal.y * sA.radius,
+        overlap: overlap
+      }
+    ]
+
+    this.#vectors.deallocate(dir)
+
+    return manifold
+  }
+
+  polygonToCircle(bodyA, sA, bodyB, sB, manifold = {}) {
+    if (!sA.aabb.overlaps(sB.aabb)) {
+      return null
+    }
+  }
+
+  polygonToPolygon(bodyA, sA, bodyB, sB, manifold = {}) {
+    if (!sA.aabb.overlaps(sB.aabb)) {
+      return null
+    }
+
+    // Uses GJK to detect overlaps.
+    // EPA to compute penetration depth and collision normal.
+    // Sutherland–Hodgman clipping generates the contact points.
+    const dir = this.#vectors.allocate()
+
+    this.#vectors.at(dir).x = bodyB.position.x - bodyA.position.x
+    this.#vectors.at(dir).y = bodyB.position.y - bodyA.position.y
+
+    const verticesA = sA.worldVertices
+    const verticesB = sB.worldVertices
+
+    if (this.#vectors.at(dir).isZero()) {
+      this.#vectors.at(dir).set(1, 0)
     }
 
     this.#simplex.length = 0
-    this.#simplex.push(this.#getSupportPoint(vertsA, vertsB, dir))
-    dir.negate()
+    this.#simplex.push(
+      this.#getSupportPolygons(verticesA, verticesB, this.#vectors.at(dir))
+    )
+    this.#vectors.at(dir).negate()
 
     while (true) {
-      const support = this.#getSupportPoint(vertsA, vertsB, dir)
+      const support = this.#getSupportPolygons(
+        verticesA,
+        verticesB,
+        this.#vectors.at(dir)
+      )
 
-      if (this.#vectors.at(support).dot(dir) <= 0) {
+      // Does it contain the origin?
+      if (this.#vectors.at(support).dot(this.#vectors.at(dir)) <= 0) {
         this.#vectors.deallocate(support)
         for (let i = 0; i < this.#simplex.length; ++i) {
           this.#vectors.deallocate(this.#simplex[i])
         }
+
+        this.#vectors.deallocate(dir)
 
         return null
       }
@@ -32,22 +108,30 @@ export default class Collision {
       this.#simplex.push(support)
 
       if (this.#simplex.length === 2) {
-        this.#handleLineSimplex(this.#simplex, dir)
+        this.#handleLineSimplex(this.#simplex, this.#vectors.at(dir))
         continue
       }
 
-      if (this.#handleTriangleSimplex(this.#simplex, dir)) {
-        this.#EPA(vertsA, vertsB, this.#simplex, dir, manifold)
-        this.#getContactPoints(vertsA, vertsB, manifold)
+      if (this.#handleTriangleSimplex(this.#simplex, this.#vectors.at(dir))) {
+        this.#EPA(
+          verticesA,
+          verticesB,
+          this.#simplex,
+          this.#vectors.at(dir),
+          manifold
+        )
+        this.#getContactPoints(verticesA, verticesB, manifold)
+        this.#vectors.deallocate(dir)
 
         return manifold
       }
     }
   }
-  #getContactPoints(vertsA, vertsB, manifold) {
+
+  #getContactPoints(verticesA, verticesB, manifold) {
     const normal = manifold.normal
-    const ref = this.#bestEdge(vertsA, normal.x, normal.y)
-    const inc = this.#bestEdge(vertsB, -normal.x, -normal.y)
+    const ref = this.#bestEdge(verticesA, normal.x, normal.y)
+    const inc = this.#bestEdge(verticesB, -normal.x, -normal.y)
 
     const edgeDirX = ref.edge[2] - ref.edge[0]
     const edgeDirY = ref.edge[3] - ref.edge[1]
@@ -89,11 +173,11 @@ export default class Collision {
 
     const proj0 = ref.edge[0] * normal.x + ref.edge[1] * normal.y
     const proj1 = ref.edge[2] * normal.x + ref.edge[3] * normal.y
-    const maxProj = Math.max(proj0, proj1)
+    const maxProj = Math.max(proj0, proj1) // Should use the maximum
 
-    manifold.contactPoints = []
     manifold.ref = ref
     manifold.inc = inc
+    manifold.contactPoints = []
 
     for (let i = 0; i < finalClipping.count; i += 2) {
       const pointId = i >> 1
@@ -111,6 +195,7 @@ export default class Collision {
 
     return manifold
   }
+
   #clipEdge(inc, startX, startY, dirX, dirY, isClip = false) {
     const points = new Float32Array(4)
     const d0 = startX * dirX + startY * dirY
@@ -140,6 +225,7 @@ export default class Collision {
 
     return { points, count }
   }
+
   #bestEdge(vertices, dx, dy) {
     let bestDot = -Infinity
     let index = 0
@@ -191,7 +277,8 @@ export default class Collision {
 
     return { edge, id }
   }
-  #EPA(vertsA, vertsB, simplex, dir, manifold = {}) {
+
+  #EPA(verticesA, verticesB, simplex, dir, manifold = {}) {
     while (true) {
       let minDot = Infinity
       let index = 0
@@ -213,6 +300,7 @@ export default class Collision {
 
         let dot = this.#vectors.at(a).x * perpX + this.#vectors.at(a).y * perpY
 
+        // You'll thank this check later
         if (dot < 0) {
           dot = -dot
           perpX = -perpX
@@ -226,12 +314,12 @@ export default class Collision {
         }
       }
 
-      const support = this.#getSupportPoint(vertsA, vertsB, dir)
+      const support = this.#getSupportPolygons(verticesA, verticesB, dir)
       const dot = this.#vectors.at(support).dot(dir)
 
       if (dot - minDot <= 1e-3) {
         manifold.polytope = new Float32Array(simplex.length << 1)
-        manifold.normal = dir
+        manifold.normal = dir.clone()
         manifold.overlap = minDot
 
         for (let i = 0; i < simplex.length; ++i) {
@@ -251,6 +339,7 @@ export default class Collision {
       simplex.splice(index, 0, support)
     }
   }
+
   #handleTriangleSimplex(simplex, dir) {
     const [c, b, a] = simplex
 
@@ -332,6 +421,7 @@ export default class Collision {
     this.#vectors.deallocate(acPerp)
     return true
   }
+
   #handleLineSimplex(simplex, dir) {
     const [b, a] = simplex
 
@@ -364,6 +454,7 @@ export default class Collision {
     this.#vectors.deallocate(ao)
     this.#vectors.deallocate(abPerp)
   }
+
   #tripleProduct(u, v, w, out = new Vector()) {
     const dotWU = w.dot(u)
     const dotWV = w.dot(v)
@@ -372,35 +463,41 @@ export default class Collision {
     out.y = v.y * dotWU - u.y * dotWV
     return out
   }
-  #getSupportPoint(vertsA, vertsB, dir) {
-    let maxDotA = -Infinity
-    let indexA = 0
 
-    for (let i = 0; i < vertsA.length; i += 2) {
-      const dot = vertsA[i] * dir.x + vertsA[i + 1] * dir.y
+  #bestPoint(vertices, dx, dy) {
+    let bestDot = -Infinity
+    let bestInd = 0
 
-      if (dot > maxDotA) {
-        maxDotA = dot
-        indexA = i
-      }
-    }
+    for (let i = 0; i < vertices.length; i += 2) {
+      const dot = vertices[i] * dx + vertices[i + 1] * dy
 
-    let minDotB = Infinity
-    let indexB = 0
-
-    for (let i = 0; i < vertsB.length; i += 2) {
-      const dot = vertsB[i] * dir.x + vertsB[i + 1] * dir.y
-
-      if (dot < minDotB) {
-        minDotB = dot
-        indexB = i
+      if (dot > bestDot) {
+        bestDot = dot
+        bestInd = i
       }
     }
 
     const point = this.#vectors.allocate()
 
-    this.#vectors.at(point).x = vertsA[indexA] - vertsB[indexB]
-    this.#vectors.at(point).y = vertsA[indexA + 1] - vertsB[indexB + 1]
+    this.#vectors.at(point).x = vertices[bestInd]
+    this.#vectors.at(point).y = vertices[bestInd + 1]
+
+    return point
+  }
+
+  #getSupportPolygons(verticesA, verticesB, dir) {
+    const bestA = this.#bestPoint(verticesA, dir.x, dir.y)
+    const bestB = this.#bestPoint(verticesB, -dir.x, -dir.y)
+    const point = this.#vectors.allocate()
+
+    this.#vectors.at(point).x =
+      this.#vectors.at(bestA).x - this.#vectors.at(bestB).x
+    this.#vectors.at(point).y =
+      this.#vectors.at(bestA).y - this.#vectors.at(bestB).y
+
+    this.#vectors.deallocate(bestA)
+    this.#vectors.deallocate(bestB)
+
     return point
   }
 }

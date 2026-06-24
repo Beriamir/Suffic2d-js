@@ -1,5 +1,5 @@
-import Vector from './Vector.js'
-import AABB from './AABB.js'
+import Vector from "./Vector.js"
+import AABB from "./AABB.js"
 
 export default class Vertices {
   constructor() {}
@@ -17,6 +17,7 @@ export default class Vertices {
     }
     return area * 0.5
   }
+
   static getInertia(vertices, mass) {
     let numerator = 0
     let denomerator = 0
@@ -39,6 +40,7 @@ export default class Vertices {
 
     return (mass / 6) * (numerator / denomerator)
   }
+
   static getCentroid(vertices, out = new Vector()) {
     let area = 0
     let centroidX = 0
@@ -63,6 +65,7 @@ export default class Vertices {
 
     return out
   }
+
   static getMean(vertices, out = new Vector()) {
     let sumX = 0
     let sumY = 0
@@ -80,6 +83,7 @@ export default class Vertices {
 
     return out
   }
+
   static getAABB(vertices, out = new AABB()) {
     out.set(Infinity, Infinity, -Infinity, -Infinity)
 
@@ -95,29 +99,16 @@ export default class Vertices {
 
     return out
   }
-  static testPoint(pointX, pointY, vertices) {
-    const n = vertices.length
 
-    for (let i = 0; i < n; i += 2) {
-      const j = (i + 2) % n
-
+  static rotate(vertices, cos, sin) {
+    for (let i = 0; i < vertices.length; i += 2) {
       const x0 = vertices[i]
       const y0 = vertices[i + 1]
-      const x1 = vertices[j]
-      const y1 = vertices[j + 1]
 
-      const abX = x1 - x0
-      const abY = y1 - y0
-      const apX = pointX - x0
-      const apY = pointY - y0
-
-      const isOutside = abX * apY - abY * apX < 0
-
-      if (isOutside) {
-        return false
-      }
+      vertices[i] = x0 * cos - y0 * sin
+      vertices[i + 1] = x0 * sin + y0 * cos
     }
 
-    return true
+    return vertices
   }
 }

@@ -30,9 +30,29 @@ export default class DynamicTree {
       CD: 4
     }
   }
+
   get height() {
     return this.#nodes.at(this.#root).height
   }
+
+  // Greedy algorithm for sibling selection using the SAH
+  // We have three nodes A-(B,C) and want to add a leaf D, there are three choices.
+  // 1: make a new parent for A and D : E-(A-(B,C), D)
+  // 2: associate D with B
+  //   a: B is a leaf : A-(E-(B,D), C)
+  //   b: B is an internal node: A-(B{D},C)
+  // 3: associate D with C
+  //   a: C is a leaf : A-(B, E-(C,D))
+  //   b: C is an internal node: A-(B, C{D})
+  // All of these have a clear cost except when B or C is an internal node. Hence we need to be greedy.
+
+  // The cost for cases 1, 2a, and 3a can be computed using the sibling cost formula.
+  // cost of sibling H = area(union(H, D)) + increased are of ancestors
+
+  // Suppose B (or C) is an internal node, then the lowest cost would be one of two cases:
+  // case1: D becomes a sibling of B
+  // case2: D becomes a descendant of B along with a new internal node of area(D).
+  // - Erin
   #findBestSibling(node) {
     let sibling = this.#root
     let siblingArea = this.#nodes.at(sibling).aabb.perimeter
@@ -42,9 +62,10 @@ export default class DynamicTree {
       .at(sibling)
       .aabb.unionPerimeter(this.#nodes.at(node).aabb)
 
-    let bestSibling = sibling // We need to find the best sibling
+    let bestSibling = sibling
     let bestCost = directCost
 
+    // Descend the tree from root, following a single greedy path. - Erin
     while (this.#nodes.at(sibling).height > 0) {
       const cost = directCost + inheritedCost
 
@@ -111,6 +132,7 @@ export default class DynamicTree {
         break
       }
 
+      // Can the cost possibly be decreased? - Erin
       if (bestCost <= lowerCost1 && bestCost <= lowerCost2) {
         break
       }
@@ -147,6 +169,8 @@ export default class DynamicTree {
 
     return bestSibling
   }
+
+  // Perform a left or right rotation if node A is imbalanced. - Erin
   #rotate(node) {
     if (this.#nodes.at(node).height < 2) {
       return
@@ -426,9 +450,13 @@ export default class DynamicTree {
       return
     }
 
+    // Stage 1 find the best sibling
     const sibling = this.#findBestSibling(node)
+
+    // Stage 2 create a new parent
     const oldParent = this.#nodes.at(sibling).parent
     const newParent = this.#nodes.allocate()
+
     this.#nodes.at(newParent).parent = oldParent
     this.#nodes.at(newParent).child1 = sibling
     this.#nodes.at(newParent).child2 = node
@@ -437,7 +465,7 @@ export default class DynamicTree {
     this.#nodes.at(node).parent = newParent
 
     if (oldParent === null) {
-      this.#root = newParent
+      this.#root = newParent // The sibling was the root
     } else {
       if (this.#nodes.at(oldParent).child1 === sibling) {
         this.#nodes.at(oldParent).child1 = newParent
@@ -446,7 +474,7 @@ export default class DynamicTree {
       }
     }
 
-    // Refit
+    // Stage 3 walk back up the tree fixing heights and AABBs
     let ancestor = newParent
 
     while (ancestor !== null) {
