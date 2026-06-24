@@ -3,7 +3,7 @@ export default class ContactSolver {
     this.zeta = option.zeta ?? 10
     this.hertz = option.hertz ?? 30
     this.baumgarteSlop = option.baumgarteSlop ?? 0.2
-    this.restitutionSlop = option.restitutionSlop ?? 20
+    this.restitutionSlop = option.restitutionSlop ?? 100
     this.enableBlock = option.enableBlock ?? false
   }
   prepare(contact, dt) {
@@ -185,10 +185,10 @@ export default class ContactSolver {
         }
 
         if (cp.vn < -this.restitutionSlop) {
-          restitutionBias = cp.restitutionBias - vn * restitution
+          restitutionBias = cp.restitutionBias
         }
 
-        const velBias = Math.max(baumgarteBias, restitutionBias)
+        const velBias = baumgarteBias + restitutionBias
         let impulse = -cp.effNormalMass * (vn - velBias)
 
         const oldImpulse = cp.normalImpulse
@@ -220,10 +220,10 @@ export default class ContactSolver {
         }
 
         if (cp.vn < -this.restitutionSlop) {
-          restitutionBias = cp.restitutionBias - vn * restitution
+          restitutionBias = cp.restitutionBias
         }
 
-        const velBias = Math.max(baumgarteBias, restitutionBias)
+        const velBias = baumgarteBias + restitutionBias
         let impulse = -cp.effNormalMass * (vn - velBias)
 
         const oldImpulse = cp.normalImpulse
@@ -262,15 +262,15 @@ export default class ContactSolver {
         let restitutionBias2 = 0
 
         if (cp1.vn < -this.restitutionSlop) {
-          restitutionBias1 = cp1.restitutionBias - vn1 * restitution
+          restitutionBias1 = cp1.restitutionBias
         }
 
         if (cp2.vn < -this.restitutionSlop) {
-          restitutionBias2 = cp2.restitutionBias - vn2 * restitution
+          restitutionBias2 = cp2.restitutionBias
         }
 
-        const vBias1 = Math.max(baumgarteBias1, restitutionBias1)
-        const vBias2 = Math.max(baumgarteBias2, restitutionBias2)
+        const vBias1 = baumgarteBias1 + restitutionBias1
+        const vBias2 = baumgarteBias2 + restitutionBias2
 
         const aX = cp1.normalImpulse
         const aY = cp2.normalImpulse
