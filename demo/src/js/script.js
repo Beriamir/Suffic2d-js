@@ -39,13 +39,13 @@ document.addEventListener("DOMContentLoaded", _ => {
   const switchScenes = {
     pyramid() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.pyramid(world, {
+      scenes.pyramid(s2, world, {
         rows: 15,
         boxWidth: 40,
         boxHeight: 40,
@@ -58,13 +58,13 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     boxStack() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.boxStack(world, {
+      scenes.boxStack(s2, world, {
         columns: 4,
         rows: 12,
         boxWidth: 50,
@@ -78,13 +78,13 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     circleStack() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.circleStack(world, {
+      scenes.circleStack(s2, world, {
         columns: 4,
         rows: 12,
         radius: 25,
@@ -97,13 +97,13 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     jenga() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.jenga(world, {
+      scenes.jenga(s2, world, {
         levels: 13,
         width: 80,
         height: 20,
@@ -116,13 +116,13 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     restitution() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.restitution(world, {
+      scenes.restitution(s2, world, {
         startX: canvas.width * 0.2,
         startY: canvas.height / 2 - 25,
         spacing: 120
@@ -130,13 +130,13 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     friction() {
       world.clear()
-      scenes.spawnGround(world, {
+      scenes.spawnGround(s2, world, {
         x: canvas.width / 2,
         y: canvas.height - 50,
         width: canvas.width * 0.4,
         height: 25
       })
-      scenes.friction(world, {
+      scenes.friction(s2, world, {
         startX: canvas.width * 0.1,
         startY: canvas.height / 2 - 25,
         spacing: 60,
@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const body = world.bodies[i]
 
       if (body.position.y > canvas.height * 2) {
-        world.destroyRigidBody(body)
+        world.destroyBody(body)
       }
     }
   }

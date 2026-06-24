@@ -48,13 +48,15 @@ export default class World {
 
   clear() {
     for (let i = 0; i < this.#bodies.length; ++i) {
-      this.destroyRigidBody(this.#bodies[i])
+      this.destroyBody(this.#bodies[i])
       --i
     }
   }
 
-  createRigidBody(x, y, rot, option = {}) {
-    const body = new RigidBody(x, y, rot, option)
+  createBody(body) {
+    if (body.index >= 0) {
+      return body
+    }
 
     this.#dynamicTree.insertBody(body, 10)
     this.#bodies.push(body)
@@ -63,11 +65,13 @@ export default class World {
     return body
   }
 
-  destroyRigidBody(body) {
+  destroyBody(body) {
     const index = body.index
     const last = this.#bodies.length - 1
 
-    if (index < 0 || index > last) return
+    if (index < 0 || index > last) {
+      return body
+    }
 
     this.#dynamicTree.removeBody(body)
 
@@ -192,25 +196,23 @@ export default class World {
       for (let i = 0; i < this.#bodies.length; ++i) {
         const body = this.#bodies[i]
 
-        if (!body.isStatic) {
-          body.position.addMulV(body.linearVelocity, dt)
-          body.rotation += body.angularVelocity * dt
+        if (body.isStatic) continue
 
-          for (let j = 0; j < body.fixtures.length; ++j) {
-            const s = body.fixtures[j]
+        body.position.addMulV(body.linearVelocity, dt)
+        body.rotation += body.angularVelocity * dt
 
-            s.updateWorldVertices(
-              body.position.x,
-              body.position.y,
-              body.cos,
-              body.sin
-            )
-          }
+        for (let j = 0; j < body.fixtures.length; ++j) {
+          const s = body.fixtures[j]
 
-          body.updateAABB()
+          s.updateWorldVertices(
+            body.position.x,
+            body.position.y,
+            body.cos,
+            body.sin
+          )
         }
 
-        // TODO: Avoid inserting shapeless bodies into the tree?
+        body.updateAABB()
         this.#dynamicTree.updateBody(body, 10)
       }
 
