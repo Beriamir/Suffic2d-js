@@ -146,14 +146,10 @@ export default {
 
         const body = world.createRigidBody(x, y, 0, {
           restitution,
-          friction,
-          // isStatic: row === 0
+          friction
         })
 
-        body.createCircle(radius, {
-          // fillColor: row === 0 ? "gray" : null,
-          // strokeColor: row === 0 ? "dimgray" : null
-        })
+        body.createCircle(radius, {})
       }
     }
   },

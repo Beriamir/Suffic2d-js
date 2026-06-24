@@ -77,46 +77,28 @@ export default class CollidePolygonCircle {
           this.#vectors.at(dir),
           manifold
         )
-        this.#getContactPoints(
+
+        const ref = this.#bestEdge(
           sA.worldVertices,
-          bodyB.position.x,
-          bodyB.position.y,
-          sB,
-          manifold
+          manifold.normal.x,
+          manifold.normal.y
         )
+
+        manifold.ref = ref
+        manifold.contactPoints = [
+          {
+            id: `${ref.id}-${sB.id},0`,
+            pointX: bodyB.position.x - manifold.normal.x * sB.radius,
+            pointY: bodyB.position.y - manifold.normal.y * sB.radius,
+            overlap: manifold.overlap
+          }
+        ]
+
         this.#vectors.deallocate(dir)
 
         return manifold
       }
     }
-  }
-
-  #getContactPoints(vertices, x, y, sB, manifold) {
-    const normal = manifold.normal
-    const ref = this.#bestEdge(vertices, normal.x, normal.y)
-
-    const abX = ref.edge[2] - ref.edge[0]
-    const abY = ref.edge[3] - ref.edge[1]
-    const apX = x - ref.edge[0]
-    const apY = y - ref.edge[1]
-
-    const abMagSq = abX * abX + abY * abY
-    let apProj = (apX * abX + apY * abY) / abMagSq
-
-    if (apProj < 0) apProj = 0
-    if (apProj > 1) apProj = 1
-
-    manifold.ref = ref
-    manifold.contactPoints = [
-      {
-        id: `${ref.id}-${sB.id},1`,
-        pointX: ref.edge[0] + abX * apProj,
-        pointY: ref.edge[1] + abY * apProj,
-        overlap: manifold.overlap
-      }
-    ]
-
-    return manifold
   }
 
   #bestEdge(vertices, dx, dy) {
@@ -210,7 +192,7 @@ export default class CollidePolygonCircle {
       const support = this.#getSupportPoint(vertices, x, y, radius, dir)
       const dot = this.#vectors.at(support).dot(dir)
 
-      if (dot - minDot <= 1e-3) {
+      if (dot - minDot <= 1e-12) {
         manifold.polytope = new Float32Array(simplex.length << 1)
         manifold.normal = dir.clone()
         manifold.overlap = minDot
