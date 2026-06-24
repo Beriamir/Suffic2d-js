@@ -147,12 +147,12 @@ export default {
         const body = world.createRigidBody(x, y, 0, {
           restitution,
           friction,
-          isStatic: row === 0
+          // isStatic: row === 0
         })
 
         body.createCircle(radius, {
-          fillColor: row === 0 ? "gray" : null,
-          strokeColor: row === 0 ? "dimgray" : null
+          // fillColor: row === 0 ? "gray" : null,
+          // strokeColor: row === 0 ? "dimgray" : null
         })
       }
     }
@@ -171,7 +171,7 @@ export default {
 
     const hw = width / 2
     const hh = height / 2
-    const blockSpacing = width + gap
+    const blockSpacing = width // + gap
     let y = bottomY - hh
 
     for (let level = 0; level < levels; ++level) {

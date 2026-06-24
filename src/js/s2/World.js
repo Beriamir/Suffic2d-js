@@ -1,10 +1,12 @@
 import DynamicTree from "./DynamicTree.js"
 import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
-import Collision from "./Collision.js"
 import ContactSolver from "./ContactSolver.js"
 import RigidBody from "./RigidBody.js"
 import Circle from "./Circle.js"
+import CollideCircleCircle from "./CollideCircleCircle.js"
+import CollidePolygonCircle from "./CollidePolygonCircle.js"
+import CollidePolygonPolygon from "./CollidePolygonPolygon.js"
 
 export default class World {
   #bodies
@@ -13,8 +15,11 @@ export default class World {
   #contactsOld
   #contactSolver
   #dynamicTree
-  #collision
   #nearby
+
+  #collideCircleCircle
+  #collidePolygonCircle
+  #collidePolygonPolygon
   constructor(option = {}) {
     this.#bodies = []
     this.#contacts = new Map()
@@ -22,8 +27,11 @@ export default class World {
     this.#contactsOld = new Map()
     this.#contactSolver = new ContactSolver(option)
     this.#dynamicTree = new DynamicTree()
-    this.#collision = new Collision()
     this.#nearby = []
+
+    this.#collideCircleCircle = new CollideCircleCircle()
+    this.#collidePolygonCircle = new CollidePolygonCircle()
+    this.#collidePolygonPolygon = new CollidePolygonPolygon()
 
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
@@ -113,9 +121,28 @@ export default class World {
               let manifold = null
 
               if (sA.type === "circle" && sB.type === "circle") {
-                manifold = this.#collision.circleToCircle(bodyA, sA, bodyB, sB)
+                manifold = this.#collideCircleCircle.collide(
+                  bodyA,
+                  sA,
+                  bodyB,
+                  sB
+                )
+              } else if (sA.type === "circle" && sB.type === "polygon") {
+                manifold = this.#collidePolygonCircle.collide(
+                  bodyB,
+                  sB,
+                  bodyA,
+                  sA
+                )
+              } else if (sA.type === "polygon" && sB.type === "circle") {
+                manifold = this.#collidePolygonCircle.collide(
+                  bodyA,
+                  sA,
+                  bodyB,
+                  sB
+                )
               } else if (sA.type === "polygon" && sB.type === "polygon") {
-                manifold = this.#collision.polygonToPolygon(
+                manifold = this.#collidePolygonPolygon.collide(
                   bodyA,
                   sA,
                   bodyB,
