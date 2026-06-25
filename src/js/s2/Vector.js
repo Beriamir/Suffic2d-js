@@ -92,8 +92,8 @@ export default class Vector {
   toString() {
     return `(${this.x},${this.y})`
   }
-  log(text = '') {
-    console.log(text + ' ' + this.toString())
+  log(text = "") {
+    console.log(text + " " + this.toString())
     return this
   }
   static sub(vec1, vec2) {

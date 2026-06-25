@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", _ => {
   const world = new s2.World({
     gravity: { x: 0, y: 1000 },
     substeps: 2,
-    iterations: 4,
+    velocityIterations: 4,
+    positionIterations: 2,
     enableBlock: true
   })
 
@@ -65,7 +66,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 25
       })
       scenes.boxStack(s2, world, {
-        columns: 4,
+        columns: 10,
         rows: 12,
         boxWidth: 50,
         boxHeight: 50,
@@ -85,7 +86,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         height: 25
       })
       scenes.circleStack(s2, world, {
-        columns: 4,
+        columns: 10,
         rows: 12,
         radius: 25,
         spacing: 0,
@@ -125,7 +126,9 @@ document.addEventListener("DOMContentLoaded", _ => {
       scenes.restitution(s2, world, {
         startX: canvas.width * 0.2,
         startY: canvas.height / 2 - 25,
-        spacing: 120
+        spacing: 120,
+        width: 16,
+        height: 40
       })
     },
     friction() {
@@ -158,7 +161,12 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const perimetersFol = gui.addFolder("Perimeters")
   perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
-  perimetersFol.add(world, "iterations", 1, 10, 1).name("Iterations")
+  perimetersFol
+    .add(world, "velocityIterations", 1, 10, 1)
+    .name("Velocity Iters")
+  perimetersFol
+    .add(world, "positionIterations", 1, 10, 1)
+    .name("Position Iters")
 
   // statsFol.open()
   // debugsFol.open()
@@ -199,10 +207,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       for (const s of body.fixtures) {
         switch (s.type) {
           case "polygon":
-            gfx.drawPolygon(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
-              vertices: s.vertices,
+            gfx.drawPolygon(0, 0, 1, 0, {
+              vertices: s.worldVertices,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               wireframe: debugs.wireframe,
@@ -211,9 +217,7 @@ document.addEventListener("DOMContentLoaded", _ => {
             break
 
           case "circle":
-            gfx.drawCircle(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
+            gfx.drawCircle(s.center.x, s.center.y, 1, 0, {
               radius: s.radius,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,

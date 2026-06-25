@@ -100,6 +100,15 @@ export default class Vertices {
     return out
   }
 
+  static translate(vertices, offsetX, offsetY) {
+    for (let i = 0; i < vertices.length; i += 2) {
+      vertices[i] += offsetX
+      vertices[i + 1] += offsetY
+    }
+
+    return vertices
+  }
+
   static rotate(vertices, cos, sin) {
     for (let i = 0; i < vertices.length; i += 2) {
       const x0 = vertices[i]

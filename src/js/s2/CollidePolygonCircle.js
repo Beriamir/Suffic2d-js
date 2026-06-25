@@ -9,7 +9,7 @@ export default class CollidePolygonCircle {
     this.#vectors = new Pool(() => new Vector(), 16)
   }
 
-  collide(bodyA, sA, bodyB, sB, manifold = {}) {
+  collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
       return null
     }
@@ -18,8 +18,8 @@ export default class CollidePolygonCircle {
     // EPA to compute penetration depth and collision normal.
     const dir = this.#vectors.allocate()
 
-    this.#vectors.at(dir).x = bodyB.position.x - bodyA.position.x
-    this.#vectors.at(dir).y = bodyB.position.y - bodyA.position.y
+    this.#vectors.at(dir).x = sB.center.x - sA.center.x
+    this.#vectors.at(dir).y = sB.center.y - sA.center.y
 
     if (this.#vectors.at(dir).isZero()) {
       this.#vectors.at(dir).set(1, 0)
@@ -28,25 +28,11 @@ export default class CollidePolygonCircle {
     }
 
     this.#simplex.length = 0
-    this.#simplex.push(
-      this.#getSupportPoint(
-        sA.worldVertices,
-        bodyB.position.x,
-        bodyB.position.y,
-        sB.radius,
-        this.#vectors.at(dir)
-      )
-    )
+    this.#simplex.push(this.#getSupportPoint(sA, sB, this.#vectors.at(dir)))
     this.#vectors.at(dir).negate()
 
     while (true) {
-      const support = this.#getSupportPoint(
-        sA.worldVertices,
-        bodyB.position.x,
-        bodyB.position.y,
-        sB.radius,
-        this.#vectors.at(dir)
-      )
+      const support = this.#getSupportPoint(sA, sB, this.#vectors.at(dir))
 
       // Does it contain the origin?
       if (this.#vectors.at(support).dot(this.#vectors.at(dir)) <= 0) {
@@ -68,15 +54,7 @@ export default class CollidePolygonCircle {
       }
 
       if (this.#handleTriangleSimplex(this.#simplex, this.#vectors.at(dir))) {
-        this.#EPA(
-          sA.worldVertices,
-          bodyB.position.x,
-          bodyB.position.y,
-          sB.radius,
-          this.#simplex,
-          this.#vectors.at(dir),
-          manifold
-        )
+        this.#EPA(sA, sB, this.#simplex, this.#vectors.at(dir), manifold)
 
         const ref = this.#bestEdge(
           sA.worldVertices,
@@ -88,8 +66,8 @@ export default class CollidePolygonCircle {
         manifold.contactPoints = [
           {
             id: `${ref.id}-${sB.id},0`,
-            pointX: bodyB.position.x - manifold.normal.x * sB.radius,
-            pointY: bodyB.position.y - manifold.normal.y * sB.radius,
+            pointX: sB.center.x - manifold.normal.x * sB.radius,
+            pointY: sB.center.y - manifold.normal.y * sB.radius,
             overlap: manifold.overlap
           }
         ]
@@ -153,7 +131,7 @@ export default class CollidePolygonCircle {
     return { edge, id }
   }
 
-  #EPA(vertices, x, y, radius, simplex, dir, manifold = {}) {
+  #EPA(sA, sB, simplex, dir, manifold = {}) {
     while (true) {
       let minDot = Infinity
       let index = 0
@@ -189,7 +167,7 @@ export default class CollidePolygonCircle {
         }
       }
 
-      const support = this.#getSupportPoint(vertices, x, y, radius, dir)
+      const support = this.#getSupportPoint(sA, sB, dir)
       const dot = this.#vectors.at(support).dot(dir)
 
       if (dot - minDot <= 1e-12) {
@@ -360,10 +338,10 @@ export default class CollidePolygonCircle {
     return point
   }
 
-  #getSupportPoint(vertices, x, y, radius, dir) {
-    const bestA = this.#bestPoint(vertices, dir.x, dir.y)
-    const bestBX = x - dir.x * radius
-    const bestBY = y - dir.y * radius
+  #getSupportPoint(sA, sB, dir) {
+    const bestA = this.#bestPoint(sA.worldVertices, dir.x, dir.y)
+    const bestBX = sB.center.x - dir.x * sB.radius
+    const bestBY = sB.center.y - dir.y * sB.radius
     const point = this.#vectors.allocate()
 
     this.#vectors.at(point).x = this.#vectors.at(bestA).x - bestBX

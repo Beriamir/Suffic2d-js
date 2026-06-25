@@ -9,7 +9,7 @@ export default class CollidePolygonPolygon {
     this.#vectors = new Pool(() => new Vector(), 16)
   }
 
-  collide(bodyA, sA, bodyB, sB, manifold = {}) {
+  collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
       return null
     }
@@ -19,8 +19,8 @@ export default class CollidePolygonPolygon {
     // Sutherland–Hodgman clipping generates the contact points.
     const dir = this.#vectors.allocate()
 
-    this.#vectors.at(dir).x = bodyB.position.x - bodyA.position.x
-    this.#vectors.at(dir).y = bodyB.position.y - bodyA.position.y
+    this.#vectors.at(dir).x = sB.center.x - sA.center.x
+    this.#vectors.at(dir).y = sB.center.y - sA.center.y
 
     const verticesA = sA.worldVertices
     const verticesB = sB.worldVertices
@@ -266,7 +266,7 @@ export default class CollidePolygonPolygon {
       const support = this.#getSupportPolygons(verticesA, verticesB, dir)
       const dot = this.#vectors.at(support).dot(dir)
 
-      if (dot - minDot <= 1e-12) {
+      if (dot - minDot <= 1e-6) {
         manifold.polytope = new Float32Array(simplex.length << 1)
         manifold.normal = dir.clone()
         manifold.overlap = minDot

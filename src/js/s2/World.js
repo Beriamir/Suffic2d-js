@@ -27,7 +27,8 @@ export default class World {
 
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
-    this.iterations = option.iterations ?? 4
+    this.velocityIterations = option.velocityIterations ?? 4
+    this.positionIterations = option.positionIterations ?? 2
   }
 
   get bodies() {
@@ -122,7 +123,7 @@ export default class World {
               }
 
               // Narrowphase
-              const manifold = this.#collider.collide(bodyA, sA, bodyB, sB)
+              const manifold = this.#collider.collide(sA, sB)
 
               if (!manifold) {
                 continue
@@ -184,7 +185,7 @@ export default class World {
       }
 
       // Solve
-      for (let i = 0; i < this.iterations; ++i) {
+      for (let i = 0; i < this.velocityIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
           const contact = this.#contacts.get(this.#contactKeys[j])
 
@@ -216,13 +217,21 @@ export default class World {
         this.#dynamicTree.updateBody(body, 10)
       }
 
-      // Relax + store
+      // Relax
+      for (let i = 0; i < this.positionIterations; ++i) {
+        for (let j = 0; j < this.#contactKeys.length; ++j) {
+          const contact = this.#contacts.get(this.#contactKeys[j])
+
+          this.#contactSolver.solve(contact, false)
+        }
+      }
+
+      // Store
       this.#contactsOld.clear()
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
         const contact = this.#contacts.get(key)
 
-        this.#contactSolver.solve(contact, false)
         this.#contactsOld.set(key, contact)
       }
     }

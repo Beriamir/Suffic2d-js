@@ -1,16 +1,17 @@
 import Vector from "./Vector.js"
-import Vertices from "./Vertices.js"
 import AABB from "./AABB.js"
+import Vertices from "./Vertices.js"
 
-export default class Polygon {
+export default class Capsule {
   #rot
   static #uid = 0
-  constructor(vertices, options = {}) {
-    this.id = Polygon.#uid++
-    this.type = "polygon"
-    this.vertices = vertices // local
-    this.worldVertices = new Float32Array(vertices.length)
+  constructor(length, radius, options = {}) {
+    this.id = Capsule.#uid++
+    this.type = "capsule"
     this.center = new Vector()
+    this.vertices = new Float32Array([0, -length * 0.5, 0, length * 0.5])
+    this.worldVertices = new Float32Array(4)
+    this.radius = radius
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0
     this.cos = Math.cos(this.#rot)
@@ -18,9 +19,9 @@ export default class Polygon {
 
     this.density = options.density ?? 1
     this.thickness = options.thickness ?? 1
-    this.area = Vertices.getArea(vertices)
+    this.area = length * (2 * radius) + Math.PI * radius * radius
     this.mass = this.density * this.area * this.thickness
-    this.inertia = Vertices.getInertia(vertices, this.mass)
+    this.inertia = (this.mass * (length * length + 4 * radius * radius)) / 12
 
     const hue = Math.random() * 360
     this.fillColor = options.fillColor ?? `hsl(${hue}, 50%, 40%)`
@@ -28,7 +29,6 @@ export default class Polygon {
 
     this.aabb = new AABB()
   }
-
   set rotation(value) {
     this.#rot = value
     this.cos = Math.cos(this.#rot)
@@ -49,7 +49,7 @@ export default class Polygon {
       this.worldVertices[i + 1] = y + (x1 * sin + y1 * cos)
     }
 
-    Vertices.getCentroid(this.worldVertices, this.center)
+    Vertices.getMean(this.worldVertices, this.center)
     this.updateAABB()
   }
 

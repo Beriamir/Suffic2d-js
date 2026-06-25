@@ -9,15 +9,15 @@ export default class CollideCircleCircle {
     this.#vectors = new Pool(() => new Vector(), 16)
   }
 
-  collide(bodyA, sA, bodyB, sB, manifold = {}) {
+  collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
       return null
     }
 
     const dir = this.#vectors.allocate()
 
-    this.#vectors.at(dir).x = bodyB.position.x - bodyA.position.x
-    this.#vectors.at(dir).y = bodyB.position.y - bodyA.position.y
+    this.#vectors.at(dir).x = sB.center.x - sA.center.x
+    this.#vectors.at(dir).y = sB.center.y - sA.center.y
 
     const magSq = this.#vectors.at(dir).magSq()
     const radii = sA.radius + sB.radius
@@ -43,8 +43,8 @@ export default class CollideCircleCircle {
     manifold.contactPoints = [
       {
         id: `${sA.id}-${sB.id},0`,
-        pointX: bodyA.position.x + normal.x * sA.radius,
-        pointY: bodyA.position.y + normal.y * sA.radius,
+        pointX: sA.center.x + normal.x * sA.radius,
+        pointY: sA.center.y + normal.y * sA.radius,
         overlap: overlap
       }
     ]

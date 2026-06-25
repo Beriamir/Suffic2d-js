@@ -7,7 +7,8 @@ export default class Circle {
   constructor(radius, options = {}) {
     this.id = Circle.#uid++
     this.type = "circle"
-    this.radius = radius // local
+    this.radius = radius
+    this.center = new Vector()
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0
     this.cos = Math.cos(this.#rot)
@@ -35,14 +36,22 @@ export default class Circle {
   }
 
   updateWorldVertices(x, y, cos, sin) {
-    this.updateAABB(x, y)
+    const x0 = this.offset.x
+    const y0 = this.offset.y
+    const x1 = x0 * this.cos - y0 * this.sin
+    const y1 = x0 * this.sin + y0 * this.cos
+
+    this.center.x = x + (x1 * cos - y1 * sin)
+    this.center.y = y + (x1 * sin + y1 * cos)
+
+    this.updateAABB()
   }
 
-  updateAABB(x, y) {
-    this.aabb.minX = x - this.radius
-    this.aabb.minY = y - this.radius
-    this.aabb.maxX = x + this.radius
-    this.aabb.maxY = y + this.radius
+  updateAABB() {
+    this.aabb.minX = this.center.x - this.radius
+    this.aabb.minY = this.center.y - this.radius
+    this.aabb.maxX = this.center.x + this.radius
+    this.aabb.maxY = this.center.y + this.radius
     return this.aabb
   }
 }

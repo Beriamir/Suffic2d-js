@@ -4,7 +4,7 @@ export default class ContactSolver {
     this.hertz = option.hertz ?? 30
     this.baumgarteSlop = option.baumgarteSlop ?? 0.2
     this.restitutionSlop = option.restitutionSlop ?? 100
-    this.enableBlock = option.enableBlock ?? false
+    this.enableBlock = option.enableBlock ?? true
   }
   prepare(contact, dt) {
     const { bodyA, bodyB, manifold } = contact
@@ -153,7 +153,6 @@ export default class ContactSolver {
       normal,
       tangentX,
       tangentY,
-      restitution,
       friction,
       contactPoints,
       contactCount

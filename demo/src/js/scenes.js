@@ -175,15 +175,15 @@ export default {
 
     const hw = width / 2
     const hh = height / 2
-    const blockSpacing = width // + gap
+    const blockSpacing = width
     let y = bottomY - hh
 
     for (let level = 0; level < levels; ++level) {
       const horizontal = (level & 1) === 0
 
-      if (level > 0) y -= height * 3
+      if (level > 0) y -= height * 2.5
 
-      for (let block = -1; block <= 1; ++block) {
+      for (let block = -4; block <= 4; ++block) {
         const offset = block * blockSpacing
         const body = new s2.RigidBody(
           centerX + offset,
@@ -204,6 +204,8 @@ export default {
     const {
       startX = innerWidth / 2 - 300,
       startY = 100,
+      width = 10,
+      height = 40,
       spacing = 120
     } = option
 
@@ -215,7 +217,18 @@ export default {
         friction: 0.3
       })
 
-      body.createPolygon(new Float32Array([-20, -40, 20, -40, 20, 40, -20, 40]))
+      body.createPolygon(
+        new Float32Array([
+          -width,
+          -height,
+          width,
+          -height,
+          width,
+          height,
+          -width,
+          height
+        ])
+      )
 
       world.createBody(body)
     }
