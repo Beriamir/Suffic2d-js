@@ -17,7 +17,8 @@ document.addEventListener("DOMContentLoaded", _ => {
     substeps: 2,
     velocityIterations: 4,
     positionIterations: 2,
-    enableBlock: true
+    enableBlock: true,
+    nodeMargin: 5
   })
 
   const debugs = {
@@ -40,91 +41,66 @@ document.addEventListener("DOMContentLoaded", _ => {
   const sceneManager = {
     pyramid() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.pyramid(s2, world, {
         rows: 15,
+        spacing: 5,
         boxWidth: 40,
         boxHeight: 40,
-        spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     boxStack() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.boxStack(s2, world, {
         columns: 10,
         rows: 12,
+        spacing: 0,
         boxWidth: 50,
         boxHeight: 50,
-        spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     circleStack() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.circleStack(s2, world, {
         columns: 10,
         rows: 12,
         radius: 25,
         spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     jenga() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.jenga(s2, world, {
         levels: 13,
         width: 80,
         height: 20,
-        gap: 0.0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.5
+        bottomY: canvas.height - 100
       })
     },
     friction() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.friction(s2, world, {
-        startX: canvas.width * 0.1,
-        startY: canvas.height / 2 - 25,
         spacing: 60,
         rampWidth: canvas.width * 0.25,
-        rampHeight: 10
+        rampHeight: 25,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 100
       })
     }
   }
@@ -245,30 +221,21 @@ document.addEventListener("DOMContentLoaded", _ => {
         }
       } = contact
 
-      const originX = canvas.width * 0.5
-      const originY = canvas.height * 0.5
-      const mtv = new Float32Array(4)
+      if (debugs.epa && polytope) {
+        const originX = canvas.width * 0.5
+        const originY = canvas.height * 0.5
+        const mtv = new Float32Array(4)
 
-      mtv[0] = 0
-      mtv[1] = 0
-      mtv[2] = normal.x * overlap
-      mtv[3] = normal.y * overlap
+        mtv[0] = 0
+        mtv[1] = 0
+        mtv[2] = normal.x * overlap
+        mtv[3] = normal.y * overlap
 
-      if (debugs.epa) {
-        if (polytope) {
-          gfx.drawPolygon(originX, originY, 1, 0, {
-            vertices: polytope,
-            wireframe: true,
-            strokeColor: debugColor
-          })
-        } else {
-          gfx.drawCircle(originX + dirX, originY + dirY, 1, 0, {
-            radius: radius,
-            wireframe: true,
-            noLine: true,
-            strokeColor: debugColor
-          })
-        }
+        gfx.drawPolygon(originX, originY, 1, 0, {
+          vertices: polytope,
+          wireframe: true,
+          strokeColor: debugColor
+        })
         gfx.drawLine(originX, originY, 1, 0, {
           vertices: mtv,
           strokeColor: debugColor
@@ -329,21 +296,13 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   function update() {
     let last = performance.now()
-    let accu = 0
-    const step = 1 / 60
 
-    const loop = () => {
-      const now = performance.now()
+    const loop = now => {
       const dt = (now - last) * 0.001
 
       last = now
-      accu += dt
-
-      if (accu >= step) {
-        accu = 0
-        simulate(step)
-        render(gfx, step)
-      }
+      simulate(0.016)
+      render(gfx, 0.016)
 
       stats.fps = 1 / dt
       stats.bodies = world.bodies.length
@@ -352,7 +311,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       requestAnimationFrame(loop)
     }
 
-    loop()
+    requestAnimationFrame(loop)
   }
 
   setup()

@@ -1,7 +1,7 @@
 export default class ContactSolver {
   constructor(option = {}) {
-    this.zeta = option.zeta ?? 10
-    this.hertz = option.hertz ?? 30
+    this.zeta = option.zeta ?? 0.7
+    this.hertz = option.hertz ?? 3
     this.baumgarteSlop = option.baumgarteSlop ?? 0.2
     this.enableBlock = option.enableBlock ?? true
   }

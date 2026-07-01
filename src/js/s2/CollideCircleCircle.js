@@ -28,11 +28,6 @@ export default class CollideCircleCircle {
       return null
     }
 
-    // polytope
-    manifold.dirX = this.#vectors.at(dir).x
-    manifold.dirY = this.#vectors.at(dir).y
-    manifold.radius = radii
-
     const distance = Math.sqrt(magSq)
     const invDistance = 1 / distance
     const normal = Vector.scale(this.#vectors.at(dir), invDistance)

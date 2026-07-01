@@ -29,6 +29,7 @@ export default class World {
     this.substeps = option.substeps ?? 2
     this.velocityIterations = option.velocityIterations ?? 4
     this.positionIterations = option.positionIterations ?? 2
+    this.nodeMargin = option.nodeMargin ?? 10
   }
 
   get bodies() {
@@ -59,7 +60,7 @@ export default class World {
       return body
     }
 
-    this.#dynamicTree.insertBody(body, 10)
+    this.#dynamicTree.insertBody(body, this.nodeMargin)
     this.#bodies.push(body)
     body.index = this.#bodies.length - 1
 
@@ -214,7 +215,7 @@ export default class World {
         }
 
         body.updateAABB()
-        this.#dynamicTree.updateBody(body, 10)
+        this.#dynamicTree.updateBody(body, this.nodeMargin)
       }
 
       // Relax
