@@ -1,7 +1,7 @@
 import Vector from "./Vector.js"
 import AABB from "./AABB.js"
 import Polygon from "./Polygon.js"
-import Circle from './Circle.js'
+import Circle from "./Circle.js"
 
 export default class RigidBody {
   #rot
@@ -23,8 +23,7 @@ export default class RigidBody {
     this.isSensor = options.isSensor ?? false
     this.isSleeping = options.isSleeping ?? false
 
-    this.restitution = options.restitution ?? 0.0
-    this.friction = options.friction ?? 0.3
+    this.friction = options.friction ?? 0.0
     this.density = 0
     this.area = 0
     this.mass = 0

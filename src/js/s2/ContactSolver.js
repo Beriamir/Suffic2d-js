@@ -3,7 +3,6 @@ export default class ContactSolver {
     this.zeta = option.zeta ?? 10
     this.hertz = option.hertz ?? 30
     this.baumgarteSlop = option.baumgarteSlop ?? 0.2
-    this.restitutionSlop = option.restitutionSlop ?? 100
     this.enableBlock = option.enableBlock ?? true
   }
   prepare(contact, dt) {
@@ -23,16 +22,12 @@ export default class ContactSolver {
     const tangentX = (manifold.tangentX = -normal.y)
     const tangentY = (manifold.tangentY = normal.x)
     const contactCount = (manifold.contactCount = contactPoints.length)
-    const restitution = (manifold.restitution = Math.min(
-      bodyA.restitution,
-      bodyB.restitution
-    ))
 
     const omega = 2 * Math.PI * this.hertz
     const alpha = 2 * this.zeta + omega * dt
     const biasCoeff = omega / alpha
 
-    manifold.friction = Math.min(bodyA.friction, bodyB.friction)
+    manifold.friction = Math.max(bodyA.friction, bodyB.friction)
 
     for (let i = 0; i < contactCount; ++i) {
       const cp = contactPoints[i]
@@ -74,7 +69,6 @@ export default class ContactSolver {
 
       cp.baumgarteBias =
         Math.max(cp.overlap - this.baumgarteSlop, 0) * biasCoeff
-      cp.restitutionBias = -restitution * cp.vn
     }
 
     if (this.enableBlock && contactCount == 2) {
@@ -177,19 +171,12 @@ export default class ContactSolver {
         const vn = relVelX * normal.x + relVelY * normal.y
 
         let baumgarteBias = 0
-        let restitutionBias = 0
 
         if (useBias) {
           baumgarteBias = cp.baumgarteBias
         }
 
-        if (cp.vn < -this.restitutionSlop) {
-          restitutionBias = cp.restitutionBias
-        }
-
-        const velBias = baumgarteBias + restitutionBias
-        let impulse = -cp.effNormalMass * (vn - velBias)
-
+        let impulse = -cp.effNormalMass * (vn - baumgarteBias)
         const oldImpulse = cp.normalImpulse
         const newImpulse = Math.max(oldImpulse + impulse, 0)
 
@@ -212,19 +199,12 @@ export default class ContactSolver {
         const vn = relVelX * normal.x + relVelY * normal.y
 
         let baumgarteBias = 0
-        let restitutionBias = 0
 
         if (useBias) {
           baumgarteBias = cp.baumgarteBias
         }
 
-        if (cp.vn < -this.restitutionSlop) {
-          restitutionBias = cp.restitutionBias
-        }
-
-        const velBias = baumgarteBias + restitutionBias
-        let impulse = -cp.effNormalMass * (vn - velBias)
-
+        let impulse = -cp.effNormalMass * (vn - baumgarteBias)
         const oldImpulse = cp.normalImpulse
         const newImpulse = Math.max(oldImpulse + impulse, 0)
 
@@ -257,26 +237,12 @@ export default class ContactSolver {
           baumgarteBias2 = cp2.baumgarteBias
         }
 
-        let restitutionBias1 = 0
-        let restitutionBias2 = 0
-
-        if (cp1.vn < -this.restitutionSlop) {
-          restitutionBias1 = cp1.restitutionBias
-        }
-
-        if (cp2.vn < -this.restitutionSlop) {
-          restitutionBias2 = cp2.restitutionBias
-        }
-
-        const vBias1 = baumgarteBias1 + restitutionBias1
-        const vBias2 = baumgarteBias2 + restitutionBias2
-
         const aX = cp1.normalImpulse
         const aY = cp2.normalImpulse
 
         // Compute the right hand side b
-        let bX = vn1 - vBias1
-        let bY = vn2 - vBias2
+        let bX = vn1 - baumgarteBias1
+        let bY = vn2 - baumgarteBias2
 
         bX -= knA * aX + knB * aY
         bY -= knC * aX + knD * aY

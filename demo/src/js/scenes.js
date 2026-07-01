@@ -8,9 +8,7 @@ export default {
     } = option
 
     const ground = new s2.RigidBody(x, y, 0, {
-      isStatic: true,
-      restitution: 1,
-      friction: 1
+      isStatic: true
     })
 
     ground.createPolygon(
@@ -40,7 +38,6 @@ export default {
       spacing = 0,
       centerX = innerWidth * 0.5,
       bottomY = innerHeight,
-      restitution = 0.0,
       friction = 0.3
     } = option
 
@@ -58,7 +55,6 @@ export default {
       for (let col = 0; col < count; ++col) {
         const x = startX + col * colStep
         const body = new s2.RigidBody(x, y, 0, {
-          restitution,
           friction
         })
 
@@ -88,7 +84,6 @@ export default {
       spacing = 0,
       centerX = innerWidth * 0.5,
       bottomY = innerHeight,
-      restitution = 0.0,
       friction = 0.3
     } = option
 
@@ -107,7 +102,6 @@ export default {
         const y = bottomY - halfHeight - row * rowStep
 
         const body = new s2.RigidBody(x, y, 0, {
-          restitution,
           friction
         })
 
@@ -136,7 +130,6 @@ export default {
       spacing = 0,
       centerX = innerWidth * 0.5,
       bottomY = innerHeight,
-      restitution = 0.0,
       friction = 0.3
     } = option
 
@@ -151,7 +144,6 @@ export default {
         const y = bottomY - radius - row * rowStep
 
         const body = new s2.RigidBody(x, y, 0, {
-          restitution,
           friction
         })
 
@@ -168,7 +160,6 @@ export default {
       height = 20,
       centerX = innerWidth * 0.5,
       bottomY = innerHeight,
-      restitution = 0.0,
       friction = 0.3,
       gap = 0.5
     } = option
@@ -189,7 +180,7 @@ export default {
           centerX + offset,
           y,
           horizontal ? 0 : Math.PI * 0.5,
-          { restitution, friction }
+          { friction }
         )
 
         body.createPolygon(
@@ -198,39 +189,6 @@ export default {
 
         world.createBody(body)
       }
-    }
-  },
-  restitution(s2, world, option = {}) {
-    const {
-      startX = innerWidth / 2 - 300,
-      startY = 100,
-      width = 10,
-      height = 40,
-      spacing = 120
-    } = option
-
-    const values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-
-    for (let i = 0; i < values.length; i++) {
-      const body = new s2.RigidBody(startX + i * spacing, startY, 0, {
-        restitution: values[i],
-        friction: 0.3
-      })
-
-      body.createPolygon(
-        new Float32Array([
-          -width,
-          -height,
-          width,
-          -height,
-          width,
-          height,
-          -width,
-          height
-        ])
-      )
-
-      world.createBody(body)
     }
   },
   friction(s2, world, option) {
@@ -246,9 +204,7 @@ export default {
     const values = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
 
     const ramp = new s2.RigidBody(rampX, rampY, 0.3, {
-      isStatic: true,
-      restitution: 1,
-      friction: 1
+      isStatic: true
     })
 
     ramp.createPolygon(
@@ -272,7 +228,6 @@ export default {
 
     for (let i = 0; i < values.length; i++) {
       const body = new s2.RigidBody(startX + i * spacing, startY, 0, {
-        restitution: 0,
         friction: values[i]
       })
 

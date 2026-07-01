@@ -11,6 +11,7 @@ import Pool from "./s2/Pool.js"
 import CollideCircleCircle from "./s2/CollideCircleCircle.js"
 import CollidePolygonCircle from "./s2/CollidePolygonCircle.js"
 import CollidePolygonPolygon from "./s2/CollidePolygonPolygon.js"
+import Collider from "./s2/Collider.js"
 
 export default {
   Vector,
@@ -19,11 +20,12 @@ export default {
   Polygon,
   Circle,
   World,
+  Pool,
   Vertices,
+  ContactSolver,
+  DynamicTree,
   CollideCircleCircle,
   CollidePolygonCircle,
   CollidePolygonPolygon,
-  ContactSolver,
-  DynamicTree,
-  Pool
+  Collider
 }

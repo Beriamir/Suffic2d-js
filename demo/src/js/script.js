@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     joints: 0
   }
 
-  const switchScenes = {
+  const sceneManager = {
     pyramid() {
       world.clear()
       scenes.spawnGround(s2, world, {
@@ -53,7 +53,6 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 75,
-        restitution: 0.0,
         friction: 0.3
       })
     },
@@ -73,7 +72,6 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 75,
-        restitution: 0.0,
         friction: 0.3
       })
     },
@@ -92,7 +90,6 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 75,
-        restitution: 0.0,
         friction: 0.3
       })
     },
@@ -111,24 +108,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         gap: 0.0,
         centerX: canvas.width / 2,
         bottomY: canvas.height - 75,
-        restitution: 0.0,
         friction: 0.5
-      })
-    },
-    restitution() {
-      world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
-      scenes.restitution(s2, world, {
-        startX: canvas.width * 0.2,
-        startY: canvas.height / 2 - 25,
-        spacing: 120,
-        width: 16,
-        height: 40
       })
     },
     friction() {
@@ -168,21 +148,16 @@ document.addEventListener("DOMContentLoaded", _ => {
     .add(world, "positionIterations", 1, 10, 1)
     .name("Position Iters")
 
-  // statsFol.open()
-  // debugsFol.open()
-  // perimetersFol.open()
-
-  gui.add(switchScenes, "pyramid")
-  gui.add(switchScenes, "boxStack").name("box stacks")
-  gui.add(switchScenes, "circleStack").name("circle stacks")
-  gui.add(switchScenes, "jenga")
-  gui.add(switchScenes, "restitution").name("restitution")
-  gui.add(switchScenes, "friction").name("friction")
+  gui.add(sceneManager, "pyramid")
+  gui.add(sceneManager, "boxStack").name("box stacks")
+  gui.add(sceneManager, "circleStack").name("circle stacks")
+  gui.add(sceneManager, "jenga")
+  gui.add(sceneManager, "friction").name("friction")
 
   guiEl.appendChild(gui.domElement)
 
   function setup() {
-    switchScenes.pyramid()
+    sceneManager.pyramid()
   }
 
   function simulate(dt) {
