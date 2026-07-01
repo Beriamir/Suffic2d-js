@@ -40,91 +40,66 @@ document.addEventListener("DOMContentLoaded", _ => {
   const sceneManager = {
     pyramid() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.pyramid(s2, world, {
         rows: 15,
+        spacing: 0,
         boxWidth: 40,
         boxHeight: 40,
-        spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     boxStack() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.boxStack(s2, world, {
         columns: 10,
         rows: 12,
+        spacing: 0,
         boxWidth: 50,
         boxHeight: 50,
-        spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     circleStack() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.circleStack(s2, world, {
         columns: 10,
         rows: 12,
         radius: 25,
         spacing: 0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.3
+        bottomY: canvas.height - 100
       })
     },
     jenga() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.jenga(s2, world, {
         levels: 13,
         width: 80,
         height: 20,
-        gap: 0.0,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
         centerX: canvas.width / 2,
-        bottomY: canvas.height - 75,
-        friction: 0.5
+        bottomY: canvas.height - 100
       })
     },
     friction() {
       world.clear()
-      scenes.spawnGround(s2, world, {
-        x: canvas.width / 2,
-        y: canvas.height - 50,
-        width: canvas.width * 0.4,
-        height: 25
-      })
       scenes.friction(s2, world, {
-        startX: canvas.width * 0.1,
-        startY: canvas.height / 2 - 25,
         spacing: 60,
         rampWidth: canvas.width * 0.25,
-        rampHeight: 10
+        rampHeight: 25,
+        groundWidth: canvas.width * 0.4,
+        groundHeight: 25,
+        centerX: canvas.width / 2,
+        bottomY: canvas.height - 100
       })
     }
   }
