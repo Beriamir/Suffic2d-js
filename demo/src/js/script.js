@@ -296,13 +296,21 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   function update() {
     let last = performance.now()
+    let accu = 0
+    const step = 1 / 60
 
     const loop = now => {
       const dt = (now - last) * 0.001
 
       last = now
-      simulate(0.016)
-      render(gfx, 0.016)
+      accu += dt
+
+      if (accu >= step) {
+        accu -= step
+        simulate(step)
+      }
+
+      render(gfx, step)
 
       stats.fps = 1 / dt
       stats.bodies = world.bodies.length
