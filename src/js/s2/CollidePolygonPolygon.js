@@ -2,12 +2,9 @@ import Vector from "./Vector.js"
 import Pool from "./Pool.js"
 
 export default class CollidePolygonPolygon {
-  #simplex
-  #vectors
-  constructor() {
-    this.#simplex = []
-    this.#vectors = new Pool(() => new Vector(), 16)
-  }
+  #simplex = []
+  #vectors = new Pool(() => new Vector(), 16)
+  constructor() {}
 
   collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
@@ -78,9 +75,10 @@ export default class CollidePolygonPolygon {
   }
 
   #getContactPoints(verticesA, verticesB, manifold) {
-    const normal = manifold.normal
-    const ref = this.#bestEdge(verticesA, normal.x, normal.y)
-    const inc = this.#bestEdge(verticesB, -normal.x, -normal.y)
+    const normalX = manifold.normalX
+    const normalY = manifold.normalY
+    const ref = this.#bestEdge(verticesA, normalX, normalY)
+    const inc = this.#bestEdge(verticesB, -normalX, -normalY)
 
     const edgeDirX = ref.edge[2] - ref.edge[0]
     const edgeDirY = ref.edge[3] - ref.edge[1]
@@ -120,8 +118,8 @@ export default class CollidePolygonPolygon {
       )
     }
 
-    const proj0 = ref.edge[0] * normal.x + ref.edge[1] * normal.y
-    const proj1 = ref.edge[2] * normal.x + ref.edge[3] * normal.y
+    const proj0 = ref.edge[0] * normalX + ref.edge[1] * normalY
+    const proj1 = ref.edge[2] * normalX + ref.edge[3] * normalY
     const maxProj = Math.max(proj0, proj1) // Should use the maximum
 
     manifold.ref = ref
@@ -132,7 +130,7 @@ export default class CollidePolygonPolygon {
       const pointId = i >> 1
       const pointX = finalClipping.points[i]
       const pointY = finalClipping.points[i + 1]
-      const minProj = pointX * normal.x + pointY * normal.y
+      const minProj = pointX * normalX + pointY * normalY
 
       manifold.contactPoints.push({
         id: `${ref.id}-${inc.id},${pointId}`,
@@ -268,7 +266,8 @@ export default class CollidePolygonPolygon {
 
       if (dot - minDot <= 1e-6) {
         manifold.polytope = new Float32Array(simplex.length << 1)
-        manifold.normal = dir.clone()
+        manifold.normalX = dir.x
+        manifold.normalY = dir.y
         manifold.overlap = minDot
 
         for (let i = 0; i < simplex.length; ++i) {

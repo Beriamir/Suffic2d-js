@@ -13,11 +13,10 @@ document.addEventListener("DOMContentLoaded", _ => {
     hideable: true
   })
   const world = new s2.World({
-    gravity: { x: 0, y: 1000 },
-    substeps: 2,
-    velocityIterations: 4,
-    positionIterations: 2,
-    enableBlock: true,
+    gravity: { x: 0, y: 500 },
+    substeps: 1,
+    velocityIterations: 8,
+    positionIterations: 6,
     nodeMargin: 5
   })
 
@@ -43,7 +42,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.clear()
       scenes.pyramid(s2, world, {
         rows: 15,
-        spacing: 5,
+        spacing: 0,
         boxWidth: 40,
         boxHeight: 40,
         groundWidth: canvas.width * 0.4,
@@ -57,7 +56,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       scenes.boxStack(s2, world, {
         columns: 10,
         rows: 12,
-        spacing: 0,
+        spacing: 5,
         boxWidth: 50,
         boxHeight: 50,
         groundWidth: canvas.width * 0.4,
@@ -72,7 +71,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         columns: 10,
         rows: 12,
         radius: 25,
-        spacing: 0,
+        spacing: 5,
         groundWidth: canvas.width * 0.4,
         groundHeight: 25,
         centerX: canvas.width / 2,
@@ -168,7 +167,7 @@ document.addEventListener("DOMContentLoaded", _ => {
             break
 
           case "circle":
-            gfx.drawCircle(s.center.x, s.center.y, 1, 0, {
+            gfx.drawCircle(s.center.x, s.center.y, body.cos, body.sin, {
               radius: s.radius,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
@@ -209,12 +208,10 @@ document.addEventListener("DOMContentLoaded", _ => {
         bodyA,
         bodyB,
         manifold: {
-          normal,
+          normalX,
+          normalY,
           overlap,
           polytope,
-          dirX,
-          dirY,
-          radius,
           contactPoints,
           ref,
           inc
@@ -228,8 +225,8 @@ document.addEventListener("DOMContentLoaded", _ => {
 
         mtv[0] = 0
         mtv[1] = 0
-        mtv[2] = normal.x * overlap
-        mtv[3] = normal.y * overlap
+        mtv[2] = normalX * overlap
+        mtv[3] = normalY * overlap
 
         gfx.drawPolygon(originX, originY, 1, 0, {
           vertices: polytope,
@@ -266,8 +263,8 @@ document.addEventListener("DOMContentLoaded", _ => {
 
         nImpulse[0] = 0
         nImpulse[1] = 0
-        nImpulse[2] = normal.x * cp.normalImpulse * dt
-        nImpulse[3] = normal.y * cp.normalImpulse * dt
+        nImpulse[2] = normalX * cp.normalImpulse * dt
+        nImpulse[3] = normalY * cp.normalImpulse * dt
 
         if (debugs.impulse) {
           gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
@@ -285,7 +282,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         }
 
         if (debugs.normal) {
-          gfx.drawNormal(cp.pointX, cp.pointY, normal.x, normal.y, {
+          gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
             length: 10,
             strokeColor: debugColor
           })

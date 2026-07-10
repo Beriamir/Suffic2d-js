@@ -11,6 +11,7 @@ export default class Capsule {
     this.center = new Vector()
     this.vertices = new Float32Array([0, -length * 0.5, 0, length * 0.5])
     this.worldVertices = new Float32Array(4)
+    this.length = length
     this.radius = radius
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0

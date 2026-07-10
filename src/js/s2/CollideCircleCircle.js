@@ -2,12 +2,8 @@ import Vector from "./Vector.js"
 import Pool from "./Pool.js"
 
 export default class CollideCircleCircle {
-  #simplex
-  #vectors
-  constructor() {
-    this.#simplex = []
-    this.#vectors = new Pool(() => new Vector(), 16)
-  }
+  #vectors = new Pool(() => new Vector(), 16)
+  constructor() {}
 
   collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
@@ -30,16 +26,18 @@ export default class CollideCircleCircle {
 
     const distance = Math.sqrt(magSq)
     const invDistance = 1 / distance
-    const normal = Vector.scale(this.#vectors.at(dir), invDistance)
+    const normalX = this.#vectors.at(dir).x * invDistance
+    const normalY = this.#vectors.at(dir).y * invDistance
     const overlap = radii - distance
 
-    manifold.normal = normal
+    manifold.normalX = normalX
+    manifold.normalY = normalY
     manifold.overlap = overlap
     manifold.contactPoints = [
       {
         id: `${sA.id}-${sB.id},0`,
-        pointX: sA.center.x + normal.x * sA.radius,
-        pointY: sA.center.y + normal.y * sA.radius,
+        pointX: sA.center.x + normalX * sA.radius,
+        pointY: sA.center.y + normalY * sA.radius,
         overlap: overlap
       }
     ]

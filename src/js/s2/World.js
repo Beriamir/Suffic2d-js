@@ -7,24 +7,16 @@ import Circle from "./Circle.js"
 import Collider from "./Collider.js"
 
 export default class World {
-  #bodies
-  #contacts
-  #contactKeys
-  #contactsOld
-  #contactSolver
-  #dynamicTree
-  #nearby
-  #collider
-  constructor(option = {}) {
-    this.#bodies = []
-    this.#contacts = new Map()
-    this.#contactKeys = []
-    this.#contactsOld = new Map()
-    this.#contactSolver = new ContactSolver(option)
-    this.#dynamicTree = new DynamicTree()
-    this.#nearby = []
-    this.#collider = new Collider()
+  #bodies = []
+  #contacts = new Map()
+  #contactKeys = []
+  #oldContacts = new Map()
+  #contactSolver = new ContactSolver()
+  #dynamicTree = new DynamicTree()
+  #nearby = []
+  #collider = new Collider()
 
+  constructor(option = {}) {
     this.gravity = option.gravity ?? new Vector()
     this.substeps = option.substeps ?? 2
     this.velocityIterations = option.velocityIterations ?? 4
@@ -159,30 +151,10 @@ export default class World {
       // Prepare and warm start
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
-        const newContact = this.#contacts.get(key)
+        const contact = this.#contacts.get(key)
 
-        this.#contactSolver.prepare(newContact, dt)
-
-        if (!this.#contactsOld.has(key)) {
-          continue
-        }
-
-        const oldContact = this.#contactsOld.get(key)
-        const newPts = newContact.manifold.contactPoints
-        const oldPts = oldContact.manifold.contactPoints
-
-        for (const newCp of newPts) {
-          for (const oldCp of oldPts) {
-            if (newCp.id == oldCp.id) {
-              newCp.normalImpulse = oldCp.normalImpulse
-              newCp.tangentImpulse = oldCp.tangentImpulse
-              newCp.persistent = true
-              break
-            }
-          }
-        }
-
-        this.#contactSolver.warmStart(newContact)
+        this.#contactSolver.prepare(contact, dt)
+        this.#contactSolver.warmStart(contact, this.#oldContacts.get(key))
       }
 
       // Solve
@@ -228,12 +200,12 @@ export default class World {
       }
 
       // Store
-      this.#contactsOld.clear()
+      this.#oldContacts.clear()
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
         const contact = this.#contacts.get(key)
 
-        this.#contactsOld.set(key, contact)
+        this.#oldContacts.set(key, contact)
       }
     }
   }

@@ -1,353 +1,123 @@
-import Vector from "./Vector.js"
-import Pool from "./Pool.js"
-
 export default class CollidePolygonCircle {
-  #simplex
-  #vectors
-  constructor() {
-    this.#simplex = []
-    this.#vectors = new Pool(() => new Vector(), 16)
-  }
+  #axes = []
+  #projA = {}
+  #projB = {}
+  constructor() {}
 
   collide(sA, sB, manifold = {}) {
     if (!sA.aabb.overlaps(sB.aabb)) {
       return null
     }
 
-    // Uses GJK to detect overlaps.
-    // EPA to compute penetration depth and collision normal.
-    const dir = this.#vectors.allocate()
+    const dirX = sB.center.x - sA.center.x
+    const dirY = sB.center.y - sA.center.y
+    const best = this.#bestPoint(sA.worldVertices, dirX, dirY)
 
-    this.#vectors.at(dir).x = sB.center.x - sA.center.x
-    this.#vectors.at(dir).y = sB.center.y - sA.center.y
+    this.#axes.length = 0
+    this.#axes.push(
+      sB.center.x - sA.worldVertices[best],
+      sB.center.y - sA.worldVertices[best + 1]
+    )
 
-    if (this.#vectors.at(dir).isZero()) {
-      this.#vectors.at(dir).set(1, 0)
-    } else {
-      this.#vectors.at(dir).normalize()
-    }
+    const axes = this.#getAxes(sA.worldVertices, this.#axes)
 
-    this.#simplex.length = 0
-    this.#simplex.push(this.#getSupportPoint(sA, sB, this.#vectors.at(dir)))
-    this.#vectors.at(dir).negate()
+    let normalX = dirX
+    let normalY = dirY
+    let overlap = Infinity
+    let refId = best
 
-    while (true) {
-      const support = this.#getSupportPoint(sA, sB, this.#vectors.at(dir))
+    for (let i = 0; i < axes.length; i += 2) {
+      const x0 = axes[i]
+      const y0 = axes[i + 1]
+      const invMag = 1 / Math.sqrt(x0 * x0 + y0 * y0)
 
-      // Does it contain the origin?
-      if (this.#vectors.at(support).dot(this.#vectors.at(dir)) <= 0) {
-        this.#vectors.deallocate(support)
-        for (let i = 0; i < this.#simplex.length; ++i) {
-          this.#vectors.deallocate(this.#simplex[i])
-        }
+      const axisX = x0 * invMag
+      const axisY = y0 * invMag
 
-        this.#vectors.deallocate(dir)
+      this.#projVertices(sA.worldVertices, axisX, axisY)
+      this.#projB.min = sB.center.x * axisX + sB.center.y * axisY - sB.radius
+      this.#projB.max = sB.center.x * axisX + sB.center.y * axisY + sB.radius
 
+      if (
+        this.#projA.min > this.#projB.max ||
+        this.#projB.min > this.#projA.max
+      ) {
         return null
       }
 
-      this.#simplex.push(support)
+      const minOverlap = Math.min(
+        this.#projA.max - this.#projB.min,
+        this.#projB.max - this.#projA.min
+      )
 
-      if (this.#simplex.length === 2) {
-        this.#handleLineSimplex(this.#simplex, this.#vectors.at(dir))
-        continue
-      }
-
-      if (this.#handleTriangleSimplex(this.#simplex, this.#vectors.at(dir))) {
-        this.#EPA(sA, sB, this.#simplex, this.#vectors.at(dir), manifold)
-
-        const ref = this.#bestEdge(
-          sA.worldVertices,
-          manifold.normal.x,
-          manifold.normal.y
-        )
-
-        manifold.ref = ref
-        manifold.contactPoints = [
-          {
-            id: `${ref.id}-${sB.id},0`,
-            pointX: sB.center.x - manifold.normal.x * sB.radius,
-            pointY: sB.center.y - manifold.normal.y * sB.radius,
-            overlap: manifold.overlap
-          }
-        ]
-
-        this.#vectors.deallocate(dir)
-
-        return manifold
+      if (minOverlap < overlap) {
+        normalX = axisX
+        normalY = axisY
+        overlap = minOverlap
+        refId = i >> 1
       }
     }
+
+    if (dirX * normalX + dirY * normalY < 0) {
+      normalX *= -1
+      normalY *= -1
+    }
+
+    manifold.normalX = normalX
+    manifold.normalY = normalY
+    manifold.overlap = overlap
+    manifold.contactPoints = [
+      {
+        id: `${refId}-${sB.id},0`,
+        pointX: sB.center.x - normalX * sB.radius,
+        pointY: sB.center.y - normalY * sB.radius,
+        overlap: overlap
+      }
+    ]
+
+    return manifold
   }
 
-  #bestEdge(vertices, dx, dy) {
-    let bestDot = -Infinity
-    let index = 0
-
+  #getAxes(vertices, axes = []) {
     for (let i = 0; i < vertices.length; i += 2) {
-      const dot = vertices[i] * dx + vertices[i + 1] * dy
+      const j = i < vertices.length - 2 ? i + 2 : 0
 
-      if (dot > bestDot) {
-        bestDot = dot
-        index = i
-      }
+      const x0 = vertices[i]
+      const y0 = vertices[i + 1]
+      const x1 = vertices[j]
+      const y1 = vertices[j + 1]
+
+      axes.push(-(y1 - y0), x1 - x0)
     }
 
-    const n = vertices.length
-    const prevI = index >= 2 ? index - 2 : index - 2 + n
-    const nextI = index < n - 2 ? index + 2 : index + 2 - n
-
-    const prevX = vertices[prevI]
-    const prevY = vertices[prevI + 1]
-    const bestX = vertices[index]
-    const bestY = vertices[index + 1]
-    const nextX = vertices[nextI]
-    const nextY = vertices[nextI + 1]
-
-    const prevDirX = prevX - bestX
-    const prevDirY = prevY - bestY
-    const nextDirX = nextX - bestX
-    const nextDirY = nextY - bestY
-
-    const prevDot = prevDirX * dx + prevDirY * dy
-    const nextDot = nextDirX * dx + nextDirY * dy
-
-    const edge = new Float32Array(4)
-    let id = 0
-
-    if (prevDot > nextDot) {
-      edge[0] = prevX
-      edge[1] = prevY
-      edge[2] = bestX
-      edge[3] = bestY
-      id = prevI >> 1
-    } else {
-      edge[0] = bestX
-      edge[1] = bestY
-      edge[2] = nextX
-      edge[3] = nextY
-      id = index >> 1
-    }
-
-    return { edge, id }
-  }
-
-  #EPA(sA, sB, simplex, dir, manifold = {}) {
-    while (true) {
-      let minDot = Infinity
-      let index = 0
-
-      for (let i = 0; i < simplex.length; ++i) {
-        const j = i + 1 > simplex.length - 1 ? 0 : i + 1
-
-        const a = simplex[i]
-        const b = simplex[j]
-
-        let perpX = -(this.#vectors.at(b).y - this.#vectors.at(a).y)
-        let perpY = this.#vectors.at(b).x - this.#vectors.at(a).x
-
-        const mag = Math.sqrt(perpX * perpX + perpY * perpY)
-        const invMag = 1 / mag
-
-        perpX *= invMag
-        perpY *= invMag
-
-        let dot = this.#vectors.at(a).x * perpX + this.#vectors.at(a).y * perpY
-
-        // You'll thank this check later
-        if (dot < 0) {
-          dot = -dot
-          perpX = -perpX
-          perpY = -perpY
-        }
-
-        if (dot < minDot) {
-          minDot = dot
-          dir.set(perpX, perpY)
-          index = j
-        }
-      }
-
-      const support = this.#getSupportPoint(sA, sB, dir)
-      const dot = this.#vectors.at(support).dot(dir)
-
-      if (dot - minDot <= 1e-12) {
-        manifold.polytope = new Float32Array(simplex.length << 1)
-        manifold.normal = dir.clone()
-        manifold.overlap = minDot
-
-        for (let i = 0; i < simplex.length; ++i) {
-          const v = simplex[i]
-
-          manifold.polytope[i << 1] = this.#vectors.at(v).x
-          manifold.polytope[(i << 1) + 1] = this.#vectors.at(v).y
-
-          this.#vectors.deallocate(v)
-        }
-
-        this.#vectors.deallocate(support)
-
-        return manifold
-      }
-
-      simplex.splice(index, 0, support)
-    }
-  }
-
-  #handleTriangleSimplex(simplex, dir) {
-    const [c, b, a] = simplex
-
-    const ab = this.#vectors.allocate()
-    const ac = this.#vectors.allocate()
-    const ao = this.#vectors.allocate()
-    const abPerp = this.#vectors.allocate()
-    const acPerp = this.#vectors.allocate()
-
-    this.#vectors
-      .at(ab)
-      .set(
-        this.#vectors.at(b).x - this.#vectors.at(a).x,
-        this.#vectors.at(b).y - this.#vectors.at(a).y
-      )
-    this.#vectors
-      .at(ac)
-      .set(
-        this.#vectors.at(c).x - this.#vectors.at(a).x,
-        this.#vectors.at(c).y - this.#vectors.at(a).y
-      )
-    this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
-
-    this.#tripleProduct(
-      this.#vectors.at(ac),
-      this.#vectors.at(ab),
-      this.#vectors.at(ab),
-      this.#vectors.at(abPerp)
-    )
-    this.#tripleProduct(
-      this.#vectors.at(ab),
-      this.#vectors.at(ac),
-      this.#vectors.at(ac),
-      this.#vectors.at(acPerp)
-    )
-
-    if (this.#vectors.at(abPerp).isZero()) {
-      this.#vectors.at(abPerp).copy(this.#vectors.at(ab)).perp()
-    }
-
-    if (this.#vectors.at(acPerp).isZero()) {
-      this.#vectors.at(acPerp).copy(this.#vectors.at(ac)).perp()
-    }
-
-    if (this.#vectors.at(abPerp).dot(this.#vectors.at(ao)) >= 0) {
-      simplex.length = 2
-      simplex[0] = b
-      simplex[1] = a
-      dir.copy(this.#vectors.at(abPerp)).normalize()
-
-      this.#vectors.deallocate(c)
-      this.#vectors.deallocate(ab)
-      this.#vectors.deallocate(ac)
-      this.#vectors.deallocate(ao)
-      this.#vectors.deallocate(abPerp)
-      this.#vectors.deallocate(acPerp)
-      return false
-    }
-
-    if (this.#vectors.at(acPerp).dot(this.#vectors.at(ao)) >= 0) {
-      simplex.length = 2
-      simplex[0] = c
-      simplex[1] = a
-      dir.copy(this.#vectors.at(acPerp)).normalize()
-
-      this.#vectors.deallocate(b)
-      this.#vectors.deallocate(ab)
-      this.#vectors.deallocate(ac)
-      this.#vectors.deallocate(ao)
-      this.#vectors.deallocate(abPerp)
-      this.#vectors.deallocate(acPerp)
-      return false
-    }
-
-    this.#vectors.deallocate(ab)
-    this.#vectors.deallocate(ac)
-    this.#vectors.deallocate(ao)
-    this.#vectors.deallocate(abPerp)
-    this.#vectors.deallocate(acPerp)
-    return true
-  }
-
-  #handleLineSimplex(simplex, dir) {
-    const [b, a] = simplex
-
-    const ab = this.#vectors.allocate()
-    const ao = this.#vectors.allocate()
-    const abPerp = this.#vectors.allocate()
-
-    this.#vectors
-      .at(ab)
-      .set(
-        this.#vectors.at(b).x - this.#vectors.at(a).x,
-        this.#vectors.at(b).y - this.#vectors.at(a).y
-      )
-    this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
-
-    this.#tripleProduct(
-      this.#vectors.at(ab),
-      this.#vectors.at(ao),
-      this.#vectors.at(ab),
-      this.#vectors.at(abPerp)
-    )
-
-    if (this.#vectors.at(abPerp).isZero()) {
-      this.#vectors.at(abPerp).copy(this.#vectors.at(ab)).perp()
-    }
-
-    dir.copy(this.#vectors.at(abPerp)).normalize()
-
-    this.#vectors.deallocate(ab)
-    this.#vectors.deallocate(ao)
-    this.#vectors.deallocate(abPerp)
-  }
-
-  #tripleProduct(u, v, w, out = new Vector()) {
-    const dotWU = w.dot(u)
-    const dotWV = w.dot(v)
-
-    out.x = v.x * dotWU - u.x * dotWV
-    out.y = v.y * dotWU - u.y * dotWV
-    return out
+    return axes
   }
 
   #bestPoint(vertices, dx, dy) {
-    let bestDot = -Infinity
-    let bestInd = 0
+    let max = -Infinity
+    let best = -1
 
     for (let i = 0; i < vertices.length; i += 2) {
-      const dot = vertices[i] * dx + vertices[i + 1] * dy
+      const proj = vertices[i] * dx + vertices[i + 1] * dy
 
-      if (dot > bestDot) {
-        bestDot = dot
-        bestInd = i
+      if (proj > max) {
+        max = proj
+        best = i
       }
     }
 
-    const point = this.#vectors.allocate()
-
-    this.#vectors.at(point).x = vertices[bestInd]
-    this.#vectors.at(point).y = vertices[bestInd + 1]
-
-    return point
+    return best
   }
 
-  #getSupportPoint(sA, sB, dir) {
-    const bestA = this.#bestPoint(sA.worldVertices, dir.x, dir.y)
-    const bestBX = sB.center.x - dir.x * sB.radius
-    const bestBY = sB.center.y - dir.y * sB.radius
-    const point = this.#vectors.allocate()
+  #projVertices(vertices, dx, dy) {
+    this.#projA.min = Infinity
+    this.#projA.max = -Infinity
 
-    this.#vectors.at(point).x = this.#vectors.at(bestA).x - bestBX
-    this.#vectors.at(point).y = this.#vectors.at(bestA).y - bestBY
-    this.#vectors.deallocate(bestA)
+    for (let i = 0; i < vertices.length; i += 2) {
+      const proj = vertices[i] * dx + vertices[i + 1] * dy
 
-    return point
+      if (proj < this.#projA.min) this.#projA.min = proj
+      if (proj > this.#projA.max) this.#projA.max = proj
+    }
   }
 }

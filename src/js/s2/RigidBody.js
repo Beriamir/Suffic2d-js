@@ -23,6 +23,7 @@ export default class RigidBody {
     this.isSensor = options.isSensor ?? false
     this.isSleeping = options.isSleeping ?? false
 
+    this.restitution = options.restitution ?? 0.0
     this.friction = options.friction ?? 0.0
     this.density = 0
     this.area = 0

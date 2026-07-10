@@ -2,34 +2,28 @@ import AABB from "./AABB.js"
 import Pool from "./Pool.js"
 
 export default class DynamicTree {
-  #nodes
-  #root
-  #stack
-  #rotation
-  #rotationType
-  constructor() {
-    this.#nodes = new Pool(() => {
-      return {
-        aabb: new AABB(),
-        margin: 10,
-        height: 0,
-        data: null,
-        parent: null,
-        child1: null,
-        child2: null
-      }
-    }, 16)
-    this.#root = null
-    this.#stack = []
-    this.#rotation = true
-    this.#rotationType = {
-      NONE: 0,
-      BF: 1,
-      BG: 2,
-      CE: 3,
-      CD: 4
+  #nodes = new Pool(() => {
+    return {
+      aabb: new AABB(),
+      margin: 10,
+      height: 0,
+      data: null,
+      parent: null,
+      child1: null,
+      child2: null
     }
+  }, 16)
+  #root = null
+  #stack = []
+  #rotation = true
+  #rotationType = {
+    NONE: 0,
+    BF: 1,
+    BG: 2,
+    CE: 3,
+    CD: 4
   }
+  constructor() {}
 
   get height() {
     return this.#nodes.at(this.#root).height
