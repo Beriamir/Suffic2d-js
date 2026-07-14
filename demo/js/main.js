@@ -1,25 +1,33 @@
-import s2 from "../../../src/js/suffic2d.js"
-import Graphics from "../../../lib/Graphics.js"
-import dat from "../../../lib/dat.gui.mjs"
-import scenes from "./scenes.js"
+import s2 from "../../src/index.js"
+import dat from "../../lib/dat.gui.mjs"
+import scenes from "./scenes/scenes.js"
+import Graphics from "./Graphics.js"
+import Touch from "./Touch.js"
+import Camera from "./Camera.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
   const canvas = document.getElementById("canvas")
   const guiEl = document.getElementById("gui")
 
-  const gfx = new Graphics(canvas, {}).setSize(1600, 900)
+  const gfx = new Graphics(canvas, {})
+  const camera = new Camera(0, 0, 0, 100) // x, y, angle, scale
+  const touch = new Touch(canvas)
   const gui = new dat.GUI({
     autoPlace: false,
     hideable: true
   })
-  const world = new s2.World({
-    gravity: { x: 0, y: 500 },
-    substeps: 1,
-    velocityIterations: 8,
-    positionIterations: 6,
-    nodeMargin: 5
-  })
 
+  const statsFolGUI = gui.addFolder("Stats")
+  const debugsFolGUI = gui.addFolder("Debugs")
+  const perimetersFolGUI = gui.addFolder("Perimeters")
+
+  const world = new s2.World({
+    substeps: 1,
+    velocityIterations: 4,
+    positionIterations: 2,
+    nodeMargin: 0.1,
+    gravity: new s2.Vector(0, 9.81)
+  })
   const debugs = {
     wireframe: false,
     epa: false,
@@ -39,117 +47,135 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const sceneManager = {
     pyramid() {
+      const cx = 7.5 * 0.48
+      const by = 0
+
       world.clear()
       scenes.pyramid(s2, world, {
         rows: 15,
         spacing: 0,
-        boxWidth: 40,
-        boxHeight: 40,
-        groundWidth: canvas.width * 0.4,
-        groundHeight: 25,
-        centerX: canvas.width / 2,
-        bottomY: canvas.height - 100
+        boxWidth: 0.48,
+        boxHeight: 0.48,
+        groundWidth: 20,
+        groundHeight: 0.1,
+        centerX: cx,
+        bottomY: by
       })
     },
     boxStack() {
+      const cx = 12 * 0.24
+      const by = 0
+
       world.clear()
       scenes.boxStack(s2, world, {
-        columns: 10,
+        columns: 12,
         rows: 12,
-        spacing: 5,
-        boxWidth: 50,
-        boxHeight: 50,
-        groundWidth: canvas.width * 0.4,
-        groundHeight: 25,
-        centerX: canvas.width / 2,
-        bottomY: canvas.height - 100
+        spacing: 0,
+        boxWidth: 0.48,
+        boxHeight: 0.48,
+        groundWidth: 20,
+        groundHeight: 0.1,
+        centerX: cx,
+        bottomY: by
       })
     },
     circleStack() {
+      const cx = 12 * 0.24
+      const by = 0
+
       world.clear()
       scenes.circleStack(s2, world, {
-        columns: 10,
+        columns: 12,
         rows: 12,
-        radius: 25,
-        spacing: 5,
-        groundWidth: canvas.width * 0.4,
-        groundHeight: 25,
-        centerX: canvas.width / 2,
-        bottomY: canvas.height - 100
+        spacing: 0,
+        radius: 0.24,
+        groundWidth: 20,
+        groundHeight: 0.1,
+        centerX: cx,
+        bottomY: by
       })
     },
     jenga() {
+      const cx = 4.5
+      const by = 0
+
       world.clear()
       scenes.jenga(s2, world, {
         levels: 13,
-        width: 80,
-        height: 20,
-        groundWidth: canvas.width * 0.4,
-        groundHeight: 25,
-        centerX: canvas.width / 2,
-        bottomY: canvas.height - 100
+        width: 1,
+        height: 0.2,
+        groundWidth: 20,
+        groundHeight: 0.1,
+        centerX: cx,
+        bottomY: by
       })
     },
     friction() {
+      const cx = 6 * 0.48
+      const by = 0
+
       world.clear()
       scenes.friction(s2, world, {
-        spacing: 60,
-        rampWidth: canvas.width * 0.25,
-        rampHeight: 25,
-        groundWidth: canvas.width * 0.4,
-        groundHeight: 25,
-        centerX: canvas.width / 2,
-        bottomY: canvas.height - 100
+        spacing: 0.48 * 3,
+        rampWidth: 10,
+        rampHeight: 0.1,
+        groundWidth: 50,
+        groundHeight: 0.1,
+        centerX: cx,
+        bottomY: by
       })
     }
   }
 
-  const statsFol = gui.addFolder("Stats")
+  touch.onPan = (dx, dy) => camera.move(dx, dy)
+  touch.onZoom = factor => camera.zoom(factor)
+  touch.onRotate = delta => camera.rotate(delta)
+
   for (const stat of Object.keys(stats)) {
-    statsFol.add(stats, stat).listen().name(stat.toUpperCase())
+    statsFolGUI.add(stats, stat).listen().name(stat.toUpperCase())
   }
 
-  const debugsFol = gui.addFolder("Debugs")
   for (const key of Object.keys(debugs)) {
-    debugsFol.add(debugs, key).name(key.toUpperCase())
+    debugsFolGUI.add(debugs, key).name(key.toUpperCase())
   }
 
-  const perimetersFol = gui.addFolder("Perimeters")
-  perimetersFol.add(world, "substeps", 1, 10, 1).name("SUB STEPS")
-  perimetersFol
-    .add(world, "velocityIterations", 1, 10, 1)
-    .name("Velocity Iters")
-  perimetersFol
-    .add(world, "positionIterations", 1, 10, 1)
-    .name("Position Iters")
+  perimetersFolGUI.add(world, "substeps", 1, 10, 1)
+  perimetersFolGUI.add(world, "velocityIterations", 1, 10, 1)
+  perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
 
   gui.add(sceneManager, "pyramid")
-  gui.add(sceneManager, "boxStack").name("box stacks")
-  gui.add(sceneManager, "circleStack").name("circle stacks")
+  gui.add(sceneManager, "boxStack")
+  gui.add(sceneManager, "circleStack")
   gui.add(sceneManager, "jenga")
-  gui.add(sceneManager, "friction").name("friction")
+  gui.add(sceneManager, "friction")
 
   guiEl.appendChild(gui.domElement)
 
+  window.addEventListener("resize", e => {
+    windowResize(innerWidth, innerHeight)
+  })
+
+  function windowResize(width, height) {
+    canvas.width = width
+    canvas.height = height
+  }
+
   function setup() {
+    windowResize(innerWidth, innerHeight)
     sceneManager.pyramid()
   }
 
   function simulate(dt) {
     world.simulate(dt)
-    for (let i = 0; i < world.bodies.length; ++i) {
-      const body = world.bodies[i]
-
-      if (body.position.y > canvas.height * 2) {
-        world.destroyBody(body)
-      }
-    }
   }
 
-  function render(gfx, dt) {
+  function render(gfx) {
+    gfx.clear(0, 0, canvas.width, canvas.height)
+    gfx.setCamera(camera)
+
+    const strokeWidth = 1 / camera.scale
     const debugColor = "lightgray"
 
-    gfx.clear(0, 0, canvas.width, canvas.height)
     for (let i = 0; i < world.bodies.length; ++i) {
       const body = world.bodies[i]
       const { position, cos, sin } = body
@@ -157,22 +183,32 @@ document.addEventListener("DOMContentLoaded", _ => {
       for (const s of body.fixtures) {
         switch (s.type) {
           case "polygon":
-            gfx.drawPolygon(0, 0, 1, 0, {
-              vertices: s.worldVertices,
+            gfx.drawPolygon(position.x, position.y, cos, sin, {
+              offsetX: s.offsetX,
+              offsetY: s.offsetY,
+              cos: s.cos,
+              sin: s.sin,
+              vertices: s.vertices,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               wireframe: debugs.wireframe,
-              noStroke: !debugs.wireframe
+              noStroke: !debugs.wireframe,
+              strokeWidth
             })
             break
 
           case "circle":
-            gfx.drawCircle(s.center.x, s.center.y, body.cos, body.sin, {
+            gfx.drawCircle(position.x, position.y, cos, sin, {
+              offsetX: s.offsetX,
+              offsetY: s.offsetY,
+              cos: s.cos,
+              sin: s.sin,
               radius: s.radius,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               wireframe: debugs.wireframe,
-              noStroke: !debugs.wireframe
+              noStroke: !debugs.wireframe,
+              strokeWidth
             })
             break
 
@@ -187,7 +223,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         const body = world.bodies[i]
         gfx.drawAABB(body.aabb, {
           strokeColor: debugColor,
-          wireframe: true
+          wireframe: true,
+          strokeWidth
         })
       }
     }
@@ -196,7 +233,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.dynamicTree.traverse(node => {
         gfx.drawAABB(node.aabb, {
           strokeColor: debugColor,
-          wireframe: true
+          wireframe: true,
+          strokeWidth
         })
       })
     }
@@ -210,17 +248,17 @@ document.addEventListener("DOMContentLoaded", _ => {
         manifold: {
           normalX,
           normalY,
+          ref,
+          inc,
           overlap,
           polytope,
-          contactPoints,
-          ref,
-          inc
+          contactPoints
         }
       } = contact
 
       if (debugs.epa && polytope) {
-        const originX = canvas.width * 0.5
-        const originY = canvas.height * 0.5
+        const originX = 0
+        const originY = 0
         const mtv = new Float32Array(4)
 
         mtv[0] = 0
@@ -231,30 +269,34 @@ document.addEventListener("DOMContentLoaded", _ => {
         gfx.drawPolygon(originX, originY, 1, 0, {
           vertices: polytope,
           wireframe: true,
-          strokeColor: debugColor
+          strokeColor: debugColor,
+          strokeWidth
         })
         gfx.drawLine(originX, originY, 1, 0, {
           vertices: mtv,
-          strokeColor: debugColor
+          strokeColor: debugColor,
+          strokeWidth
         })
         gfx.drawCircle(originX, originY, 1, 0, {
-          radius: 2,
+          radius: 2 / camera.scale,
           fillColor: debugColor,
-          strokeColor: debugColor
+          noStroke: true
         })
       }
 
       if (debugs.ref && ref) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: ref.edge,
-          strokeColor: debugColor
+          strokeColor: debugColor,
+          strokeWidth
         })
       }
 
       if (debugs.inc && inc) {
         gfx.drawLine(0, 0, 1, 0, {
           vertices: inc.edge,
-          strokeColor: debugColor
+          strokeColor: debugColor,
+          strokeWidth
         })
       }
 
@@ -263,32 +305,39 @@ document.addEventListener("DOMContentLoaded", _ => {
 
         nImpulse[0] = 0
         nImpulse[1] = 0
-        nImpulse[2] = normalX * cp.normalImpulse * dt
-        nImpulse[3] = normalY * cp.normalImpulse * dt
+        nImpulse[2] = normalX * cp.normalImpulse
+        nImpulse[3] = normalY * cp.normalImpulse
 
         if (debugs.impulse) {
           gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
             vertices: nImpulse,
-            strokeColor: debugColor
+            strokeColor: debugColor,
+            strokeWidth
           })
         }
 
         if (debugs.point) {
           gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-            radius: 2,
+            radius: 1.5 / camera.scale,
             fillColor: debugColor,
-            noStroke: true
+            noStroke: true,
+            strokeWidth
           })
         }
 
         if (debugs.normal) {
           gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-            length: 10,
-            strokeColor: debugColor
+            length: 8 / camera.scale,
+            strokeColor: debugColor,
+            strokeWidth
           })
         }
       }
     }
+
+    gfx.setCamera(null)
+
+    // GUID
   }
 
   function update() {
@@ -301,18 +350,16 @@ document.addEventListener("DOMContentLoaded", _ => {
 
       last = now
       accu += dt
-
       if (accu >= step) {
-        accu -= step
         simulate(step)
+        accu -= step
+
+        stats.fps = 1 / dt
+        stats.bodies = world.bodies.length
+        stats.joints = 0
       }
 
       render(gfx, step)
-
-      stats.fps = 1 / dt
-      stats.bodies = world.bodies.length
-      stats.joints = 0
-
       requestAnimationFrame(loop)
     }
 

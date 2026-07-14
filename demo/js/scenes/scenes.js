@@ -3,7 +3,6 @@ import boxStacks from "./boxStacks.js"
 import circleStacks from "./circleStacks.js"
 import jenga from "./jenga.js"
 import friction from "./friction.js"
-import restitution from "./restitution.js"
 
 export default {
   pyramid(s2, world, option = {}) {
@@ -20,8 +19,5 @@ export default {
   },
   friction(s2, world, option) {
     friction.create(s2, world, option)
-  },
-  restitution(s2, world, option) {
-    restitution.create(s2, world, option)
   }
 }

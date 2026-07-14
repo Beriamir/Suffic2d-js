@@ -3,9 +3,8 @@ export default {
     const {
       columns = 1,
       rows = 20,
+      radius = 40,
       spacing = 0,
-      boxWidth = 40,
-      boxHeight = 40,
       groundWidth = innerWidth / 2,
       groundHeight = 25,
       centerX = innerWidth * 0.5,
@@ -37,34 +36,25 @@ export default {
 
     world.createBody(ground)
 
-    const halfWidth = boxWidth * 0.5
-    const halfHeight = boxHeight * 0.5
-    const colStep = boxWidth + spacing
-    const rowStep = boxHeight + spacing
+    const colStep = radius * 2 + spacing
+    const rowStep = radius * 2 + spacing
     const startX = centerX - (columns - 1) * colStep * 0.5
 
     for (let col = 0; col < columns; ++col) {
       const x = startX + col * colStep
 
       for (let row = 0; row < rows; ++row) {
-        const y = bottomY - halfHeight - row * rowStep
+        const y = bottomY - radius - row * rowStep
 
         const body = new s2.RigidBody(x, y, 0, {
           friction: 0.3
         })
+        const hue = Math.random() * 360
 
-        body.createPolygon(
-          new Float32Array([
-            -halfWidth,
-            -halfHeight,
-            halfWidth,
-            -halfHeight,
-            halfWidth,
-            halfHeight,
-            -halfWidth,
-            halfHeight
-          ])
-        )
+        body.createCircle(radius, {
+          // fillColor: `hsla(${hue}, 50%, 50%, 0.5)`,
+          // strokeColor: `hsla(${hue}, 50%, 50%, 1)`
+        })
 
         world.createBody(body)
       }

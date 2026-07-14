@@ -1,36 +1,56 @@
 export default class Graphics {
+  #ctx
   constructor(canvas, options = {}) {
-    this.ctx = canvas.getContext("2d", options)
+    this.#ctx = canvas.getContext("2d", options)
     this.canvas = canvas
   }
-  get centerX() {
-    return this.canvas.width * 0.5
-  }
-  get centerY() {
-    return this.canvas.height * 0.5
-  }
-  setSize(width, height) {
-    this.canvas.width = width
-    this.canvas.height = height
-    return this
-  }
+
   clear(x, y, w, h) {
-    this.ctx.clearRect(x, y, w, h)
+    this.#ctx.clearRect(x, y, w, h)
     return this
   }
+
+  setCamera(camera) {
+    if (!camera) {
+      this.#ctx.restore()
+      return this
+    }
+
+    const scale = camera.scale
+    const cos = camera.cos
+    const sin = camera.sin
+
+    const centerX = this.canvas.width * 0.5
+    const centerY = this.canvas.height * 0.5
+    const translateX = camera.x * cos - camera.y * sin
+    const translateY = camera.x * sin + camera.y * cos
+
+    this.#ctx.save()
+    this.#ctx.setTransform(
+      cos * scale,
+      sin * scale,
+      -sin * scale,
+      cos * scale,
+      centerX - translateX * scale,
+      centerY - translateY * scale
+    )
+    return this
+  }
+
   drawText(x, y, text, options = {}) {
     const fillColor = options.fillColor ?? "#0e0e0e"
     const baseline = options.baseline ?? "top"
     const fontSize = options.fontSize ?? 12
     const align = options.align ?? "start"
 
-    this.ctx.fillStyle = fillColor
-    this.ctx.font = `normal ${fontSize}px verdana`
-    this.ctx.textBaseline = baseline
-    this.ctx.textAlign = align
-    this.ctx.fillText(text, x, y)
+    this.#ctx.fillStyle = fillColor
+    this.#ctx.font = `normal ${fontSize}px verdana`
+    this.#ctx.textBaseline = baseline
+    this.#ctx.textAlign = align
+    this.#ctx.fillText(text, x, y)
     return this
   }
+
   drawCircle(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
@@ -50,28 +70,29 @@ export default class Graphics {
     const anchorX = worldX + (radius * cos - 0 * sin)
     const anchorY = worldY + (radius * sin + 0 * cos)
 
-    this.ctx.beginPath()
-    this.ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
+    this.#ctx.beginPath()
+    this.#ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
 
     if (!noLine) {
-      this.ctx.moveTo(worldX, worldY)
-      this.ctx.lineTo(anchorX, anchorY)
+      this.#ctx.moveTo(worldX, worldY)
+      this.#ctx.lineTo(anchorX, anchorY)
     }
 
     if (!wireframe) {
-      this.ctx.fillStyle = options.fillColor ?? `gray`
-      this.ctx.fill()
+      this.#ctx.fillStyle = options.fillColor ?? `gray`
+      this.#ctx.fill()
     }
 
     if (noStroke) {
       return this
     }
 
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
+
   drawCapsule(x, y, cos, sin, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
@@ -104,27 +125,28 @@ export default class Graphics {
     const startAngle = Math.atan2(perpY, perpX)
     const endAngle = Math.atan2(-perpY, -perpX)
 
-    this.ctx.beginPath()
-    this.ctx.arc(cx1, cy1, radius, startAngle, endAngle)
-    this.ctx.arc(cx2, cy2, radius, endAngle, startAngle)
-    this.ctx.closePath()
-    this.ctx.moveTo(cx1, cy1)
-    this.ctx.lineTo(cx2, cy2)
+    this.#ctx.beginPath()
+    this.#ctx.arc(cx1, cy1, radius, startAngle, endAngle)
+    this.#ctx.arc(cx2, cy2, radius, endAngle, startAngle)
+    this.#ctx.closePath()
+    this.#ctx.moveTo(cx1, cy1)
+    this.#ctx.lineTo(cx2, cy2)
 
     if (!wireframe) {
-      this.ctx.fillStyle = options.fillColor ?? `gray`
-      this.ctx.fill()
+      this.#ctx.fillStyle = options.fillColor ?? `gray`
+      this.#ctx.fill()
     }
 
     if (noStroke) {
       return this
     }
 
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
+
   drawPolygon(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
@@ -143,35 +165,36 @@ export default class Graphics {
     let worldX = x + (x0 * cos - y0 * sin)
     let worldY = y + (x0 * sin + y0 * cos)
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(worldX, worldY)
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(worldX, worldY)
     for (let i = 2; i < vertices.length; i += 2) {
       x0 = localX + vertices[i]
       y0 = localY + vertices[i + 1]
       worldX = x + (x0 * cos - y0 * sin)
       worldY = y + (x0 * sin + y0 * cos)
-      this.ctx.lineTo(worldX, worldY)
+      this.#ctx.lineTo(worldX, worldY)
     }
     x0 = localX + vertices[0]
     y0 = localY + vertices[1]
     worldX = x + (x0 * cos - y0 * sin)
     worldY = y + (x0 * sin + y0 * cos)
-    this.ctx.lineTo(worldX, worldY)
+    this.#ctx.lineTo(worldX, worldY)
 
     if (!wireframe) {
-      this.ctx.fillStyle = options.fillColor ?? `gray`
-      this.ctx.fill()
+      this.#ctx.fillStyle = options.fillColor ?? `gray`
+      this.#ctx.fill()
     }
 
     if (noStroke) {
       return this
     }
 
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
+
   drawLine(x, y, cos = 1, sin = 0, options = {}) {
     const localX = options.offsetX ?? 0
     const localY = options.offsetY ?? 0
@@ -188,47 +211,49 @@ export default class Graphics {
     let worldX = x + (x0 * cos - y0 * sin)
     let worldY = y + (x0 * sin + y0 * cos)
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(worldX, worldY)
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(worldX, worldY)
     for (let i = 2; i < vertices.length; i += 2) {
       x0 = localX + vertices[i]
       y0 = localY + vertices[i + 1]
       worldX = x + (x0 * cos - y0 * sin)
       worldY = y + (x0 * sin + y0 * cos)
-      this.ctx.lineTo(worldX, worldY)
+      this.#ctx.lineTo(worldX, worldY)
     }
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
+
   drawAABB(aabb, options = {}) {
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
     const strokeColor = options.strokeColor ?? "#0e0e0e"
     const strokeWidth = options.strokeWidth ?? 1
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(aabb.minX, aabb.minY)
-    this.ctx.lineTo(aabb.maxX, aabb.minY)
-    this.ctx.lineTo(aabb.maxX, aabb.maxY)
-    this.ctx.lineTo(aabb.minX, aabb.maxY)
-    this.ctx.lineTo(aabb.minX, aabb.minY)
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(aabb.minX, aabb.minY)
+    this.#ctx.lineTo(aabb.maxX, aabb.minY)
+    this.#ctx.lineTo(aabb.maxX, aabb.maxY)
+    this.#ctx.lineTo(aabb.minX, aabb.maxY)
+    this.#ctx.lineTo(aabb.minX, aabb.minY)
 
     if (!wireframe) {
-      this.ctx.fillStyle = options.fillColor ?? `gray`
-      this.ctx.fill()
+      this.#ctx.fillStyle = options.fillColor ?? `gray`
+      this.#ctx.fill()
     }
 
     if (noStroke) {
       return this
     }
 
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
+
   drawNormal(x, y, normalX, normalY, options = {}) {
     const strokeColor = options.strokeColor ?? "#0e0e0e"
     const strokeWidth = options.strokeWidth ?? 1
@@ -247,15 +272,15 @@ export default class Graphics {
     const rightX = endX + backX * head + perpX * head
     const rightY = endY + backY * head + perpY * head
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(x, y)
-    this.ctx.lineTo(endX, endY)
-    this.ctx.moveTo(leftX, leftY)
-    this.ctx.lineTo(endX, endY)
-    this.ctx.lineTo(rightX, rightY)
-    this.ctx.lineWidth = strokeWidth
-    this.ctx.strokeStyle = strokeColor
-    this.ctx.stroke()
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(x, y)
+    this.#ctx.lineTo(endX, endY)
+    this.#ctx.moveTo(leftX, leftY)
+    this.#ctx.lineTo(endX, endY)
+    this.#ctx.lineTo(rightX, rightY)
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
     return this
   }
 }

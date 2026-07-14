@@ -7,13 +7,12 @@ export default {
       groundWidth = innerWidth / 2,
       groundHeight = 25,
       centerX = innerWidth * 0.5,
-      bottomY = innerHeight,
-      values = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+      bottomY = innerHeight
     } = option
 
-    const rampX = centerX * 0.6
-    const rampY = bottomY * 0.7
-    const ramp = new s2.RigidBody(rampX, rampY, 0.3, {
+    const rampX = centerX * 3
+    const rampY = -5
+    const ramp = new s2.RigidBody(rampX, rampY, 0.2, {
       isStatic: true
     })
 
@@ -61,17 +60,26 @@ export default {
 
     world.createBody(ground)
 
-    for (let i = 0; i < values.length; i++) {
+    for (let i = 10, j = 0; i >= 0; i--) {
+      j++
+      const size = 0.24
       const body = new s2.RigidBody(
-        centerX * 0.2 + i * spacing,
-        bottomY / 2,
-        0,
+        -centerX * 0.2 + j * spacing,
+        -10 + size * j,
+        0.25,
         {
-          friction: values[i]
+          friction: i / 10
         }
       )
+      const hue = Math.random() * 360
 
-      body.createPolygon(new Float32Array([-20, -20, 20, -20, 20, 20, -20, 20]))
+      body.createPolygon(
+        new Float32Array([-size, -size, size, -size, size, size, -size, size]),
+        {
+          // fillColor: `hsla(${hue}, 50%, 50%, 0.5)`,
+          // strokeColor: `hsla(${hue}, 50%, 50%, 1)`
+        }
+      )
 
       world.createBody(body)
     }

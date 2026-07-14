@@ -17,7 +17,14 @@ export default class World {
   #collider = new Collider()
 
   constructor(option = {}) {
-    this.gravity = option.gravity ?? new Vector()
+    const gravity = option.gravity
+
+    if (typeof gravity == "object") {
+      this.gravity = gravity
+    } else {
+      this.gravity = new Vector(0, 9.81)
+    }
+
     this.substeps = option.substeps ?? 2
     this.velocityIterations = option.velocityIterations ?? 4
     this.positionIterations = option.positionIterations ?? 2

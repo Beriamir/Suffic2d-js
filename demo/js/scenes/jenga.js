@@ -43,7 +43,7 @@ export default {
     for (let level = 0; level < levels; ++level) {
       const horizontal = (level & 1) === 0
 
-      if (level > 0) y -= height * 2.5
+      if (level > 0) y -= height * 3
 
       for (let block = -4; block <= 4; ++block) {
         const offset = block * blockSpacing

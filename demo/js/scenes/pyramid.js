@@ -1,15 +1,14 @@
 export default {
   create(s2, world, option = {}) {
     const {
-      columns = 10,
-      rows = 1,
+      rows = 15,
       spacing = 0,
       boxWidth = 40,
       boxHeight = 40,
-      groundWidth = innerWidth / 2,
+      groundWidth = innerWidth * 0.5,
       groundHeight = 25,
       centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      bottomY = innerHeight - 25
     } = option
 
     const groundX = centerX
@@ -41,17 +40,18 @@ export default {
     const halfHeight = boxHeight * 0.5
     const colStep = boxWidth + spacing
     const rowStep = boxHeight + spacing
-    const startX = centerX - (columns - 1) * colStep * 0.5
 
-    for (let col = 0; col <= columns; ++col) {
-      const x = startX + col * colStep
+    for (let row = 0; row < rows; ++row) {
+      const count = rows - row
+      const startX = centerX - (count - 1) * colStep * 0.5
+      const y = bottomY - halfHeight - row * rowStep
 
-      for (let row = 0; row < rows; ++row) {
-        const y = bottomY * 0.5 - halfHeight - row * rowStep
-
+      for (let col = 0; col < count; ++col) {
+        const x = startX + col * colStep
         const body = new s2.RigidBody(x, y, 0, {
-          restitution: col / 10
+          friction: 0.3
         })
+        const hue = Math.random() * 360
 
         body.createPolygon(
           new Float32Array([
@@ -63,7 +63,11 @@ export default {
             halfHeight,
             -halfWidth,
             halfHeight
-          ])
+          ]),
+          {
+            // fillColor: `hsla(${hue}, 50%, 50%, 0.5)`,
+            // strokeColor: `hsla(${hue}, 50%, 50%, 1)`
+          }
         )
 
         world.createBody(body)

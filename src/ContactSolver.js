@@ -63,7 +63,7 @@ export default class ContactSolver {
       cp.tangentImpulse = 0
       cp.persistent = false
 
-      const biasSlop = 0.2
+      const biasSlop = 0.01
       const biasBeta = 0.2
 
       cp.velBias = Math.max(cp.overlap - biasSlop, 0) * (biasBeta / dt)
