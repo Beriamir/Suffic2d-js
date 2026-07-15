@@ -1,8 +1,8 @@
 import s2 from "../../src/index.js"
 import dat from "../../lib/dat.gui.mjs"
 import scenes from "./scenes/scenes.js"
+import Input from "./inputs/Input.js"
 import Graphics from "./Graphics.js"
-import Touch from "./Touch.js"
 import Camera from "./Camera.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const gfx = new Graphics(canvas, {})
   const camera = new Camera(0, 0, 0, 100) // x, y, angle, scale
-  const touch = new Touch(canvas)
+  const input = new Input(canvas)
   const gui = new dat.GUI({
     autoPlace: false,
     hideable: true
@@ -127,9 +127,15 @@ document.addEventListener("DOMContentLoaded", _ => {
     }
   }
 
-  touch.onPan = (dx, dy) => camera.move(dx, dy)
-  touch.onZoom = factor => camera.zoom(factor)
-  touch.onRotate = delta => camera.rotate(delta)
+  input.onPan = (dx, dy) => {
+    camera.move(dx, dy)
+  }
+  input.onZoom = factor => {
+    camera.zoom(factor)
+  }
+  input.onRotate = delta => {
+    camera.rotate(delta)
+  }
 
   for (const stat of Object.keys(stats)) {
     statsFolGUI.add(stats, stat).listen().name(stat.toUpperCase())
@@ -352,14 +358,14 @@ document.addEventListener("DOMContentLoaded", _ => {
       accu += dt
       if (accu >= step) {
         simulate(step)
-        accu -= step
+        render(gfx, step)
 
+        accu -= step
         stats.fps = 1 / dt
         stats.bodies = world.bodies.length
         stats.joints = 0
       }
 
-      render(gfx, step)
       requestAnimationFrame(loop)
     }
 

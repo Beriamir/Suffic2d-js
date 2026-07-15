@@ -10,8 +10,8 @@ export default class Touch {
   #lastTouchX = 0
   #lastTouchY = 0
 
-  constructor(target, option = {}) {
-    this.#target = target
+  constructor(input) {
+    this.input = input
     this.onPan = null
     this.onZoom = null
     this.onRotate = null
@@ -24,7 +24,7 @@ export default class Touch {
   }
 
   #bindEvents() {
-    const target = this.#target
+    const target = this.input.target
 
     if (!target) {
       return
@@ -51,8 +51,8 @@ export default class Touch {
             const dx = touch.clientX - this.#lastTouchX
             const dy = touch.clientY - this.#lastTouchY
 
-            if (typeof this.onMove == "function") {
-              this.onMove(dx, dy, touch.clientX, touch.clientY)
+            if (typeof this.input.onMove == "function") {
+              this.input.onMove(dx, dy, touch.clientX, touch.clientY)
             }
           }
 
@@ -70,19 +70,19 @@ export default class Touch {
             const distance = this.#getDistance(a, b)
             const rotation = this.#getRotation(a, b)
 
-            if (typeof this.onPan == "function") {
+            if (typeof this.input.onPan == "function") {
               const dx = center.x - this.#lastGestureCenter.x
               const dy = center.y - this.#lastGestureCenter.y
 
-              this.onPan(dx, dy)
+              this.input.onPan(dx, dy)
             }
 
-            if (typeof this.onZoom == "function") {
-              this.onZoom(distance / this.#lastGestureDistance)
+            if (typeof this.input.onZoom == "function") {
+              this.input.onZoom(distance / this.#lastGestureDistance)
             }
 
-            if (typeof this.onRotate == "function") {
-              this.onRotate(rotation - this.#lastGestureRotation)
+            if (typeof this.input.onRotate == "function") {
+              this.input.onRotate(rotation - this.#lastGestureRotation)
             }
 
             this.#lastGestureCenter.x = center.x
@@ -143,8 +143,8 @@ export default class Touch {
       this.#lastTouchX = touches[0].clientX
       this.#lastTouchY = touches[0].clientY
 
-      if (typeof this.onDown == "function") {
-        this.onDown(touches[0].clientX, touches[0].clientY)
+      if (typeof this.input.onDown == "function") {
+        this.input.onDown(touches[0].clientX, touches[0].clientY)
       }
     } else if (touches.length >= 2) {
       this.#gestureIds[0] = touches[0].identifier
@@ -153,8 +153,8 @@ export default class Touch {
       this.#lastGestureDistance = this.#getDistance(touches[0], touches[1])
       this.#lastGestureRotation = this.#getRotation(touches[0], touches[1])
     } else {
-      if (typeof this.onUp == "function") {
-        this.onUp()
+      if (typeof this.input.onUp == "function") {
+        this.input.onUp()
       }
     }
   }
