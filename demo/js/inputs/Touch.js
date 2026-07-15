@@ -12,19 +12,8 @@ export default class Touch {
 
   constructor(input) {
     this.input = input
-    this.onPan = null
-    this.onZoom = null
-    this.onRotate = null
 
-    this.onDown = null
-    this.onMove = null
-    this.onUp = null
-
-    this.#bindEvents()
-  }
-
-  #bindEvents() {
-    const target = this.input.target
+    const target = input.target
 
     if (!target) {
       return
@@ -51,8 +40,8 @@ export default class Touch {
             const dx = touch.clientX - this.#lastTouchX
             const dy = touch.clientY - this.#lastTouchY
 
-            if (typeof this.input.onMove == "function") {
-              this.input.onMove(dx, dy, touch.clientX, touch.clientY)
+            if (typeof input.onMove == "function") {
+              input.onMove(dx, dy, touch.clientX, touch.clientY)
             }
           }
 
@@ -70,19 +59,19 @@ export default class Touch {
             const distance = this.#getDistance(a, b)
             const rotation = this.#getRotation(a, b)
 
-            if (typeof this.input.onPan == "function") {
+            if (typeof input.onPan == "function") {
               const dx = center.x - this.#lastGestureCenter.x
               const dy = center.y - this.#lastGestureCenter.y
 
-              this.input.onPan(dx, dy)
+              input.onPan(dx, dy)
             }
 
-            if (typeof this.input.onZoom == "function") {
-              this.input.onZoom(distance / this.#lastGestureDistance)
+            if (typeof input.onZoom == "function") {
+              input.onZoom(distance / this.#lastGestureDistance)
             }
 
-            if (typeof this.input.onRotate == "function") {
-              this.input.onRotate(rotation - this.#lastGestureRotation)
+            if (typeof input.onRotate == "function") {
+              input.onRotate(rotation - this.#lastGestureRotation)
             }
 
             this.#lastGestureCenter.x = center.x
