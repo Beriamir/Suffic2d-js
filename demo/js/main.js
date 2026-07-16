@@ -47,12 +47,12 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const sceneManager = {
     pyramid() {
-      const cx = 7.5 * 0.48
+      const cx = 15 * 0.48
       const by = 0
 
       world.clear()
       scenes.pyramid(s2, world, {
-        rows: 15,
+        rows: 30,
         spacing: 0,
         boxWidth: 0.48,
         boxHeight: 0.48,
@@ -63,13 +63,13 @@ document.addEventListener("DOMContentLoaded", _ => {
       })
     },
     boxStack() {
-      const cx = 12 * 0.24
+      const cx = 30 * 0.24
       const by = 0
 
       world.clear()
       scenes.boxStack(s2, world, {
-        columns: 12,
-        rows: 12,
+        columns: 30,
+        rows: 30,
         spacing: 0,
         boxWidth: 0.48,
         boxHeight: 0.48,
@@ -80,13 +80,13 @@ document.addEventListener("DOMContentLoaded", _ => {
       })
     },
     circleStack() {
-      const cx = 12 * 0.24
+      const cx = 30 * 0.24
       const by = 0
 
       world.clear()
       scenes.circleStack(s2, world, {
-        columns: 12,
-        rows: 12,
+        columns: 30,
+        rows: 30,
         spacing: 0,
         radius: 0.24,
         groundWidth: 20,
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", _ => {
 
       world.clear()
       scenes.jenga(s2, world, {
-        levels: 13,
+        levels: 31,
         width: 1,
         height: 0.2,
         groundWidth: 20,
