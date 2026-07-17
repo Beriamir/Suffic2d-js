@@ -114,7 +114,7 @@ export default class CollidePolygonPolygon {
         ref.edge[1],
         -edgeDirY,
         edgeDirX,
-        false
+        true
       )
     }
 
@@ -264,7 +264,7 @@ export default class CollidePolygonPolygon {
       const support = this.#getSupportPolygons(verticesA, verticesB, dir)
       const dot = this.#vectors.at(support).dot(dir)
 
-      if (dot - minDot <= 1e-12) {
+      if (dot - minDot <= 1e-6) {
         manifold.polytope = new Float32Array(simplex.length << 1)
         manifold.normalX = dir.x
         manifold.normalY = dir.y
