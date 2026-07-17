@@ -24,19 +24,25 @@ export default class CollidePolygonCircle {
     let normalX = dirX
     let normalY = dirY
     let overlap = Infinity
-    let refId = best
 
     for (let i = 0; i < axes.length; i += 2) {
       const x0 = axes[i]
       const y0 = axes[i + 1]
-      const invMag = 1 / Math.sqrt(x0 * x0 + y0 * y0)
+      const mag = Math.sqrt(x0 * x0 + y0 * y0)
 
+      if (mag == 0) {
+        continue
+      }
+
+      const invMag = 1 / mag
       const axisX = x0 * invMag
       const axisY = y0 * invMag
 
       this.#projVertices(sA.worldVertices, axisX, axisY)
-      this.#projB.min = sB.center.x * axisX + sB.center.y * axisY - sB.radius
-      this.#projB.max = sB.center.x * axisX + sB.center.y * axisY + sB.radius
+
+      const projB = sB.center.x * axisX + sB.center.y * axisY
+      this.#projB.min = projB - sB.radius
+      this.#projB.max = projB + sB.radius
 
       if (
         this.#projA.min > this.#projB.max ||
@@ -54,7 +60,6 @@ export default class CollidePolygonCircle {
         normalX = axisX
         normalY = axisY
         overlap = minOverlap
-        refId = i >> 1
       }
     }
 
@@ -68,7 +73,7 @@ export default class CollidePolygonCircle {
     manifold.overlap = overlap
     manifold.contactPoints = [
       {
-        id: `${refId}-${sB.id},0`,
+        id: `${sA.id}-${sB.id},0`,
         pointX: sB.center.x - normalX * sB.radius,
         pointY: sB.center.y - normalY * sB.radius,
         overlap: overlap
