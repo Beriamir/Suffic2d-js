@@ -66,7 +66,7 @@ export default class ContactSolver {
       cp.persistent = false
 
       const biasSlop = 0.01 // meter
-      const biasBeta = 0.1 // 0 -> 1
+      const biasBeta = mA == 0 || mB == 0 ? 0.3 : 0.1 // 0 -> 1
 
       cp.velBias = Math.max(cp.overlap - biasSlop, 0) * (biasBeta / dt)
     }
