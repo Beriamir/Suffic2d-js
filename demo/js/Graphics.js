@@ -67,18 +67,16 @@ export default class Graphics {
       return this
     }
 
-    const worldX = x + (offsetX * cos - offsetY * sin)
-    const worldY = y + (offsetX * sin + offsetY * cos)
-    const anchorX = worldX + radius * (localCos * cos - localSin * sin)
-    const anchorY = worldY + radius * (localCos * sin + localSin * cos)
+    const totalCos = cos * localCos - sin * localSin
+    const totalSin = cos * localSin + sin * localCos
+
+    const worldX = x + (offsetX * totalCos - offsetY * totalSin)
+    const worldY = y + (offsetX * totalSin + offsetY * totalCos)
+    const anchorX = worldX + radius * totalCos
+    const anchorY = worldY + radius * totalSin
 
     this.#ctx.beginPath()
     this.#ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
-
-    if (!noLine) {
-      this.#ctx.moveTo(worldX, worldY)
-      this.#ctx.lineTo(anchorX, anchorY)
-    }
 
     if (!wireframe) {
       this.#ctx.fillStyle = options.fillColor ?? `gray`
@@ -87,6 +85,11 @@ export default class Graphics {
 
     if (noStroke) {
       return this
+    }
+
+    if (!noLine) {
+      this.#ctx.moveTo(worldX, worldY)
+      this.#ctx.lineTo(anchorX, anchorY)
     }
 
     this.#ctx.lineWidth = strokeWidth
@@ -96,12 +99,15 @@ export default class Graphics {
   }
 
   drawCapsule(x, y, cos, sin, options = {}) {
-    const localX = options.offsetX ?? 0
-    const localY = options.offsetY ?? 0
+    const offsetX = options.offsetX ?? 0
+    const offsetY = options.offsetY ?? 0
+    const localCos = options.cos ?? 1
+    const localSin = options.sin ?? 0
     const length = options.length ?? 0
     const radius = options.radius ?? 0
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
+    const noLine = options.noLine ?? false
     const strokeColor = options.strokeColor ?? "#0e0e0e"
     const strokeWidth = options.strokeWidth ?? 1
 
@@ -109,30 +115,29 @@ export default class Graphics {
       return this
     }
 
-    const halfLength = length * 0.5
+    const totalCos = cos * localCos - sin * localSin
+    const totalSin = cos * localSin + sin * localCos
 
-    const x1 = localX
-    const y1 = localY - halfLength
-    const x2 = localX
-    const y2 = localY + halfLength
+    const c0X = offsetX
+    const c0Y = offsetY - length * 0.5
+    const c1X = offsetX
+    const c1Y = offsetY + length * 0.5
 
-    const cx1 = x + (x1 * cos - y1 * sin)
-    const cy1 = y + (x1 * sin + y1 * cos)
-    const cx2 = x + (x2 * cos - y2 * sin)
-    const cy2 = y + (x2 * sin + y2 * cos)
+    const x0 = x + (c0X * totalCos - c0Y * totalSin)
+    const y0 = y + (c0X * totalSin + c0Y * totalCos)
+    const x1 = x + (c1X * totalCos - c1Y * totalSin)
+    const y1 = y + (c1X * totalSin + c1Y * totalCos)
 
-    const perpX = -(cy2 - cy1)
-    const perpY = cx2 - cx1
+    const perpX = -(y1 - y0)
+    const perpY = x1 - x0
 
     const startAngle = Math.atan2(perpY, perpX)
     const endAngle = Math.atan2(-perpY, -perpX)
 
     this.#ctx.beginPath()
-    this.#ctx.arc(cx1, cy1, radius, startAngle, endAngle)
-    this.#ctx.arc(cx2, cy2, radius, endAngle, startAngle)
+    this.#ctx.arc(x0, y0, radius, startAngle, endAngle)
+    this.#ctx.arc(x1, y1, radius, endAngle, startAngle)
     this.#ctx.closePath()
-    this.#ctx.moveTo(cx1, cy1)
-    this.#ctx.lineTo(cx2, cy2)
 
     if (!wireframe) {
       this.#ctx.fillStyle = options.fillColor ?? `gray`
@@ -141,6 +146,11 @@ export default class Graphics {
 
     if (noStroke) {
       return this
+    }
+
+    if (!noLine) {
+      this.#ctx.moveTo(x0, y0)
+      this.#ctx.lineTo(x1, y1)
     }
 
     this.#ctx.lineWidth = strokeWidth
@@ -164,24 +174,24 @@ export default class Graphics {
       return this
     }
 
-    let x0 = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
-    let y0 = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
-    let worldX = x + (x0 * cos - y0 * sin)
-    let worldY = y + (x0 * sin + y0 * cos)
+    const totalCos = cos * localCos - sin * localSin
+    const totalSin = cos * localSin + sin * localCos
+
+    const localX = offsetX + vertices[0]
+    const localY = offsetY + vertices[1]
+    const worldX = x + (localX * totalCos - localY * totalSin)
+    const worldY = y + (localX * totalSin + localY * totalCos)
 
     this.#ctx.beginPath()
     this.#ctx.moveTo(worldX, worldY)
     for (let i = 2; i < vertices.length; i += 2) {
-      x0 = offsetX + (vertices[i] * localCos - vertices[i + 1] * localSin)
-      y0 = offsetY + (vertices[i] * localSin + vertices[i + 1] * localCos)
-      worldX = x + (x0 * cos - y0 * sin)
-      worldY = y + (x0 * sin + y0 * cos)
+      const localX = offsetX + vertices[i]
+      const localY = offsetY + vertices[i + 1]
+      const worldX = x + (localX * totalCos - localY * totalSin)
+      const worldY = y + (localX * totalSin + localY * totalCos)
+
       this.#ctx.lineTo(worldX, worldY)
     }
-    x0 = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
-    y0 = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
-    worldX = x + (x0 * cos - y0 * sin)
-    worldY = y + (x0 * sin + y0 * cos)
     this.#ctx.lineTo(worldX, worldY)
 
     if (!wireframe) {
@@ -212,18 +222,21 @@ export default class Graphics {
       return this
     }
 
-    let x0 = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
-    let y0 = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
-    let worldX = x + (x0 * cos - y0 * sin)
-    let worldY = y + (x0 * sin + y0 * cos)
+    const totalCos = cos * localCos - sin * localSin
+    const totalSin = cos * localSin + sin * localCos
+
+    const localX = offsetX + vertices[0]
+    const localY = offsetY + vertices[1]
+    const worldX = x + (localX * totalCos - localY * totalSin)
+    const worldY = y + (localX * totalSin + localY * totalCos)
 
     this.#ctx.beginPath()
     this.#ctx.moveTo(worldX, worldY)
     for (let i = 2; i < vertices.length; i += 2) {
-      let x0 = offsetX + (vertices[i] * localCos - vertices[i + 1] * localSin)
-      let y0 = offsetY + (vertices[i] * localSin + vertices[i + 1] * localCos)
-      let worldX = x + (x0 * cos - y0 * sin)
-      let worldY = y + (x0 * sin + y0 * cos)
+      const localX = offsetX + vertices[i]
+      const localY = offsetY + vertices[i + 1]
+      const worldX = x + (localX * totalCos - localY * totalSin)
+      const worldY = y + (localX * totalSin + localY * totalCos)
 
       this.#ctx.lineTo(worldX, worldY)
     }
