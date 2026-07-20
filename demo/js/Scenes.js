@@ -287,6 +287,66 @@ export default class Scenes {
     }
   }
 
+  static lineShapes(s2, world, option = {}) {
+    const {
+      count = 200,
+      size = 0.24,
+      groundWidth = 10,
+      groundHeight = 1,
+      centerX = 0,
+      bottomY = 0
+    } = option
+
+    const groundX = centerX
+    const groundY = bottomY
+    const ground = new s2.RigidBody(groundX, groundY, 0, {
+      isStatic: true
+    })
+
+    ground.createLine(groundWidth, {
+      offset: new s2.Vector(-groundWidth * 0.5, -groundWidth * 0.5),
+      rotation: 0,
+      fillColor: "gray",
+      strokeColor: "dimgray"
+    })
+    ground.createLine(groundWidth, {
+      offset: new s2.Vector(groundWidth * 0.5, -groundWidth * 0.5),
+      rotation: 0,
+      fillColor: "gray",
+      strokeColor: "dimgray"
+    })
+    ground.createPolygon(Shapes.rectangle(groundWidth * 0.5, groundHeight), {
+      fillColor: "gray",
+      strokeColor: "dimgray"
+    })
+
+    world.createBody(ground)
+
+    const eachCount = Math.floor(count / 2)
+
+    for (let i = 0; i < eachCount; i++) {
+      const x = Math.random() * groundWidth - groundWidth * 0.5
+      const y = Math.random() * -10 - 10
+      const body = new s2.RigidBody(x, y, 0, {
+        friction: 0.3
+      })
+
+      body.createCircle(size, {})
+      world.createBody(body)
+    }
+
+    for (let i = 0; i < eachCount; i++) {
+      const x = Math.random() * groundWidth - groundWidth * 0.5
+      const y = Math.random() * -10 - 10
+      const body = new s2.RigidBody(x, y, 0, {
+        friction: 0.3
+      })
+
+      body.createLine(size * 4, {})
+      world.createBody(body)
+    }
+  }
+
   static mixShapes(s2, world, option = {}) {
     const {
       count = 200,
@@ -335,6 +395,7 @@ export default class Scenes {
       body.createCircle(size, {})
       world.createBody(body)
     }
+
     for (let i = 0; i < eachCount; i++) {
       const x = Math.random() * groundWidth - groundWidth * 0.5
       const y = Math.random() * -10 - 10
@@ -345,6 +406,7 @@ export default class Scenes {
       body.createCapsule(size * 2, size, {})
       world.createBody(body)
     }
+
     for (let i = 0; i < eachCount; i++) {
       const x = Math.random() * groundWidth - groundWidth * 0.5
       const y = Math.random() * -10 - 10

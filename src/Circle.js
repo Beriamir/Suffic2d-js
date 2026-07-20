@@ -3,9 +3,7 @@ import AABB from "./AABB.js"
 
 export default class Circle {
   #rot
-  static #uid = 0
   constructor(radius, options = {}) {
-    this.id = Circle.#uid++
     this.type = "circle"
     this.radius = radius
     this.center = new Vector()

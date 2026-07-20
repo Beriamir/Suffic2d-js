@@ -4,13 +4,11 @@ import Vertices from "./Vertices.js"
 
 export default class Line {
   #rot
-  static #uid = 0
   constructor(length, options = {}) {
-    this.id = Line.#uid++
     this.type = "line"
     this.length = length
     this.radius = 0
-    this.vertices = new Float32Array([0, -length * 0.5, 0, length * 0.5])
+    this.vertices = new Float32Array([0, length * 0.5, 0, -length * 0.5])
     this.worldVertices = new Float32Array(this.vertices.length)
     this.center = new Vector()
     this.center1 = new Vector()

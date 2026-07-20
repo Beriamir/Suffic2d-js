@@ -143,6 +143,17 @@ document.addEventListener("DOMContentLoaded", _ => {
         bottomY: by
       })
     },
+    line_Shapes() {
+      world.clear()
+      Scenes.lineShapes(s2, world, {
+        count: 200,
+        size: 0.24,
+        groundWidth: 20,
+        groundHeight: 0.5,
+        centerX: 0,
+        bottomY: 0.5
+      })
+    },
     mix_Shapes() {
       world.clear()
       Scenes.mixShapes(s2, world, {

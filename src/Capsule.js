@@ -4,9 +4,7 @@ import Vertices from "./Vertices.js"
 
 export default class Capsule {
   #rot
-  static #uid = 0
   constructor(length, radius, options = {}) {
-    this.id = Capsule.#uid++
     this.type = "capsule"
     this.length = length
     this.radius = radius

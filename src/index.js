@@ -11,7 +11,8 @@ import Pool from "./Pool.js"
 import CollideCircles from "./CollideCircles.js"
 import CollidePolygonCircle from "./CollidePolygonCircle.js"
 import CollidePolygons from "./CollidePolygons.js"
-import CollideCapsuleCircle from './CollideCapsuleCircle.js'
+import CollideCapsuleCircle from "./CollideCapsuleCircle.js"
+import CollideLines from "./CollideLines.js"
 import Collider from "./Collider.js"
 
 export default {
@@ -29,5 +30,6 @@ export default {
   CollidePolygonCircle,
   CollidePolygons,
   CollideCapsuleCircle,
+  CollideLines,
   Collider
 }

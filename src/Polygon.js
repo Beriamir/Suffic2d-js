@@ -4,9 +4,7 @@ import AABB from "./AABB.js"
 
 export default class Polygon {
   #rot
-  static #uid = 0
   constructor(vertices, options = {}) {
-    this.id = Polygon.#uid++
     this.type = "polygon"
     this.vertices = vertices
     this.worldVertices = new Float32Array(vertices.length)

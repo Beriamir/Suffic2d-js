@@ -35,6 +35,7 @@ export default class RigidBody {
     this.invMass = 0
     this.invInertia = 0
 
+    this.fixtureUid = 0
     this.fixtures = []
     this.anchors = []
     this.aabb = new AABB()
@@ -56,6 +57,7 @@ export default class RigidBody {
     }
 
     this.fixtures.push(shape)
+    shape.id = this.fixtureUid++
     shape.index = this.fixtures.length - 1
     shape.updateWorldVertices(
       this.position.x,
