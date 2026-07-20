@@ -2,7 +2,8 @@ import Vector from "./Vector.js"
 import AABB from "./AABB.js"
 import Polygon from "./Polygon.js"
 import Circle from "./Circle.js"
-import Capsule from './Capsule.js'
+import Capsule from "./Capsule.js"
+import Line from "./Line.js"
 
 export default class RigidBody {
   #rot
@@ -172,5 +173,12 @@ export default class RigidBody {
 
     this.createFixture(capsule)
     return capsule
+  }
+
+  createLine(length, option = {}) {
+    const line = new Line(length, option)
+
+    this.createFixture(line)
+    return line
   }
 }

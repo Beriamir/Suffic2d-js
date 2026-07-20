@@ -12,19 +12,26 @@ export default class Collider {
     this.colliders = []
     this.shapes = {
       circle: 0,
-      capsule: 1,
-      polygon: 2
+      line: 1,
+      capsule: 2,
+      polygon: 3
     }
     this.table = {
       circle: {
         circle: this.collideCircles
       },
+      line: {
+        circle: this.collideCapsuleCircle,
+        line: this.collidePolygons
+      },
       capsule: {
         circle: this.collideCapsuleCircle,
+        line: this.collidePolygons,
         capsule: this.collidePolygons
       },
       polygon: {
         circle: this.collidePolygonCircle,
+        line: this.collidePolygons,
         capsule: this.collidePolygons,
         polygon: this.collidePolygons
       }

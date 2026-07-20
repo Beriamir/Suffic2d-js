@@ -269,6 +269,18 @@ document.addEventListener("DOMContentLoaded", _ => {
             })
             break
 
+          case "line":
+            gfx.drawLine(position.x, position.y, cos, sin, {
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
+              cos: s.cos,
+              sin: s.sin,
+              vertices: s.vertices,
+              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              strokeWidth
+            })
+            break
+
           default:
             break
         }
