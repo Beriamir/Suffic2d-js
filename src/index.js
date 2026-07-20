@@ -8,9 +8,10 @@ import Vertices from "./Vertices.js"
 import ContactSolver from "./ContactSolver.js"
 import DynamicTree from "./DynamicTree.js"
 import Pool from "./Pool.js"
-import CollideCircleCircle from "./CollideCircleCircle.js"
+import CollideCircles from "./CollideCircles.js"
 import CollidePolygonCircle from "./CollidePolygonCircle.js"
-import CollidePolygonPolygon from "./CollidePolygonPolygon.js"
+import CollidePolygons from "./CollidePolygons.js"
+import CollideCapsuleCircle from './CollideCapsuleCircle.js'
 import Collider from "./Collider.js"
 
 export default {
@@ -24,8 +25,9 @@ export default {
   Vertices,
   ContactSolver,
   DynamicTree,
-  CollideCircleCircle,
+  CollideCircles,
   CollidePolygonCircle,
-  CollidePolygonPolygon,
+  CollidePolygons,
+  CollideCapsuleCircle,
   Collider
 }

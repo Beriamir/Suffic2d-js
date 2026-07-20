@@ -84,8 +84,10 @@ export default class CollidePolygonCircle {
   }
 
   #getAxes(vertices, axes = []) {
-    for (let i = 0; i < vertices.length; i += 2) {
-      const j = i < vertices.length - 2 ? i + 2 : 0
+    const n = vertices.length
+
+    for (let i = 0; i < n; i += 2) {
+      const j = i < n - 2 ? i + 2 : 0
 
       const x0 = vertices[i]
       const y0 = vertices[i + 1]

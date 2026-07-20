@@ -8,11 +8,18 @@ export default class Capsule {
   constructor(length, radius, options = {}) {
     this.id = Capsule.#uid++
     this.type = "capsule"
-    this.center = new Vector()
-    this.vertices = new Float32Array([0, -length * 0.5, 0, length * 0.5])
-    this.worldVertices = new Float32Array(4)
     this.length = length
     this.radius = radius
+    this.vertices = this.#createCapsuleVertices(
+      length,
+      radius,
+      options.roundness ?? 15
+    )
+    this.worldVertices = new Float32Array(this.vertices.length)
+    this.center = new Vector()
+    this.center1 = new Vector()
+    this.center2 = new Vector()
+
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0
     this.cos = Math.cos(this.#rot)
@@ -20,9 +27,9 @@ export default class Capsule {
 
     this.density = options.density ?? 1
     this.thickness = options.thickness ?? 1
-    this.area = length * (2 * radius) + Math.PI * radius * radius
+    this.area = Vertices.getArea(this.vertices)
     this.mass = this.density * this.area * this.thickness
-    this.inertia = (this.mass * (length * length + 4 * radius * radius)) / 12
+    this.inertia = Vertices.getInertia(this.vertices, this.mass)
 
     const hue = Math.random() * 360
     this.fillColor = options.fillColor ?? `hsl(${hue}, 50%, 40%)`
@@ -39,19 +46,49 @@ export default class Capsule {
     return this.#rot
   }
 
+  #createCapsuleVertices(length, radius, roundness = 9) {
+    const capsule = []
+    const halfLength = length * 0.5
+
+    for (let i = 0; i <= roundness; i++) {
+      const t = (i * Math.PI) / roundness
+      capsule.push(Math.cos(t) * radius, halfLength + Math.sin(t) * radius)
+    }
+
+    for (let i = 0; i <= roundness; i++) {
+      const t = Math.PI + (i * Math.PI) / roundness
+      capsule.push(Math.cos(t) * radius, -halfLength + Math.sin(t) * radius)
+    }
+
+    return new Float32Array(capsule)
+  }
+
   updateWorldVertices(x, y, cos, sin) {
+    const totalCos = cos * this.cos - sin * this.sin
+    const totalSin = cos * this.sin + sin * this.cos
+
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.offset.x + this.vertices[i]
       const y0 = this.offset.y + this.vertices[i + 1]
-      const x1 = x0 * this.cos - y0 * this.sin
-      const y1 = x0 * this.sin + y0 * this.cos
 
-      this.worldVertices[i] = x + (x1 * cos - y1 * sin)
-      this.worldVertices[i + 1] = y + (x1 * sin + y1 * cos)
+      this.worldVertices[i] = x + (x0 * totalCos - y0 * totalSin)
+      this.worldVertices[i + 1] = y + (x0 * totalSin + y0 * totalCos)
     }
 
-    Vertices.getMean(this.worldVertices, this.center)
     this.updateAABB()
+
+    const x0 = this.offset.x
+    const y0 = this.offset.y - this.length * 0.5
+    const x1 = this.offset.x
+    const y1 = this.offset.y + this.length * 0.5
+
+    this.center1.x = x + (x0 * totalCos - y0 * totalSin)
+    this.center1.y = y + (x0 * totalSin + y0 * totalCos)
+    this.center2.x = x + (x1 * totalCos - y1 * totalSin)
+    this.center2.y = y + (x1 * totalSin + y1 * totalCos)
+
+    this.center.x = (this.center1.x + this.center2.x) * 0.5
+    this.center.y = (this.center1.y + this.center2.y) * 0.5
   }
 
   updateAABB() {
@@ -62,8 +99,9 @@ export default class Capsule {
       const y0 = this.worldVertices[i + 1]
 
       if (x0 < this.aabb.minX) this.aabb.minX = x0
-      if (y0 < this.aabb.minY) this.aabb.minY = y0
       if (x0 > this.aabb.maxX) this.aabb.maxX = x0
+
+      if (y0 < this.aabb.minY) this.aabb.minY = y0
       if (y0 > this.aabb.maxY) this.aabb.maxY = y0
     }
 

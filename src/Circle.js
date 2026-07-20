@@ -9,6 +9,7 @@ export default class Circle {
     this.type = "circle"
     this.radius = radius
     this.center = new Vector()
+
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0
     this.cos = Math.cos(this.#rot)
@@ -36,14 +37,13 @@ export default class Circle {
   }
 
   updateWorldVertices(x, y, cos, sin) {
+    const totalCos = cos * this.cos - sin * this.sin
+    const totalSin = cos * this.sin + sin * this.cos
     const x0 = this.offset.x
     const y0 = this.offset.y
-    const x1 = x0 * this.cos - y0 * this.sin
-    const y1 = x0 * this.sin + y0 * this.cos
 
-    this.center.x = x + (x1 * cos - y1 * sin)
-    this.center.y = y + (x1 * sin + y1 * cos)
-
+    this.center.x = x + (x0 * totalCos - y0 * totalSin)
+    this.center.y = y + (x0 * totalSin + y0 * totalCos)
     this.updateAABB()
   }
 

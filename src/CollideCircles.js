@@ -1,7 +1,7 @@
 import Vector from "./Vector.js"
 import Pool from "./Pool.js"
 
-export default class CollideCircleCircle {
+export default class CollideCircles {
   #vectors = new Pool(() => new Vector(), 16)
   constructor() {}
 

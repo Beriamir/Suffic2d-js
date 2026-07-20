@@ -1,7 +1,7 @@
 import s2 from "../../src/index.js"
 import dat from "../../lib/dat.gui.mjs"
-import scenes from "./scenes/scenes.js"
-import Input from "./inputs/Input.js"
+import Scenes from "./Scenes.js"
+import Input from "./Input.js"
 import Graphics from "./Graphics.js"
 import Camera from "./Camera.js"
 
@@ -23,12 +23,13 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const world = new s2.World({
     substeps: 1,
-    velocityIterations: 4,
-    positionIterations: 2,
+    velocityIterations: 8,
+    positionIterations: 3,
     nodeMargin: 0.1,
     gravity: new s2.Vector(0, 9.81)
   })
   const debugs = {
+    hide_Bodies: false,
     wireframe: false,
     epa: false,
     normal: false,
@@ -47,65 +48,82 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const sceneManager = {
     pyramid() {
-      const cx = 15 * 0.48
+      const cx = 15 * 0.24
       const by = 0
 
       world.clear()
-      scenes.pyramid(s2, world, {
-        rows: 30,
-        spacing: 0,
-        boxWidth: 0.48,
-        boxHeight: 0.48,
-        groundWidth: 20,
-        groundHeight: 0.1,
+      Scenes.pyramid(s2, world, {
+        rows: 15,
+        spacing: 0.02,
+        boxWidth: 0.24,
+        boxHeight: 0.24,
+        groundWidth: 10,
+        groundHeight: 0.5,
         centerX: cx,
         bottomY: by
       })
     },
-    boxStack() {
-      const cx = 30 * 0.24
+    vertical_Stack() {
+      const cx = 15 * 0.24
       const by = 0
 
       world.clear()
-      scenes.boxStack(s2, world, {
-        columns: 30,
-        rows: 30,
-        spacing: 0,
-        boxWidth: 0.48,
-        boxHeight: 0.48,
-        groundWidth: 20,
-        groundHeight: 0.1,
+      Scenes.verticalStack(s2, world, {
+        columns: 15,
+        rows: 15,
+        spacing: 0.05,
+        boxWidth: 0.24,
+        boxHeight: 0.24,
+        groundWidth: 10,
+        groundHeight: 0.5,
         centerX: cx,
         bottomY: by
       })
     },
-    circleStack() {
-      const cx = 30 * 0.24
+    circle_Stack() {
+      const cx = 15 * 0.24
       const by = 0
 
       world.clear()
-      scenes.circleStack(s2, world, {
-        columns: 30,
-        rows: 30,
-        spacing: 0,
+      Scenes.circleStack(s2, world, {
+        columns: 15,
+        rows: 15,
+        spacing: 0.05,
         radius: 0.24,
-        groundWidth: 20,
-        groundHeight: 0.1,
+        groundWidth: 10,
+        groundHeight: 0.5,
+        centerX: cx,
+        bottomY: by
+      })
+    },
+    capsule_Stack() {
+      const cx = 15 * 0.24
+      const by = 0
+
+      world.clear()
+      Scenes.capsuleStack(s2, world, {
+        columns: 15,
+        rows: 8,
+        spacing: 0.05,
+        length: 0.48,
+        radius: 0.24,
+        groundWidth: 10,
+        groundHeight: 0.5,
         centerX: cx,
         bottomY: by
       })
     },
     jenga() {
-      const cx = 4.5
+      const cx = 0
       const by = 0
 
       world.clear()
-      scenes.jenga(s2, world, {
-        levels: 31,
-        width: 1,
-        height: 0.2,
-        groundWidth: 20,
-        groundHeight: 0.1,
+      Scenes.jenga(s2, world, {
+        levels: 15,
+        width: 0.5,
+        height: 0.1,
+        groundWidth: 15,
+        groundHeight: 0.5,
         centerX: cx,
         bottomY: by
       })
@@ -115,15 +133,32 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
-      scenes.friction(s2, world, {
+      Scenes.friction(s2, world, {
         spacing: 0.48 * 3,
         rampWidth: 10,
         rampHeight: 0.1,
-        groundWidth: 50,
-        groundHeight: 0.1,
+        groundWidth: 30,
+        groundHeight: 0.5,
         centerX: cx,
         bottomY: by
       })
+    },
+    mix_Shapes() {
+      world.clear()
+      Scenes.mixShapes(s2, world, {
+        count: 200,
+        size: 0.24,
+        groundWidth: 20,
+        groundHeight: 0.5,
+        centerX: 0,
+        bottomY: 0.5
+      })
+    },
+    reset_Camera() {
+      camera.x = 0
+      camera.y = 0
+      camera.angle = 0
+      camera.scale = 100
     }
   }
 
@@ -136,38 +171,36 @@ document.addEventListener("DOMContentLoaded", _ => {
   input.onRotate = delta => {
     camera.rotate(delta)
   }
+  input.onResize = (w, h) => {
+    canvas.width = w
+    canvas.height = h
+  }
 
   for (const stat of Object.keys(stats)) {
     statsFolGUI.add(stats, stat).listen().name(stat.toUpperCase())
   }
 
-  for (const key of Object.keys(debugs)) {
-    debugsFolGUI.add(debugs, key).name(key.toUpperCase())
+  for (const stat of Object.keys(camera)) {
+    statsFolGUI.add(camera, stat).listen().name(stat.toUpperCase())
+  }
+
+  for (const debug of Object.keys(debugs)) {
+    debugsFolGUI.add(debugs, debug).name(debug.toUpperCase())
   }
 
   perimetersFolGUI.add(world, "substeps", 1, 10, 1)
   perimetersFolGUI.add(world, "velocityIterations", 1, 10, 1)
   perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
 
-  gui.add(sceneManager, "pyramid")
-  gui.add(sceneManager, "boxStack")
-  gui.add(sceneManager, "circleStack")
-  gui.add(sceneManager, "jenga")
-  gui.add(sceneManager, "friction")
+  for (const key of Object.keys(sceneManager)) {
+    gui.add(sceneManager, key).name(key.toUpperCase())
+  }
 
   guiEl.appendChild(gui.domElement)
 
-  window.addEventListener("resize", e => {
-    windowResize(innerWidth, innerHeight)
-  })
-
-  function windowResize(width, height) {
-    canvas.width = width
-    canvas.height = height
-  }
-
   function setup() {
-    windowResize(innerWidth, innerHeight)
+    canvas.width = innerWidth
+    canvas.height = innerHeight
     sceneManager.pyramid()
   }
 
@@ -187,11 +220,13 @@ document.addEventListener("DOMContentLoaded", _ => {
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
+        if (debugs.hide_Bodies) continue
+
         switch (s.type) {
           case "polygon":
             gfx.drawPolygon(position.x, position.y, cos, sin, {
-              offsetX: s.offsetX,
-              offsetY: s.offsetY,
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
               cos: s.cos,
               sin: s.sin,
               vertices: s.vertices,
@@ -205,10 +240,26 @@ document.addEventListener("DOMContentLoaded", _ => {
 
           case "circle":
             gfx.drawCircle(position.x, position.y, cos, sin, {
-              offsetX: s.offsetX,
-              offsetY: s.offsetY,
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
               cos: s.cos,
               sin: s.sin,
+              radius: s.radius,
+              fillColor: body.isSleeping ? "gray" : s.fillColor,
+              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              wireframe: debugs.wireframe,
+              noStroke: !debugs.wireframe,
+              strokeWidth
+            })
+            break
+
+          case "capsule":
+            gfx.drawCapsule(position.x, position.y, cos, sin, {
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
+              cos: s.cos,
+              sin: s.sin,
+              length: s.length,
               radius: s.radius,
               fillColor: body.isSleeping ? "gray" : s.fillColor,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
@@ -343,7 +394,7 @@ document.addEventListener("DOMContentLoaded", _ => {
 
     gfx.setCamera(null)
 
-    // GUID
+    // GUID goes here
   }
 
   function update() {
@@ -357,10 +408,10 @@ document.addEventListener("DOMContentLoaded", _ => {
       last = now
       accu += dt
       if (accu >= step) {
+        accu = 0
         simulate(step)
         render(gfx, step)
 
-        accu -= step
         stats.fps = 1 / dt
         stats.bodies = world.bodies.length
         stats.joints = 0

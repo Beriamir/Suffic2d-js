@@ -1,24 +1,32 @@
-import CollideCircleCircle from "./CollideCircleCircle.js"
+import CollideCircles from "./CollideCircles.js"
+import CollideCapsuleCircle from "./CollideCapsuleCircle.js"
 import CollidePolygonCircle from "./CollidePolygonCircle.js"
-import CollidePolygonPolygon from "./CollidePolygonPolygon.js"
+import CollidePolygons from "./CollidePolygons.js"
 
 export default class Collider {
   constructor() {
-    this.collideCircleCircle = new CollideCircleCircle()
+    this.collideCircles = new CollideCircles()
+    this.collideCapsuleCircle = new CollideCapsuleCircle()
     this.collidePolygonCircle = new CollidePolygonCircle()
-    this.collidePolygonPolygon = new CollidePolygonPolygon()
+    this.collidePolygons = new CollidePolygons()
     this.colliders = []
     this.shapes = {
       circle: 0,
-      polygon: 1
+      capsule: 1,
+      polygon: 2
     }
     this.table = {
       circle: {
-        circle: this.collideCircleCircle
+        circle: this.collideCircles
+      },
+      capsule: {
+        circle: this.collideCapsuleCircle,
+        capsule: this.collidePolygons
       },
       polygon: {
         circle: this.collidePolygonCircle,
-        polygon: this.collidePolygonPolygon
+        capsule: this.collidePolygons,
+        polygon: this.collidePolygons
       }
     }
 

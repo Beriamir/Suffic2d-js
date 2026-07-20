@@ -1,3 +1,5 @@
+// TODO: Block Solver?
+
 export default class ContactSolver {
   constructor(option = {}) {}
 

@@ -85,7 +85,7 @@ export default class Vector {
     return this.x * this.x + this.y * this.y
   }
   isZero() {
-    const epsilon = 1e-12
+    const epsilon = 1e-6
 
     return this.magSq() < epsilon * epsilon
   }

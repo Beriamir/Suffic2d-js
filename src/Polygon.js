@@ -8,9 +8,10 @@ export default class Polygon {
   constructor(vertices, options = {}) {
     this.id = Polygon.#uid++
     this.type = "polygon"
-    this.vertices = vertices // local
+    this.vertices = vertices
     this.worldVertices = new Float32Array(vertices.length)
     this.center = new Vector()
+
     this.offset = options.offset ?? new Vector()
     this.#rot = options.rotation ?? 0
     this.cos = Math.cos(this.#rot)
@@ -39,14 +40,15 @@ export default class Polygon {
   }
 
   updateWorldVertices(x, y, cos, sin) {
+    const totalCos = cos * this.cos - sin * this.sin
+    const totalSin = cos * this.sin + sin * this.cos
+
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.offset.x + this.vertices[i]
       const y0 = this.offset.y + this.vertices[i + 1]
-      const x1 = x0 * this.cos - y0 * this.sin
-      const y1 = x0 * this.sin + y0 * this.cos
 
-      this.worldVertices[i] = x + (x1 * cos - y1 * sin)
-      this.worldVertices[i + 1] = y + (x1 * sin + y1 * cos)
+      this.worldVertices[i] = x + (x0 * totalCos - y0 * totalSin)
+      this.worldVertices[i + 1] = y + (x0 * totalSin + y0 * totalCos)
     }
 
     Vertices.getCentroid(this.worldVertices, this.center)
@@ -61,8 +63,9 @@ export default class Polygon {
       const y0 = this.worldVertices[i + 1]
 
       if (x0 < this.aabb.minX) this.aabb.minX = x0
-      if (y0 < this.aabb.minY) this.aabb.minY = y0
       if (x0 > this.aabb.maxX) this.aabb.maxX = x0
+
+      if (y0 < this.aabb.minY) this.aabb.minY = y0
       if (y0 > this.aabb.maxY) this.aabb.maxY = y0
     }
 
