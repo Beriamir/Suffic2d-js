@@ -4,8 +4,7 @@ export default class ContactSolver {
   constructor(option = {}) {}
 
   prepare(contact, dt) {
-    const { bodyA, bodyB, manifold } = contact
-    const { normalX, normalY, contactPoints } = manifold
+    const { bodyA, bodyB, normalX, normalY, contactPoints } = contact
 
     const mA = bodyA.invMass
     const mB = bodyB.invMass
@@ -17,9 +16,9 @@ export default class ContactSolver {
     const wA = bodyA.angularVelocity
     const wB = bodyB.angularVelocity
 
-    const tangentX = (manifold.tangentX = -normalY)
-    const tangentY = (manifold.tangentY = normalX)
-    const contactCount = (manifold.contactCount = contactPoints.length)
+    const tangentX = (contact.tangentX = -normalY)
+    const tangentY = (contact.tangentY = normalX)
+    const contactCount = (contact.contactCount = contactPoints.length)
 
     // const zeta = 1 // damping
     // const hertz = mA == 0 || mB == 0 ? 60 : 30 // cycles per second
@@ -72,25 +71,22 @@ export default class ContactSolver {
     }
   }
 
-  warmStart(newContact, oldContact) {
-    if (!oldContact) {
+  warmStart(newContact, oldContactPoints) {
+    if (!oldContactPoints) {
       return
     }
 
     const {
       bodyA,
       bodyB,
-      manifold: {
-        normalX,
-        normalY,
-        tangentX,
-        tangentY,
-        contactPoints,
-        contactCount
-      }
+      normalX,
+      normalY,
+      tangentX,
+      tangentY,
+      contactPoints,
+      contactCount
     } = newContact
 
-    const oldContactPoints = oldContact.manifold.contactPoints
     const mA = bodyA.invMass
     const mB = bodyB.invMass
     const iA = bodyA.invInertia
@@ -129,15 +125,16 @@ export default class ContactSolver {
   }
 
   solve(contact, useBias = false) {
-    const { bodyA, bodyB, manifold } = contact
     const {
+      bodyA,
+      bodyB,
       normalX,
       normalY,
       tangentX,
       tangentY,
       contactPoints,
       contactCount
-    } = manifold
+    } = contact
 
     const mA = bodyA.invMass
     const mB = bodyB.invMass

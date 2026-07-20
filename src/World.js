@@ -10,7 +10,7 @@ export default class World {
   #bodies = []
   #contacts = new Map()
   #contactKeys = []
-  #oldContacts = new Map()
+  #oldContactPoints = new Map()
   #contactSolver = new ContactSolver()
   #dynamicTree = new DynamicTree()
   #nearby = []
@@ -84,7 +84,7 @@ export default class World {
     this.#bodies.pop()
     body.index = -1
 
-    return body.index
+    return body
   }
 
   simulate(dt) {
@@ -123,22 +123,22 @@ export default class World {
               }
 
               // Narrowphase
-              const manifold = this.#collider.collide(sA, sB)
+              const contact = this.#collider.collide(sA, sB)
 
-              if (!manifold) {
+              if (!contact) {
                 continue
               }
 
+              contact.bodyA = bodyA
+              contact.bodyB = bodyB
+
               this.#contactKeys.push(key)
-              this.#contacts.set(key, {
-                bodyA,
-                bodyB,
-                manifold
-              })
+              this.#contacts.set(key, contact)
             }
           }
         }
       }
+
       this.#contactKeys.sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
@@ -159,17 +159,19 @@ export default class World {
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
         const contact = this.#contacts.get(key)
+        const oldContactPoints = this.#oldContactPoints.get(key)
 
         this.#contactSolver.prepare(contact, dt)
-        this.#contactSolver.warmStart(contact, this.#oldContacts.get(key))
+        this.#contactSolver.warmStart(contact, oldContactPoints)
       }
 
-      // Solve
+      // Solve inequality constraints
       for (let i = 0; i < this.velocityIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
-          const contact = this.#contacts.get(this.#contactKeys[j])
-
-          this.#contactSolver.solve(contact, true)
+          this.#contactSolver.solve(
+            this.#contacts.get(this.#contactKeys[j]),
+            true // Apply baumgarte bias
+          )
         }
       }
 
@@ -200,19 +202,20 @@ export default class World {
       // Relax
       for (let i = 0; i < this.positionIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
-          const contact = this.#contacts.get(this.#contactKeys[j])
-
-          this.#contactSolver.solve(contact, false)
+          this.#contactSolver.solve(
+            this.#contacts.get(this.#contactKeys[j]),
+            false
+          )
         }
       }
 
       // Store
-      this.#oldContacts.clear()
+      this.#oldContactPoints.clear()
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
         const contact = this.#contacts.get(key)
 
-        this.#oldContacts.set(key, contact)
+        this.#oldContactPoints.set(key, contact.contactPoints)
       }
     }
   }
