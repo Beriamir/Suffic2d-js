@@ -248,7 +248,6 @@ document.addEventListener("DOMContentLoaded", _ => {
               strokeWidth
             })
             break
-
           case "circle":
             gfx.drawCircle(position.x, position.y, cos, sin, {
               offsetX: s.offset.x,
@@ -263,7 +262,6 @@ document.addEventListener("DOMContentLoaded", _ => {
               strokeWidth
             })
             break
-
           case "capsule":
             gfx.drawCapsule(position.x, position.y, cos, sin, {
               offsetX: s.offset.x,
@@ -279,7 +277,6 @@ document.addEventListener("DOMContentLoaded", _ => {
               strokeWidth
             })
             break
-
           case "line":
             gfx.drawLine(position.x, position.y, cos, sin, {
               offsetX: s.offset.x,
@@ -290,9 +287,6 @@ document.addEventListener("DOMContentLoaded", _ => {
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               strokeWidth
             })
-            break
-
-          default:
             break
         }
       }
@@ -325,15 +319,13 @@ document.addEventListener("DOMContentLoaded", _ => {
       const {
         bodyA,
         bodyB,
-        manifold: {
-          normalX,
-          normalY,
-          ref,
-          inc,
-          overlap,
-          polytope,
-          contactPoints
-        }
+        normalX,
+        normalY,
+        ref,
+        inc,
+        overlap,
+        polytope,
+        contactPoints
       } = contact
 
       if (debugs.epa && polytope) {
@@ -416,29 +408,21 @@ document.addEventListener("DOMContentLoaded", _ => {
     }
 
     gfx.setCamera(null)
-
-    // GUID goes here
   }
 
   function update() {
-    let last = performance.now()
-    let accu = 0
     const step = 1 / 60
+    let last = performance.now()
 
     const loop = now => {
       const dt = (now - last) * 0.001
-
       last = now
-      accu += dt
-      if (accu >= step) {
-        accu = 0
-        simulate(step)
-        render(gfx, step)
 
-        stats.fps = 1 / dt
-        stats.bodies = world.bodies.length
-        stats.joints = 0
-      }
+      simulate(step)
+      render(gfx)
+      stats.fps = 1 / dt
+      stats.bodies = world.bodies.length
+      stats.joints = 0
 
       requestAnimationFrame(loop)
     }

@@ -7,12 +7,12 @@ export default class Scenes {
     const {
       rows = 15,
       spacing = 0,
-      boxWidth = 40,
-      boxHeight = 40,
-      groundWidth = innerWidth * 0.5,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight - 25
+      boxWidth = 0.24,
+      boxHeight = 0.24,
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const groundX = centerX
@@ -52,12 +52,12 @@ export default class Scenes {
       columns = 1,
       rows = 20,
       spacing = 0,
-      boxWidth = 40,
-      boxHeight = 40,
-      groundWidth = innerWidth / 2,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      boxWidth = 0.24,
+      boxHeight = 0.24,
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const groundX = centerX
@@ -87,7 +87,9 @@ export default class Scenes {
           friction: 0.3
         })
 
-        body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {})
+        body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
+          offset: new s2.Vector(0, 0)
+        })
         world.createBody(body)
       }
     }
@@ -97,12 +99,12 @@ export default class Scenes {
     const {
       columns = 1,
       rows = 20,
-      radius = 40,
+      radius = 0.24,
       spacing = 0,
-      groundWidth = innerWidth / 2,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const groundX = centerX
@@ -141,13 +143,13 @@ export default class Scenes {
     const {
       columns = 1,
       rows = 20,
-      length = 40,
-      radius = 40,
+      length = 0.24,
+      radius = 0.24,
       spacing = 0,
-      groundWidth = innerWidth / 2,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const groundX = centerX
@@ -182,7 +184,8 @@ export default class Scenes {
         )
 
         body.createCapsule(length, radius, {
-          roundness: 15
+          roundness: 15,
+          offset: new s2.Vector(0, 0)
         })
         world.createBody(body)
       }
@@ -192,12 +195,12 @@ export default class Scenes {
   static jenga(s2, world, option = {}) {
     const {
       levels = 18,
-      width = 80,
-      height = 20,
-      groundWidth = innerWidth / 2,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      width = 0.24,
+      height = 0.24,
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const groundX = centerX
@@ -237,13 +240,13 @@ export default class Scenes {
 
   static friction(s2, world, option) {
     const {
-      spacing = 120,
-      rampWidth = innerWidth * 0.25,
-      rampHeight = 25,
-      groundWidth = innerWidth / 2,
-      groundHeight = 25,
-      centerX = innerWidth * 0.5,
-      bottomY = innerHeight
+      spacing = 0,
+      rampWidth = 10,
+      rampHeight = 0.24,
+      groundWidth = 10,
+      groundHeight = 0.5,
+      centerX = 0,
+      bottomY = 0
     } = option
 
     const rampX = centerX * 3
@@ -387,7 +390,7 @@ export default class Scenes {
 
     for (let i = 0; i < eachCount; i++) {
       const x = Math.random() * groundWidth - groundWidth * 0.5
-      const y = Math.random() * -10 - 10
+      const y = Math.random() * -20 - 10
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
       })
@@ -398,7 +401,7 @@ export default class Scenes {
 
     for (let i = 0; i < eachCount; i++) {
       const x = Math.random() * groundWidth - groundWidth * 0.5
-      const y = Math.random() * -10 - 10
+      const y = Math.random() * -20 - 10
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
       })
@@ -409,7 +412,7 @@ export default class Scenes {
 
     for (let i = 0; i < eachCount; i++) {
       const x = Math.random() * groundWidth - groundWidth * 0.5
-      const y = Math.random() * -10 - 10
+      const y = Math.random() * -20 - 10
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
       })
