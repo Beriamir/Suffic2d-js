@@ -38,13 +38,13 @@ export default class Graphics {
   }
 
   drawText(x, y, text, options = {}) {
-    const fillColor = options.fillColor ?? "#0e0e0e"
+    const color = options.color ?? "#0e0e0e"
     const baseline = options.baseline ?? "top"
-    const fontSize = options.fontSize ?? 12
+    const size = options.size ?? 12
     const align = options.align ?? "start"
 
-    this.#ctx.fillStyle = fillColor
-    this.#ctx.font = `normal ${fontSize}px verdana`
+    this.#ctx.fillStyle = color
+    this.#ctx.font = `normal ${size}px verdana`
     this.#ctx.textBaseline = baseline
     this.#ctx.textAlign = align
     this.#ctx.fillText(text, x, y)
