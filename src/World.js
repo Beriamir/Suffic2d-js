@@ -165,7 +165,7 @@ export default class World {
         this.#contactSolver.warmStart(contact, oldContactPoints)
       }
 
-      // Solve inequality constraints
+      // Solve
       for (let i = 0; i < this.velocityIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
           this.#contactSolver.solve(
@@ -209,7 +209,7 @@ export default class World {
         }
       }
 
-      // Store
+      // Cache
       this.#oldContactPoints.clear()
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]

@@ -16,6 +16,9 @@ export default class ContactSolver {
     const wA = bodyA.angularVelocity
     const wB = bodyB.angularVelocity
 
+    const restitution = Math.max(bodyA.restitution, bodyB.restitution)
+    contact.friction = Math.max(bodyA.friction, bodyB.friction)
+
     const tangentX = (contact.tangentX = -normalY)
     const tangentY = (contact.tangentY = normalX)
     const contactCount = (contact.contactCount = contactPoints.length)
@@ -39,6 +42,10 @@ export default class ContactSolver {
       const rbX = cp.pointX - bodyB.position.x
       const rbY = cp.pointY - bodyB.position.y
 
+      const relVelX = vB.x - rbY * wB - (vA.x - raY * wA)
+      const relVelY = vB.y + rbX * wB - (vA.y + raX * wA)
+      const vn = relVelX * normalX + relVelY * normalY
+
       const rnA = raX * normalY - raY * normalX
       const rnB = rbX * normalY - rbY * normalX
       const rtA = raX * tangentY - raY * tangentX
@@ -51,6 +58,8 @@ export default class ContactSolver {
       cp.raY = raY
       cp.rbX = rbX
       cp.rbY = rbY
+
+      cp.vn = vn
 
       cp.rnA = rnA
       cp.rnB = rnB
@@ -67,6 +76,7 @@ export default class ContactSolver {
       const biasSlop = 0.01 // meter
       const biasBeta = mA == 0 || mB == 0 ? 0.3 : 0.1 // 0 -> 1
 
+      cp.velRestitution = -restitution * vn
       cp.velBias = Math.max(cp.overlap - biasSlop, 0) * (biasBeta / dt)
     }
   }
@@ -133,7 +143,8 @@ export default class ContactSolver {
       tangentX,
       tangentY,
       contactPoints,
-      contactCount
+      contactCount,
+      friction
     } = contact
 
     const mA = bodyA.invMass
@@ -146,10 +157,6 @@ export default class ContactSolver {
     let wA = bodyA.angularVelocity
     let wB = bodyB.angularVelocity
 
-    // TODO: restitution?
-
-    const friction = Math.max(bodyA.friction, bodyB.friction)
-
     for (let i = 0; i < contactCount; ++i) {
       const cp = contactPoints[i]
 
@@ -158,12 +165,17 @@ export default class ContactSolver {
       const vn = relVelX * normalX + relVelY * normalY
 
       let velBias = 0
+      let velRestitution = 0
 
       if (useBias) {
         velBias = cp.velBias
+      } else {
+        if (cp.vn < 1) {
+          velRestitution = cp.velRestitution
+        }
       }
 
-      let impulse = (-vn + velBias) * cp.effNormalMass
+      let impulse = (-vn + velRestitution + velBias) * cp.effNormalMass
       const oldImpulse = cp.normalImpulse
       const newImpulse = Math.max(oldImpulse + impulse, 0)
 

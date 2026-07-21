@@ -7,15 +7,10 @@ import Camera from "./Camera.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
   const canvas = document.getElementById("canvas")
-  const guiEl = document.getElementById("gui")
-
   const gfx = new Graphics(canvas, {})
   const camera = new Camera(0, 0, 0, 100) // x, y, angle, scale
   const input = new Input(canvas)
-  const gui = new dat.GUI({
-    autoPlace: false,
-    hideable: true
-  })
+  const gui = new dat.GUI()
 
   const statsFolGUI = gui.addFolder("Stats")
   const debugsFolGUI = gui.addFolder("Debugs")
@@ -128,6 +123,21 @@ document.addEventListener("DOMContentLoaded", _ => {
         bottomY: by
       })
     },
+    restitution() {
+      const cx = 15 * 0.24
+      const by = 0
+
+      world.clear()
+      Scenes.restitution(s2, world, {
+        rows: 1,
+        spacing: 0.24,
+        radius: 0.24,
+        groundWidth: 10,
+        groundHeight: 0.5,
+        centerX: cx,
+        bottomY: by
+      })
+    },
     friction() {
       const cx = 6 * 0.48
       const by = 0
@@ -206,8 +216,6 @@ document.addEventListener("DOMContentLoaded", _ => {
   for (const key of Object.keys(sceneManager)) {
     gui.add(sceneManager, key).name(key.toUpperCase())
   }
-
-  guiEl.appendChild(gui.domElement)
 
   function setup() {
     canvas.width = innerWidth
