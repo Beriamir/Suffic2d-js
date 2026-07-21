@@ -159,6 +159,42 @@ export default class Graphics {
     return this
   }
 
+  drawLine(x, y, cos = 1, sin = 0, options = {}) {
+    const offsetX = options.offsetX ?? 0
+    const offsetY = options.offsetY ?? 0
+    const localCos = options.cos ?? 1
+    const localSin = options.sin ?? 0
+    const length = options.length ?? null
+    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeWidth = options.strokeWidth ?? 1
+
+    if (!length) {
+      return this
+    }
+
+    const totalCos = cos * localCos - sin * localSin
+    const totalSin = cos * localSin + sin * localCos
+
+    const c0X = offsetX
+    const c0Y = offsetY - length * 0.5
+    const c1X = offsetX
+    const c1Y = offsetY + length * 0.5
+
+    const x0 = x + (c0X * totalCos - c0Y * totalSin)
+    const y0 = y + (c0X * totalSin + c0Y * totalCos)
+    const x1 = x + (c1X * totalCos - c1Y * totalSin)
+    const y1 = y + (c1X * totalSin + c1Y * totalCos)
+
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(x0, y0)
+    this.#ctx.lineTo(x1, y1)
+
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
+    return this
+  }
+
   drawPolygon(x, y, cos = 1, sin = 0, options = {}) {
     const offsetX = options.offsetX ?? 0
     const offsetY = options.offsetY ?? 0
@@ -203,43 +239,6 @@ export default class Graphics {
       return this
     }
 
-    this.#ctx.lineWidth = strokeWidth
-    this.#ctx.strokeStyle = strokeColor
-    this.#ctx.stroke()
-    return this
-  }
-
-  drawLine(x, y, cos = 1, sin = 0, options = {}) {
-    const offsetX = options.offsetX ?? 0
-    const offsetY = options.offsetY ?? 0
-    const localCos = options.cos ?? 1
-    const localSin = options.sin ?? 0
-    const vertices = options.vertices ?? null
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
-    const strokeWidth = options.strokeWidth ?? 1
-
-    if (!vertices && vertices.length < 2) {
-      return this
-    }
-
-    const totalCos = cos * localCos - sin * localSin
-    const totalSin = cos * localSin + sin * localCos
-
-    const localX = offsetX + vertices[0]
-    const localY = offsetY + vertices[1]
-    const worldX = x + (localX * totalCos - localY * totalSin)
-    const worldY = y + (localX * totalSin + localY * totalCos)
-
-    this.#ctx.beginPath()
-    this.#ctx.moveTo(worldX, worldY)
-    for (let i = 2; i < vertices.length; i += 2) {
-      const localX = offsetX + vertices[i]
-      const localY = offsetY + vertices[i + 1]
-      const worldX = x + (localX * totalCos - localY * totalSin)
-      const worldY = y + (localX * totalSin + localY * totalCos)
-
-      this.#ctx.lineTo(worldX, worldY)
-    }
     this.#ctx.lineWidth = strokeWidth
     this.#ctx.strokeStyle = strokeColor
     this.#ctx.stroke()

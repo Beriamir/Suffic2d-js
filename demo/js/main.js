@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", _ => {
               offsetY: s.offset.y,
               cos: s.cos,
               sin: s.sin,
-              vertices: s.vertices,
+              length: s.length,
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               strokeWidth
             })
