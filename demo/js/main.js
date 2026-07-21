@@ -286,12 +286,7 @@ document.addEventListener("DOMContentLoaded", _ => {
             })
             break
           case "line":
-            gfx.drawLine(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
-              cos: s.cos,
-              sin: s.sin,
-              length: s.length,
+            gfx.drawLine(s.center1.x, s.center1.y, s.center2.x, s.center2.y, {
               strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
               strokeWidth
             })
@@ -339,12 +334,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       if (debugs.epa && polytope) {
         const originX = 0
         const originY = 0
-        const mtv = new Float32Array(4)
-
-        mtv[0] = 0
-        mtv[1] = 0
-        mtv[2] = normalX * overlap
-        mtv[3] = normalY * overlap
+        const mtvX = normalX * overlap
+        const mtvY = normalY * overlap
 
         gfx.drawPolygon(originX, originY, 1, 0, {
           vertices: polytope,
@@ -352,8 +343,7 @@ document.addEventListener("DOMContentLoaded", _ => {
           strokeColor: debugColor,
           strokeWidth
         })
-        gfx.drawLine(originX, originY, 1, 0, {
-          vertices: mtv,
+        gfx.drawLine(originX, originY, mtvX, mtvY, {
           strokeColor: debugColor,
           strokeWidth
         })
@@ -365,32 +355,24 @@ document.addEventListener("DOMContentLoaded", _ => {
       }
 
       if (debugs.ref && ref) {
-        gfx.drawLine(0, 0, 1, 0, {
-          vertices: ref.edge,
+        gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
           strokeColor: debugColor,
           strokeWidth
         })
       }
 
       if (debugs.inc && inc) {
-        gfx.drawLine(0, 0, 1, 0, {
-          vertices: inc.edge,
+        gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
           strokeColor: debugColor,
           strokeWidth
         })
       }
 
       for (const cp of contactPoints) {
-        const nImpulse = new Float32Array(4)
-
-        nImpulse[0] = 0
-        nImpulse[1] = 0
-        nImpulse[2] = normalX * cp.normalImpulse
-        nImpulse[3] = normalY * cp.normalImpulse
-
         if (debugs.impulse) {
-          gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
-            vertices: nImpulse,
+          gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+            length: cp.normalImpulse,
+            showHead: false,
             strokeColor: debugColor,
             strokeWidth
           })

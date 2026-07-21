@@ -160,44 +160,6 @@ export default class Graphics {
     return this
   }
 
-  drawLine(x, y, cos = 1, sin = 0, options = {}) {
-    const offsetX = options.offsetX ?? 0
-    const offsetY = options.offsetY ?? 0
-    const localCos = options.cos ?? 1
-    const localSin = options.sin ?? 0
-    const length = options.length ?? null
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
-    const strokeWidth = options.strokeWidth ?? 1
-
-    if (!length) {
-      return this
-    }
-
-    const c0X = 0
-    const c0Y = -length * 0.5
-    const c1X = 0
-    const c1Y = length * 0.5
-
-    const local0X = offsetX + (c0X * localCos - c0Y * localSin)
-    const local0Y = offsetY + (c0X * localSin + c0Y * localCos)
-    const local1X = offsetX + (c1X * localCos - c1Y * localSin)
-    const local1Y = offsetY + (c1X * localSin + c1Y * localCos)
-
-    const world0X = x + (local0X * cos - local0Y * sin)
-    const world0Y = y + (local0X * sin + local0Y * cos)
-    const world1X = x + (local1X * cos - local1Y * sin)
-    const world1Y = y + (local1X * sin + local1Y * cos)
-
-    this.#ctx.beginPath()
-    this.#ctx.moveTo(world0X, world0Y)
-    this.#ctx.lineTo(world1X, world1Y)
-
-    this.#ctx.lineWidth = strokeWidth
-    this.#ctx.strokeStyle = strokeColor
-    this.#ctx.stroke()
-    return this
-  }
-
   drawPolygon(x, y, cos = 1, sin = 0, options = {}) {
     const offsetX = options.offsetX ?? 0
     const offsetY = options.offsetY ?? 0
@@ -248,6 +210,19 @@ export default class Graphics {
     return this
   }
 
+  drawLine(x0, y0, x1, y1, options = {}) {
+    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeWidth = options.strokeWidth ?? 1
+
+    this.#ctx.beginPath()
+    this.#ctx.moveTo(x0, y0)
+    this.#ctx.lineTo(x1, y1)
+    this.#ctx.lineWidth = strokeWidth
+    this.#ctx.strokeStyle = strokeColor
+    this.#ctx.stroke()
+    return this
+  }
+
   drawAABB(aabb, options = {}) {
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
@@ -280,26 +255,30 @@ export default class Graphics {
     const strokeColor = options.strokeColor ?? "#0e0e0e"
     const strokeWidth = options.strokeWidth ?? 1
     const length = options.length ?? 20
-
-    const head = length * 0.3
-    const backX = -normalX
-    const backY = -normalY
-    const perpX = -normalY
-    const perpY = normalX
+    const showHead = options.showHead ?? true
 
     const endX = x + normalX * length
     const endY = y + normalY * length
-    const leftX = endX + backX * head - perpX * head
-    const leftY = endY + backY * head - perpY * head
-    const rightX = endX + backX * head + perpX * head
-    const rightY = endY + backY * head + perpY * head
 
     this.#ctx.beginPath()
     this.#ctx.moveTo(x, y)
     this.#ctx.lineTo(endX, endY)
-    this.#ctx.moveTo(leftX, leftY)
-    this.#ctx.lineTo(endX, endY)
-    this.#ctx.lineTo(rightX, rightY)
+    if (showHead) {
+      const head = length * 0.3
+      const backX = -normalX
+      const backY = -normalY
+      const perpX = -normalY
+      const perpY = normalX
+
+      const leftX = endX + backX * head - perpX * head
+      const leftY = endY + backY * head - perpY * head
+      const rightX = endX + backX * head + perpX * head
+      const rightY = endY + backY * head + perpY * head
+
+      this.#ctx.moveTo(leftX, leftY)
+      this.#ctx.lineTo(endX, endY)
+      this.#ctx.lineTo(rightX, rightY)
+    }
     this.#ctx.lineWidth = strokeWidth
     this.#ctx.strokeStyle = strokeColor
     this.#ctx.stroke()
