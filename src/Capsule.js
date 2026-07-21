@@ -62,28 +62,32 @@ export default class Capsule {
   }
 
   updateWorldVertices(x, y, cos, sin) {
-    const totalCos = cos * this.cos - sin * this.sin
-    const totalSin = cos * this.sin + sin * this.cos
-
     for (let i = 0; i < this.vertices.length; i += 2) {
-      const x0 = this.offset.x + this.vertices[i]
-      const y0 = this.offset.y + this.vertices[i + 1]
+      const x0 = this.vertices[i]
+      const y0 = this.vertices[i + 1]
+      const localX = this.offset.x + (x0 * this.cos - y0 * this.sin)
+      const localY = this.offset.y + (x0 * this.sin + y0 * this.cos)
 
-      this.worldVertices[i] = x + (x0 * totalCos - y0 * totalSin)
-      this.worldVertices[i + 1] = y + (x0 * totalSin + y0 * totalCos)
+      this.worldVertices[i] = x + (localX * cos - localY * sin)
+      this.worldVertices[i + 1] = y + (localX * sin + localY * cos)
     }
 
     this.updateAABB()
 
-    const x0 = this.offset.x
-    const y0 = this.offset.y - this.length * 0.5
-    const x1 = this.offset.x
-    const y1 = this.offset.y + this.length * 0.5
+    const c0X = 0
+    const c0Y = -this.length * 0.5
+    const c1X = 0
+    const c1Y = this.length * 0.5
 
-    this.center1.x = x + (x0 * totalCos - y0 * totalSin)
-    this.center1.y = y + (x0 * totalSin + y0 * totalCos)
-    this.center2.x = x + (x1 * totalCos - y1 * totalSin)
-    this.center2.y = y + (x1 * totalSin + y1 * totalCos)
+    const local0X = this.offset.x + (c0X * this.cos - c0Y * this.sin)
+    const local0Y = this.offset.y + (c0X * this.sin + c0Y * this.cos)
+    const local1X = this.offset.x + (c1X * this.cos - c1Y * this.sin)
+    const local1Y = this.offset.y + (c1X * this.sin + c1Y * this.cos)
+
+    this.center1.x = x + (local0X * cos - local0Y * sin)
+    this.center1.y = y + (local0X * sin + local0Y * cos)
+    this.center2.x = x + (local1X * cos - local1Y * sin)
+    this.center2.y = y + (local1X * sin + local1Y * cos)
 
     this.center.x = (this.center1.x + this.center2.x) * 0.5
     this.center.y = (this.center1.y + this.center2.y) * 0.5

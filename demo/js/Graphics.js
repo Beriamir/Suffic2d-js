@@ -68,9 +68,9 @@ export default class Graphics {
     }
 
     const localX = offsetX
-    const localY = offsetX
-    const worldX = x + (localX * cos - localX * sin)
-    const worldY = y + (localY * sin + localY * cos)
+    const localY = offsetY
+    const worldX = x + (localX * cos - localY * sin)
+    const worldY = y + (localX * sin + localY * cos)
     const anchorX = worldX + radius * (cos * localCos - sin * localSin)
     const anchorY = worldY + radius * (cos * localSin + sin * localCos)
 

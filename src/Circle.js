@@ -35,13 +35,11 @@ export default class Circle {
   }
 
   updateWorldVertices(x, y, cos, sin) {
-    const totalCos = cos * this.cos - sin * this.sin
-    const totalSin = cos * this.sin + sin * this.cos
-    const x0 = this.offset.x
-    const y0 = this.offset.y
+    const localX = this.offset.x
+    const localY = this.offset.y
 
-    this.center.x = x + (x0 * totalCos - y0 * totalSin)
-    this.center.y = y + (x0 * totalSin + y0 * totalCos)
+    this.center.x = x + (localX * cos - localY * sin)
+    this.center.y = y + (localX * sin + localY * cos)
     this.updateAABB()
   }
 

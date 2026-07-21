@@ -38,15 +38,14 @@ export default class Polygon {
   }
 
   updateWorldVertices(x, y, cos, sin) {
-    const totalCos = cos * this.cos - sin * this.sin
-    const totalSin = cos * this.sin + sin * this.cos
-
     for (let i = 0; i < this.vertices.length; i += 2) {
-      const x0 = this.offset.x + this.vertices[i]
-      const y0 = this.offset.y + this.vertices[i + 1]
+      const x0 = this.vertices[i]
+      const y0 = this.vertices[i + 1]
+      const localX = this.offset.x + (x0 * this.cos - y0 * this.sin)
+      const localY = this.offset.y + (x0 * this.sin + y0 * this.cos)
 
-      this.worldVertices[i] = x + (x0 * totalCos - y0 * totalSin)
-      this.worldVertices[i + 1] = y + (x0 * totalSin + y0 * totalCos)
+      this.worldVertices[i] = x + (localX * cos - localY * sin)
+      this.worldVertices[i + 1] = y + (localX * sin + localY * cos)
     }
 
     Vertices.getCentroid(this.worldVertices, this.center)
