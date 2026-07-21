@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", _ => {
         bottomY: by
       })
     },
-    line_Shapes() {
+    line_Shape() {
       world.clear()
       Scenes.lineShapes(s2, world, {
         count: 200,
