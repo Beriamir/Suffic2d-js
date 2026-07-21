@@ -284,4 +284,30 @@ export default class Graphics {
     this.#ctx.stroke()
     return this
   }
+
+  drawImage(x, y, cos, sin, option = {}) {
+    const offsetX = option.offsetX ?? 0
+    const offsetY = option.offsetY ?? 0
+    const localCos = option.cos ?? 1
+    const localSin = option.sin ?? 0
+    const image = option.image ?? null
+    const width = option.width ?? 0.24
+    const height = option.height ?? 0.24
+
+    if (image && !image.complete) return
+
+    const angle = Math.atan2(
+      localCos * sin + localSin * cos,
+      localCos * cos - localSin * sin
+    )
+    const worldX = x + offsetX
+    const worldY = y + offsetY
+
+    this.#ctx.save()
+    this.#ctx.translate(worldX, worldY)
+    this.#ctx.rotate(angle)
+    this.#ctx.drawImage(image, -width, -height, width * 2, height * 2)
+    this.#ctx.restore()
+    return this
+  }
 }
