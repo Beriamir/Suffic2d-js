@@ -67,13 +67,12 @@ export default class Graphics {
       return this
     }
 
-    const totalCos = cos * localCos - sin * localSin
-    const totalSin = cos * localSin + sin * localCos
-
-    const worldX = x + (offsetX * totalCos - offsetY * totalSin)
-    const worldY = y + (offsetX * totalSin + offsetY * totalCos)
-    const anchorX = worldX + radius * totalCos
-    const anchorY = worldY + radius * totalSin
+    const localX = offsetX
+    const localY = offsetX
+    const worldX = x + (localX * cos - localX * sin)
+    const worldY = y + (localY * sin + localY * cos)
+    const anchorX = worldX + radius * (cos * localCos - sin * localSin)
+    const anchorY = worldY + radius * (cos * localSin + sin * localCos)
 
     this.#ctx.beginPath()
     this.#ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
@@ -115,28 +114,30 @@ export default class Graphics {
       return this
     }
 
-    const totalCos = cos * localCos - sin * localSin
-    const totalSin = cos * localSin + sin * localCos
+    const c0X = 0
+    const c0Y = -length * 0.5
+    const c1X = 0
+    const c1Y = length * 0.5
 
-    const c0X = offsetX
-    const c0Y = offsetY - length * 0.5
-    const c1X = offsetX
-    const c1Y = offsetY + length * 0.5
+    const local0X = offsetX + (c0X * localCos - c0Y * localSin)
+    const local0Y = offsetY + (c0X * localSin + c0Y * localCos)
+    const local1X = offsetX + (c1X * localCos - c1Y * localSin)
+    const local1Y = offsetY + (c1X * localSin + c1Y * localCos)
 
-    const x0 = x + (c0X * totalCos - c0Y * totalSin)
-    const y0 = y + (c0X * totalSin + c0Y * totalCos)
-    const x1 = x + (c1X * totalCos - c1Y * totalSin)
-    const y1 = y + (c1X * totalSin + c1Y * totalCos)
+    const world0X = x + (local0X * cos - local0Y * sin)
+    const world0Y = y + (local0X * sin + local0Y * cos)
+    const world1X = x + (local1X * cos - local1Y * sin)
+    const world1Y = y + (local1X * sin + local1Y * cos)
 
-    const perpX = -(y1 - y0)
-    const perpY = x1 - x0
+    const perpX = -(world1Y - world0Y)
+    const perpY = world1X - world0X
 
     const startAngle = Math.atan2(perpY, perpX)
     const endAngle = Math.atan2(-perpY, -perpX)
 
     this.#ctx.beginPath()
-    this.#ctx.arc(x0, y0, radius, startAngle, endAngle)
-    this.#ctx.arc(x1, y1, radius, endAngle, startAngle)
+    this.#ctx.arc(world0X, world0Y, radius, startAngle, endAngle)
+    this.#ctx.arc(world1X, world1Y, radius, endAngle, startAngle)
     this.#ctx.closePath()
 
     if (!wireframe) {
@@ -149,8 +150,8 @@ export default class Graphics {
     }
 
     if (!noLine) {
-      this.#ctx.moveTo(x0, y0)
-      this.#ctx.lineTo(x1, y1)
+      this.#ctx.moveTo(world0X, world0Y)
+      this.#ctx.lineTo(world1X, world1Y)
     }
 
     this.#ctx.lineWidth = strokeWidth
@@ -172,22 +173,24 @@ export default class Graphics {
       return this
     }
 
-    const totalCos = cos * localCos - sin * localSin
-    const totalSin = cos * localSin + sin * localCos
+    const c0X = 0
+    const c0Y = -length * 0.5
+    const c1X = 0
+    const c1Y = length * 0.5
 
-    const c0X = offsetX
-    const c0Y = offsetY - length * 0.5
-    const c1X = offsetX
-    const c1Y = offsetY + length * 0.5
+    const local0X = offsetX + (c0X * localCos - c0Y * localSin)
+    const local0Y = offsetY + (c0X * localSin + c0Y * localCos)
+    const local1X = offsetX + (c1X * localCos - c1Y * localSin)
+    const local1Y = offsetY + (c1X * localSin + c1Y * localCos)
 
-    const x0 = x + (c0X * totalCos - c0Y * totalSin)
-    const y0 = y + (c0X * totalSin + c0Y * totalCos)
-    const x1 = x + (c1X * totalCos - c1Y * totalSin)
-    const y1 = y + (c1X * totalSin + c1Y * totalCos)
+    const world0X = x + (local0X * cos - local0Y * sin)
+    const world0Y = y + (local0X * sin + local0Y * cos)
+    const world1X = x + (local1X * cos - local1Y * sin)
+    const world1Y = y + (local1X * sin + local1Y * cos)
 
     this.#ctx.beginPath()
-    this.#ctx.moveTo(x0, y0)
-    this.#ctx.lineTo(x1, y1)
+    this.#ctx.moveTo(world0X, world0Y)
+    this.#ctx.lineTo(world1X, world1Y)
 
     this.#ctx.lineWidth = strokeWidth
     this.#ctx.strokeStyle = strokeColor
@@ -210,21 +213,21 @@ export default class Graphics {
       return this
     }
 
-    const totalCos = cos * localCos - sin * localSin
-    const totalSin = cos * localSin + sin * localCos
-
-    const localX = offsetX + vertices[0]
-    const localY = offsetY + vertices[1]
-    const worldX = x + (localX * totalCos - localY * totalSin)
-    const worldY = y + (localX * totalSin + localY * totalCos)
+    const localX = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
+    const localY = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
+    const worldX = x + (localX * cos - localY * sin)
+    const worldY = y + (localX * sin + localY * cos)
 
     this.#ctx.beginPath()
     this.#ctx.moveTo(worldX, worldY)
     for (let i = 2; i < vertices.length; i += 2) {
-      const localX = offsetX + vertices[i]
-      const localY = offsetY + vertices[i + 1]
-      const worldX = x + (localX * totalCos - localY * totalSin)
-      const worldY = y + (localX * totalSin + localY * totalCos)
+      const localX =
+        offsetX + (vertices[i] * localCos - vertices[i + 1] * localSin)
+      const localY =
+        offsetY + (vertices[i] * localSin + vertices[i + 1] * localCos)
+
+      const worldX = x + (localX * cos - localY * sin)
+      const worldY = y + (localX * sin + localY * cos)
 
       this.#ctx.lineTo(worldX, worldY)
     }
