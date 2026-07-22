@@ -39,6 +39,25 @@ export default class RigidBody {
     this.fixtures = []
     this.anchors = []
     this.aabb = new AABB()
+
+    this.updateColor()
+  }
+
+  updateColor() {
+    const linearSpeed = Math.sqrt(this.linearVelocity.magSq())
+    const angularSpeed = Math.abs(this.angularVelocity)
+
+    const linearMax = 5
+    const angularMax = 10
+
+    const linearT = Math.min(linearSpeed / linearMax, 1)
+    const angularT = Math.min(angularSpeed / angularMax, 1)
+
+    const t = Math.max(linearT, angularT)
+
+    const hue = (1 - t) * 240
+
+    this.velocityColor = `hsl(${hue}, 100%, 50%)`
   }
 
   set rotation(value) {

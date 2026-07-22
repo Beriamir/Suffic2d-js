@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     normal: false,
     point: false,
     impulse: false,
+    velocity: false,
     ref: false,
     inc: false,
     aabb: false,
@@ -241,6 +242,17 @@ document.addEventListener("DOMContentLoaded", _ => {
       for (const s of body.fixtures) {
         if (debugs.hide_Bodies) continue
 
+        const fillColor = debugs.velocity
+          ? body.velocityColor
+          : body.isSleeping
+            ? "gray"
+            : s.fillColor
+        const strokeColor = debugs.velocity
+          ? body.velocityColor
+          : body.isSleeping
+            ? "dimgray"
+            : s.strokeColor
+
         switch (s.type) {
           case "polygon":
             gfx.drawPolygon(position.x, position.y, cos, sin, {
@@ -249,8 +261,8 @@ document.addEventListener("DOMContentLoaded", _ => {
               cos: s.cos,
               sin: s.sin,
               vertices: s.vertices,
-              fillColor: body.isSleeping ? "gray" : s.fillColor,
-              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              fillColor,
+              strokeColor,
               wireframe: debugs.wireframe,
               noStroke: !debugs.wireframe,
               strokeWidth
@@ -263,8 +275,8 @@ document.addEventListener("DOMContentLoaded", _ => {
               cos: s.cos,
               sin: s.sin,
               radius: s.radius,
-              fillColor: body.isSleeping ? "gray" : s.fillColor,
-              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              fillColor,
+              strokeColor,
               wireframe: debugs.wireframe,
               noStroke: !debugs.wireframe,
               strokeWidth
@@ -278,8 +290,8 @@ document.addEventListener("DOMContentLoaded", _ => {
               sin: s.sin,
               length: s.length,
               radius: s.radius,
-              fillColor: body.isSleeping ? "gray" : s.fillColor,
-              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              fillColor,
+              strokeColor,
               wireframe: debugs.wireframe,
               noStroke: !debugs.wireframe,
               strokeWidth
@@ -287,7 +299,7 @@ document.addEventListener("DOMContentLoaded", _ => {
             break
           case "line":
             gfx.drawLine(s.center1.x, s.center1.y, s.center2.x, s.center2.y, {
-              strokeColor: body.isSleeping ? "dimgray" : s.strokeColor,
+              strokeColor,
               strokeWidth
             })
             break

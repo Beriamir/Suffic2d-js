@@ -183,6 +183,7 @@ export default class World {
 
         body.position.addMulV(body.linearVelocity, dt)
         body.rotation += body.angularVelocity * dt
+        body.updateColor()
 
         for (let j = 0; j < body.fixtures.length; ++j) {
           const s = body.fixtures[j]
