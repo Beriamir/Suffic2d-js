@@ -21,7 +21,8 @@ document.addEventListener("DOMContentLoaded", _ => {
     velocityIterations: 8,
     positionIterations: 3,
     nodeMargin: 0.1,
-    gravity: new s2.Vector(0, 9.81)
+    gravity: new s2.Vector(0, 9.81),
+    useBlockSolver: true
   })
   const debugs = {
     hide_Bodies: false,
@@ -168,7 +169,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     mix_Shapes() {
       world.clear()
       Scenes.mixShapes(s2, world, {
-        count: 200,
+        count: 1000,
         size: 0.24,
         groundWidth: 20,
         groundHeight: 0.5,
@@ -213,6 +214,7 @@ document.addEventListener("DOMContentLoaded", _ => {
   perimetersFolGUI.add(world, "substeps", 1, 10, 1)
   perimetersFolGUI.add(world, "velocityIterations", 1, 10, 1)
   perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
+  perimetersFolGUI.add(world, "useBlockSolver").name("Block Solver")
 
   for (const key of Object.keys(sceneManager)) {
     gui.add(sceneManager, key).name(key.toUpperCase())

@@ -2,6 +2,7 @@ import DynamicTree from "./DynamicTree.js"
 import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
 import ContactSolver from "./ContactSolver.js"
+import BlockSolver from "./BlockSolver.js"
 import RigidBody from "./RigidBody.js"
 import Circle from "./Circle.js"
 import Collider from "./Collider.js"
@@ -12,6 +13,7 @@ export default class World {
   #contactKeys = []
   #oldContactPoints = new Map()
   #contactSolver = new ContactSolver()
+  #blockSolver = new BlockSolver()
   #dynamicTree = new DynamicTree()
   #nearby = []
   #collider = new Collider()
@@ -25,10 +27,11 @@ export default class World {
       this.gravity = new Vector(0, 9.81)
     }
 
-    this.substeps = option.substeps ?? 2
-    this.velocityIterations = option.velocityIterations ?? 4
-    this.positionIterations = option.positionIterations ?? 2
-    this.nodeMargin = option.nodeMargin ?? 10
+    this.substeps = option.substeps ?? 1
+    this.velocityIterations = option.velocityIterations ?? 8
+    this.positionIterations = option.positionIterations ?? 3
+    this.nodeMargin = option.nodeMargin ?? 0.1
+    this.useBlockSolver = option.useBlockSolver ?? false
   }
 
   get bodies() {
@@ -155,20 +158,24 @@ export default class World {
         }
       }
 
+      const contactSolver = this.useBlockSolver
+        ? this.#blockSolver
+        : this.#contactSolver
+
       // Prepare and warm start
       for (let i = 0; i < this.#contactKeys.length; ++i) {
         const key = this.#contactKeys[i]
         const contact = this.#contacts.get(key)
         const oldContactPoints = this.#oldContactPoints.get(key)
 
-        this.#contactSolver.prepare(contact, dt)
-        this.#contactSolver.warmStart(contact, oldContactPoints)
+        contactSolver.prepare(contact, dt)
+        contactSolver.warmStart(contact, oldContactPoints)
       }
 
       // Solve
       for (let i = 0; i < this.velocityIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
-          this.#contactSolver.solve(
+          contactSolver.solve(
             this.#contacts.get(this.#contactKeys[j]),
             true // Apply baumgarte bias
           )
@@ -203,10 +210,7 @@ export default class World {
       // Relax
       for (let i = 0; i < this.positionIterations; ++i) {
         for (let j = 0; j < this.#contactKeys.length; ++j) {
-          this.#contactSolver.solve(
-            this.#contacts.get(this.#contactKeys[j]),
-            false
-          )
+          contactSolver.solve(this.#contacts.get(this.#contactKeys[j]), false)
         }
       }
 
