@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = false
       Scenes.pyramid(s2, world, {
         rows: 15,
         spacing: 0.02,
@@ -65,6 +66,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = true
       Scenes.verticalStack(s2, world, {
         columns: 15,
         rows: 15,
@@ -82,6 +84,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = false
       Scenes.circleStack(s2, world, {
         columns: 15,
         rows: 15,
@@ -98,6 +101,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = true
       Scenes.capsuleStack(s2, world, {
         columns: 15,
         rows: 8,
@@ -110,11 +114,30 @@ document.addEventListener("DOMContentLoaded", _ => {
         bottomY: by
       })
     },
+    compound() {
+      const cx = 8 * 0.24
+      const by = 0
+
+      world.clear()
+      world.useBlockSolver = false
+      Scenes.compound(s2, world, {
+        columns: 8,
+        rows: 15,
+        spacing: 0.05,
+        boxWidth: 0.24,
+        boxHeight: 0.24,
+        groundWidth: 500,
+        groundHeight: 0.5,
+        centerX: cx,
+        bottomY: by
+      })
+    },
     jenga() {
       const cx = 0
       const by = 0
 
       world.clear()
+      world.useBlockSolver = true
       Scenes.jenga(s2, world, {
         levels: 15,
         width: 0.5,
@@ -130,6 +153,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = false
       Scenes.restitution(s2, world, {
         rows: 1,
         spacing: 0.24,
@@ -145,6 +169,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const by = 0
 
       world.clear()
+      world.useBlockSolver = false
       Scenes.friction(s2, world, {
         spacing: 0.48 * 3,
         rampWidth: 10,
@@ -157,6 +182,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     line_Shape() {
       world.clear()
+      world.useBlockSolver = false
       Scenes.lineShapes(s2, world, {
         count: 200,
         size: 0.24,
@@ -168,6 +194,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     },
     mix_Shapes() {
       world.clear()
+      world.useBlockSolver = false
       Scenes.mixShapes(s2, world, {
         count: 1000,
         size: 0.24,
@@ -214,7 +241,7 @@ document.addEventListener("DOMContentLoaded", _ => {
   perimetersFolGUI.add(world, "substeps", 1, 10, 1)
   perimetersFolGUI.add(world, "velocityIterations", 1, 10, 1)
   perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
-  perimetersFolGUI.add(world, "useBlockSolver").name("Block Solver")
+  perimetersFolGUI.add(world, "useBlockSolver").listen().name("Block Solver")
 
   for (const key of Object.keys(sceneManager)) {
     gui.add(sceneManager, key).name(key.toUpperCase())
