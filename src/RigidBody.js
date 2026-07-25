@@ -24,6 +24,8 @@ export default class RigidBody {
     this.isStatic = options.isStatic ?? false
     this.isSensor = options.isSensor ?? false
     this.isSleeping = options.isSleeping ?? false
+    this.sleepingTime = 0
+    this.contactKeys = []
 
     this.restitution = options.restitution ?? 0.0
     this.friction = options.friction ?? 0.0
@@ -43,11 +45,21 @@ export default class RigidBody {
     this.updateColor()
   }
 
+  canSleep() {
+    const linearTol = 0.01
+    const angularTol = 0.03
+
+    return (
+      this.linearVelocity.magSq() <= linearTol * linearTol &&
+      Math.abs(this.angularVelocity) <= angularTol
+    )
+  }
+
   updateColor() {
     const linearSpeed = Math.sqrt(this.linearVelocity.magSq())
     const angularSpeed = Math.abs(this.angularVelocity)
 
-    const linearMax = 5
+    const linearMax = 1
     const angularMax = 10
 
     const linearT = Math.min(linearSpeed / linearMax, 1)

@@ -1,19 +1,16 @@
 import DynamicTree from "./DynamicTree.js"
 import Vector from "./Vector.js"
 import Vertices from "./Vertices.js"
-import ContactSolver from "./ContactSolver.js"
-import BlockSolver from "./BlockSolver.js"
 import RigidBody from "./RigidBody.js"
 import Circle from "./Circle.js"
 import Collider from "./Collider.js"
+import Island from "./Island.js"
 
 export default class World {
   #bodies = []
   #contacts = new Map()
   #contactKeys = []
   #oldContactPoints = new Map()
-  #contactSolver = new ContactSolver()
-  #blockSolver = new BlockSolver()
   #dynamicTree = new DynamicTree()
   #nearby = []
   #collider = new Collider()
@@ -32,6 +29,7 @@ export default class World {
     this.positionIterations = option.positionIterations ?? 3
     this.nodeMargin = option.nodeMargin ?? 0.1
     this.useBlockSolver = option.useBlockSolver ?? false
+    this.island = new Island(this)
   }
 
   get bodies() {
@@ -43,8 +41,8 @@ export default class World {
   get contactKeys() {
     return this.#contactKeys
   }
-  get contactSolver() {
-    return this.#contactSolver
+  get oldContactPoints() {
+    return this.#oldContactPoints
   }
   get dynamicTree() {
     return this.#dynamicTree
@@ -97,6 +95,10 @@ export default class World {
       this.#contacts.clear()
       this.#contactKeys.length = 0
 
+      for (let i = 0; i < this.#bodies.length; ++i) {
+        this.#bodies[i].contactKeys.length = 0
+      }
+
       // Collision detection
       for (let i = 0; i < this.#bodies.length; ++i) {
         const bodyA = this.#bodies[i]
@@ -110,7 +112,11 @@ export default class World {
           const bodyB = this.#nearby[j]
           const idB = bodyB.id
 
-          if (idA === idB || !bodyA.aabb.overlaps(bodyB.aabb)) {
+          if (
+            idA === idB ||
+            !bodyA.aabb.overlaps(bodyB.aabb) ||
+            (bodyA.isStatic && bodyB.isStatic)
+          ) {
             continue
           }
 
@@ -135,6 +141,17 @@ export default class World {
               contact.bodyA = bodyA
               contact.bodyB = bodyB
 
+              for (let i = 0; i < contact.contactPoints.length; ++i) {
+                const cp = contact.contactPoints[i]
+
+                cp.normalImpulse = 0
+                cp.tangentImpulse = 0
+                cp.persistent = false
+              }
+
+              bodyA.contactKeys.push(key)
+              bodyB.contactKeys.push(key)
+
               this.#contactKeys.push(key)
               this.#contacts.set(key, contact)
             }
@@ -142,77 +159,19 @@ export default class World {
         }
       }
 
-      this.#contactKeys.sort((a, b) => {
-        if (a < b) return -1
-        if (a > b) return 1
-        return 0
-      })
-
-      // TODO: Simulation Island?
-
       for (let i = 0; i < this.#bodies.length; ++i) {
         const body = this.#bodies[i]
 
-        if (!body.isStatic) {
-          body.linearVelocity.addMulV(this.gravity, dt)
-        }
-      }
-
-      const contactSolver = this.useBlockSolver
-        ? this.#blockSolver
-        : this.#contactSolver
-
-      // Prepare and warm start
-      for (let i = 0; i < this.#contactKeys.length; ++i) {
-        const key = this.#contactKeys[i]
-        const contact = this.#contacts.get(key)
-        const oldContactPoints = this.#oldContactPoints.get(key)
-
-        contactSolver.prepare(contact, dt)
-        contactSolver.warmStart(contact, oldContactPoints)
-      }
-
-      // Solve
-      for (let i = 0; i < this.velocityIterations; ++i) {
-        for (let j = 0; j < this.#contactKeys.length; ++j) {
-          contactSolver.solve(
-            this.#contacts.get(this.#contactKeys[j]),
-            true // Apply baumgarte bias
-          )
-        }
-      }
-
-      // Update position and broadphase
-      for (let i = 0; i < this.#bodies.length; ++i) {
-        const body = this.#bodies[i]
-
-        if (body.isStatic) continue
-
-        body.position.addMulV(body.linearVelocity, dt)
-        body.rotation += body.angularVelocity * dt
-        body.updateColor()
-
-        for (let j = 0; j < body.fixtures.length; ++j) {
-          const s = body.fixtures[j]
-
-          s.updateWorldVertices(
-            body.position.x,
-            body.position.y,
-            body.cos,
-            body.sin
-          )
+        if (this.island.visited.has(body.id) || body.isStatic) {
+          continue
         }
 
-        body.updateAABB()
-        this.#dynamicTree.updateBody(body, this.nodeMargin)
+        this.island.prepare()
+        this.island.build(body)
+        this.island.solve(dt)
       }
 
-      // Relax
-      for (let i = 0; i < this.positionIterations; ++i) {
-        for (let j = 0; j < this.#contactKeys.length; ++j) {
-          contactSolver.solve(this.#contacts.get(this.#contactKeys[j]), false)
-        }
-      }
+      this.island.visited.clear()
 
       // Cache
       this.#oldContactPoints.clear()

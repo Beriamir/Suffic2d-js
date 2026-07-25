@@ -67,10 +67,6 @@ export default class ContactSolver {
       cp.effNormalMass = kn == 0 ? 0 : 1 / kn
       cp.effTangentMass = kt == 0 ? 0 : 1 / kt
 
-      cp.normalImpulse = 0
-      cp.tangentImpulse = 0
-      cp.persistent = false
-
       const biasSlop = 0.01 // meter
       const biasBeta = mA == 0 || mB == 0 ? 0.3 : 0.1 // 0 -> 1
 

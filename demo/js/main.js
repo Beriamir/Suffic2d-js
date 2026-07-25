@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.clear()
       world.useBlockSolver = false
       Scenes.mixShapes(s2, world, {
-        count: 1000,
+        count: 200,
         size: 0.24,
         groundWidth: 20,
         groundHeight: 0.5,
