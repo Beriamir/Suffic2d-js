@@ -50,8 +50,9 @@ export default class RigidBody {
     const angularTol = 0.03
 
     return (
+      this.contactKeys.length > 0 &&
       this.linearVelocity.magSq() <= linearTol * linearTol &&
-      Math.abs(this.angularVelocity) <= angularTol
+      this.angularVelocity * this.angularVelocity <= angularTol * angularTol
     )
   }
 
