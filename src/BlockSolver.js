@@ -174,6 +174,7 @@ export default class ContactSolver {
       bodyB.angularVelocity += cp.rtB * cp.tangentImpulse * iB
     }
   }
+
   solve(contact, useBias = false) {
     const {
       bodyA,
@@ -206,7 +207,7 @@ export default class ContactSolver {
 
       let velBias = 0
       let velRestitution = 0
-      let restitutionSlop = 0.5
+      const restitutionSlop = 0.5
 
       if (useBias) {
         velBias = cp.velBias
