@@ -1,4 +1,4 @@
-export default class ContactSolver {
+export default class BlockSolver {
   constructor(option = {}) {}
 
   prepare(contact, dt) {
