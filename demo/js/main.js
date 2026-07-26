@@ -180,26 +180,13 @@ document.addEventListener("DOMContentLoaded", _ => {
         bottomY: by
       })
     },
-    line_Shape() {
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.lineShapes(s2, world, {
-        count: 200,
-        size: 0.24,
-        groundWidth: 20,
-        groundHeight: 0.5,
-        centerX: 0,
-        bottomY: 0.5
-      })
-    },
     mix_Shapes() {
       world.clear()
       world.useBlockSolver = false
       Scenes.mixShapes(s2, world, {
-        count: 200,
+        count: 300,
         size: 0.24,
-        groundWidth: 20,
-        groundHeight: 0.5,
+        groundWidth: 10,
         centerX: 0,
         bottomY: 0.5
       })
@@ -210,6 +197,16 @@ document.addEventListener("DOMContentLoaded", _ => {
       camera.angle = 0
       camera.scale = 100
     }
+  }
+
+  input.onDown = (dx, dy) => {
+    //
+  }
+  input.onMove = (dx, dy, x, y) => {
+    //
+  }
+  input.onUp = () => {
+    //
   }
 
   input.onPan = (dx, dy) => {
