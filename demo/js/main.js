@@ -339,6 +339,19 @@ document.addEventListener("DOMContentLoaded", _ => {
     if (debugs.aabb) {
       for (let i = 0; i < world.bodies.length; ++i) {
         const body = world.bodies[i]
+
+        for (const s of body.fixtures) {
+          gfx.drawAABB(s.aabb, {
+            strokeColor: debugColor,
+            wireframe: true,
+            strokeWidth
+          })
+        }
+
+        if (body.fixtures.length <= 1) {
+          continue
+        }
+
         gfx.drawAABB(body.aabb, {
           strokeColor: debugColor,
           wireframe: true,
