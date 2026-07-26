@@ -138,7 +138,10 @@ export default class CollidePolygons {
         id: `${ref.id}-${inc.id},${i >> 1}`,
         pointX,
         pointY,
-        overlap: clippingDot - pointDot
+        overlap: clippingDot - pointDot,
+        normalImpulse: 0,
+        tangentImpulse: 0,
+        persistent: false
       })
     }
 

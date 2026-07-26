@@ -44,7 +44,10 @@ export default class CollideCapsuleCircle {
         id: `${sA.id}-${sB.id},0`,
         pointX: sB.center.x - normalX * sB.radius,
         pointY: sB.center.y - normalY * sB.radius,
-        overlap
+        overlap,
+        normalImpulse: 0,
+        tangentImpulse: 0,
+        persistent: false
       }
     ]
 

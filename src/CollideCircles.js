@@ -38,7 +38,10 @@ export default class CollideCircles {
         id: `${sA.id}-${sB.id},0`,
         pointX: sA.center.x + normalX * sA.radius,
         pointY: sA.center.y + normalY * sA.radius,
-        overlap: overlap
+        overlap: overlap,
+        normalImpulse: 0,
+        tangentImpulse: 0,
+        persistent: false
       }
     ]
 

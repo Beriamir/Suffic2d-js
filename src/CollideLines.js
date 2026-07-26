@@ -66,7 +66,10 @@ export default class CollideLines {
         id: `${sA.id}-${sB.id},0`,
         pointX,
         pointY,
-        overlap
+        overlap,
+        normalImpulse: 0,
+        tangentImpulse: 0,
+        persistent: false
       }
     ]
 

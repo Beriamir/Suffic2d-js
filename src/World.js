@@ -141,14 +141,6 @@ export default class World {
               contact.bodyA = bodyA
               contact.bodyB = bodyB
 
-              for (let i = 0; i < contact.contactPoints.length; ++i) {
-                const cp = contact.contactPoints[i]
-
-                cp.normalImpulse = 0
-                cp.tangentImpulse = 0
-                cp.persistent = false
-              }
-
               bodyA.contactKeys.push(key)
               bodyB.contactKeys.push(key)
 
