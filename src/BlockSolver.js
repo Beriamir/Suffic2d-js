@@ -98,10 +98,10 @@ export default class BlockSolver {
       const kn12 = mA + mB + rn1A * rn2A * iA + rn1B * rn2B * iB
 
       // Ensure a reasonable condition number.
-      const kMaxConditionNumber = 1000
+      const kMaxCondition = 1000
       const det = kn11 * kn22 - kn12 * kn12
 
-      if (kn11 * kn11 < kMaxConditionNumber * det) {
+      if (kn11 * kn11 < kMaxCondition * kMaxCondition * det) {
         // K is safe to invert.
         contact.knA = kn11
         contact.knB = kn12
@@ -273,41 +273,14 @@ export default class BlockSolver {
       bX -= knA * aX + knB * aY
       bY -= knC * aX + knD * aY
 
-      while (true) {
-        // New accumulated impulse
-        let xX = -(invknA * bX + invknB * bY)
-        let xY = -(invknC * bX + invknD * bY)
+      // New accumulated impulse
+      let xX = -(invknA * bX + invknB * bY)
+      let xY = -(invknC * bX + invknD * bY)
 
+      while (true) {
         // Case 1
         // Both points active
-        if (xX >= 0 && xY >= 0) {
-          // Incremental impulse
-          const dX = xX - aX
-          const dY = xY - aY
-
-          // Apply
-          const P1X = dX * normalX
-          const P1Y = dX * normalY
-          const P2X = dY * normalX
-          const P2Y = dY * normalY
-
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
-          wA -=
-            (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
-            iA
-          wB +=
-            (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
-            iB
-
-          // Store
-          cp1.normalImpulse = xX
-          cp2.normalImpulse = xY
-
-          break
-        }
+        if (xX >= 0 && xY >= 0) break
 
         // Case 2
         // Point 1 active
@@ -317,34 +290,7 @@ export default class BlockSolver {
         vn1 = 0
         vn2 = knB * xX + bY
 
-        if (xX >= 0 && vn2 >= 0) {
-          // Incremental impulse
-          const dX = xX - aX
-          const dY = xY - aY
-
-          // Apply
-          const P1X = dX * normalX
-          const P1Y = dX * normalY
-          const P2X = dY * normalX
-          const P2Y = dY * normalY
-
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
-          wA -=
-            (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
-            iA
-          wB +=
-            (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
-            iB
-
-          // Store
-          cp1.normalImpulse = xX
-          cp2.normalImpulse = xY
-
-          break
-        }
+        if (xX >= 0 && vn2 >= 0) break
 
         // Case 3
         // Pont 1 inactive
@@ -354,34 +300,7 @@ export default class BlockSolver {
         vn1 = knC * xY + bX
         vn2 = 0
 
-        if (xY >= 0 && vn1 >= 0) {
-          // Incremental impulse
-          const dX = xX - aX
-          const dY = xY - aY
-
-          // Apply
-          const P1X = dX * normalX
-          const P1Y = dX * normalY
-          const P2X = dY * normalX
-          const P2Y = dY * normalY
-
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
-          wA -=
-            (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
-            iA
-          wB +=
-            (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
-            iB
-
-          // Store
-          cp1.normalImpulse = xX
-          cp2.normalImpulse = xY
-
-          break
-        }
+        if (xY >= 0 && vn1 >= 0) break
 
         // Case 4
         // Both points inactive
@@ -390,38 +309,34 @@ export default class BlockSolver {
         vn1 = bX
         vn2 = bY
 
-        if (vn1 >= 0 && vn2 >= 0) {
-          // Incremental impulse
-          const dX = xX - aX
-          const dY = xY - aY
-
-          // Apply
-          const P1X = dX * normalX
-          const P1Y = dX * normalY
-          const P2X = dY * normalX
-          const P2Y = dY * normalY
-
-          vA.x -= (P1X + P2X) * mA
-          vA.y -= (P1Y + P2Y) * mA
-          vB.x += (P1X + P2X) * mB
-          vB.y += (P1Y + P2Y) * mB
-          wA -=
-            (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) *
-            iA
-          wB +=
-            (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) *
-            iB
-
-          // Store
-          cp1.normalImpulse = xX
-          cp2.normalImpulse = xY
-
-          break
-        }
+        if (vn1 >= 0 && vn2 >= 0) break
 
         // No solution, give up. This is hit sometimes, but it doesn't seem to matter.
         break
       }
+
+      // Incremental impulse
+      const dX = xX - aX
+      const dY = xY - aY
+
+      // Apply
+      const P1X = dX * normalX
+      const P1Y = dX * normalY
+      const P2X = dY * normalX
+      const P2Y = dY * normalY
+
+      vA.x -= (P1X + P2X) * mA
+      vA.y -= (P1Y + P2Y) * mA
+      vB.x += (P1X + P2X) * mB
+      vB.y += (P1Y + P2Y) * mB
+      wA -=
+        (cp1.raX * P1Y - cp1.raY * P1X + (cp2.raX * P2Y - cp2.raY * P2X)) * iA
+      wB +=
+        (cp1.rbX * P1Y - cp1.rbY * P1X + (cp2.rbX * P2Y - cp2.rbY * P2X)) * iB
+
+      // Store
+      cp1.normalImpulse = xX
+      cp2.normalImpulse = xY
     }
 
     for (let i = 0; i < contactCount; ++i) {
