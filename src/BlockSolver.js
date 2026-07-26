@@ -206,11 +206,12 @@ export default class ContactSolver {
 
       let velBias = 0
       let velRestitution = 0
+      let restitutionSlop = 0.5
 
       if (useBias) {
         velBias = cp.velBias
       } else {
-        if (cp.vn < 1) {
+        if (cp.vn * cp.vn >= restitutionSlop * restitutionSlop) {
           velRestitution = cp.velRestitution
         }
       }
@@ -247,13 +248,16 @@ export default class ContactSolver {
       let velBias2 = 0
       let velRestitution1 = 0
       let velRestitution2 = 0
+      const restitutionSlop = 0.5
 
       if (useBias) {
         velBias1 = cp1.velBias
         velBias2 = cp2.velBias
       } else {
-        if (cp1.vn < 1) velRestitution1 = cp1.velRestitution
-        if (cp2.vn < 1) velRestitution2 = cp2.velRestitution
+        if (cp1.vn * cp1.vn >= restitutionSlop * restitutionSlop)
+          velRestitution1 = cp1.velRestitution
+        if (cp2.vn * cp2.vn >= restitutionSlop * restitutionSlop)
+          velRestitution2 = cp2.velRestitution
       }
 
       // Compute b
