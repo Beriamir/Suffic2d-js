@@ -75,6 +75,7 @@ export default class Island {
         body.sleepingTime += dt
       } else {
         this.isSleeping = false
+        body.awake()
       }
 
       if (!body.isSleeping) {
@@ -119,11 +120,6 @@ export default class Island {
     // Update position and broadphase
     for (let i = 0; i < this.bodies.length; ++i) {
       const body = this.bodies[i]
-
-      if (!this.isSleeping && body.isSleeping) {
-        body.isSleeping = false
-        body.sleepingTime = 0
-      }
 
       body.position.addMulV(body.linearVelocity, dt)
       body.rotation += body.angularVelocity * dt

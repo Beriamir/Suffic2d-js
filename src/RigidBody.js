@@ -45,6 +45,11 @@ export default class RigidBody {
     this.updateColor()
   }
 
+  awake() {
+    this.isSleeping = false
+    this.sleepingTime = 0
+  }
+
   canSleep() {
     const linearTol = 0.01
     const angularTol = 0.03
