@@ -15,6 +15,8 @@ import CollideCapsuleCircle from "./CollideCapsuleCircle.js"
 import CollideLines from "./CollideLines.js"
 import Collider from "./Collider.js"
 
+import GrabJoint from "./GrabJoint.js"
+
 export default {
   Vector,
   AABB,
@@ -31,5 +33,6 @@ export default {
   CollidePolygons,
   CollideCapsuleCircle,
   CollideLines,
-  Collider
+  Collider,
+  GrabJoint
 }
