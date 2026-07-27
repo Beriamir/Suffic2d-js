@@ -26,6 +26,7 @@ export default class RigidBody {
     this.isSleeping = options.isSleeping ?? false
     this.sleepingTime = 0
     this.contactKeys = []
+    this.islandId = 0
 
     this.restitution = options.restitution ?? 0.0
     this.friction = options.friction ?? 0.0
