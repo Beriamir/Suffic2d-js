@@ -8,8 +8,10 @@ import Island from "./Island.js"
 
 export default class World {
   #bodies = []
+  #joints = new Map()
   #contacts = new Map()
   #contactKeys = []
+  #jointKeys = []
   #oldContactPoints = new Map()
   #dynamicTree = new DynamicTree()
   #nearby = []
@@ -38,8 +40,19 @@ export default class World {
   get contacts() {
     return this.#contacts
   }
+  get joints() {
+    return this.#joints
+  }
   get contactKeys() {
     return this.#contactKeys
+  }
+  get jointKeys() {
+    this.#jointKeys.length = 0
+    for (const key of this.#joints.keys()) {
+      this.#jointKeys.push(key)
+    }
+
+    return this.#jointKeys
   }
   get oldContactPoints() {
     return this.#oldContactPoints
@@ -56,6 +69,87 @@ export default class World {
     this.#oldContactPoints.clear()
     this.#contacts.clear()
     this.#contactKeys.length = 0
+
+    this.#joints.clear()
+    this.#jointKeys.length = 0
+  }
+
+  createJoint(joint) {
+    if (!joint) {
+      return joint
+    }
+
+    if (joint.type === "GrabJoint") {
+      const key = `${joint.body.id}-grab`
+
+      joint.body.jointKeys.push(key)
+
+      this.#joints.set(key, joint)
+      this.createBody(joint.body)
+    } else {
+      const key = `${joint.bodyA.id}-${joint.bodyB.id}`
+
+      joint.bodyA.jointKeys.push(key)
+      joint.bodyB.jointKeys.push(key)
+
+      this.#joints.set(key, joint)
+      this.createBody(joint.bodyA)
+      this.createBody(joint.bodyB)
+    }
+
+    return joint
+  }
+
+  destroyJoint(joint) {
+    if (!joint) {
+      return joint
+    }
+
+    if (joint.type === "GrabJoint") {
+      const key = `${joint.body.id}-grab`
+      const stored = this.#joints.get(key)
+
+      if (!stored) return joint
+
+      const body = stored.body
+
+      for (let i = 0; i < body.jointKeys.length; ++i) {
+        if (body.jointKeys[i] == key) {
+          body.jointKeys[i] = body.jointKeys[body.jointKeys.length - 1]
+          body.jointKeys.pop()
+          --i
+        }
+      }
+
+      this.#joints.delete(key)
+    } else {
+      const key = `${joint.bodyA.id}-${joint.bodyB.id}`
+      const stored = this.#joints.get(key)
+
+      if (!stored) return joint
+
+      const { bodyA, bodyB } = stored
+
+      for (let i = 0; i < bodyA.jointKeys.length; ++i) {
+        if (bodyA.jointKeys[i] == key) {
+          bodyA.jointKeys[i] = bodyA.jointKeys[bodyA.jointKeys.length - 1]
+          bodyA.jointKeys.pop()
+          --i
+        }
+      }
+
+      for (let i = 0; i < bodyB.jointKeys.length; ++i) {
+        if (bodyB.jointKeys[i] == key) {
+          bodyB.jointKeys[i] = bodyB.jointKeys[bodyB.jointKeys.length - 1]
+          bodyB.jointKeys.pop()
+          --i
+        }
+      }
+
+      this.#joints.delete(key)
+    }
+
+    return joint
   }
 
   createBody(body) {
