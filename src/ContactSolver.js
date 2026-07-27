@@ -160,12 +160,12 @@ export default class ContactSolver {
 
       let velBias = 0
       let velRestitution = 0
-      let restitutionSlop = 0.5
+      const restitutionSlop = 0.5
 
       if (useBias) {
         velBias = cp.velBias
       } else {
-        if (cp.vn * cp.vn >= restitutionSlop * restitutionSlop) {
+        if (cp.vn <= -restitutionSlop) {
           velRestitution = cp.velRestitution
         }
       }

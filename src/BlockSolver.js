@@ -212,7 +212,7 @@ export default class BlockSolver {
       if (useBias) {
         velBias = cp.velBias
       } else {
-        if (cp.vn * cp.vn >= restitutionSlop * restitutionSlop) {
+        if (cp.vn <= -restitutionSlop) {
           velRestitution = cp.velRestitution
         }
       }
@@ -255,10 +255,12 @@ export default class BlockSolver {
         velBias1 = cp1.velBias
         velBias2 = cp2.velBias
       } else {
-        if (cp1.vn * cp1.vn >= restitutionSlop * restitutionSlop)
+        if (cp1.vn <= -restitutionSlop) {
           velRestitution1 = cp1.velRestitution
-        if (cp2.vn * cp2.vn >= restitutionSlop * restitutionSlop)
+        }
+        if (cp2.vn <= -restitutionSlop) {
           velRestitution2 = cp2.velRestitution
+        }
       }
 
       // Compute b
