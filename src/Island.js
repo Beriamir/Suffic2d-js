@@ -9,6 +9,7 @@ export default class Island {
     this.world = world
     this.bodies = []
     this.contactKeys = []
+    this.jointKeys = []
     this.sleepingTime = 1 // Second
     this.isSleeping = false
     this.stack = []
@@ -18,6 +19,7 @@ export default class Island {
   prepare() {
     this.bodies.length = 0
     this.contactKeys.length = 0
+    this.jointKeys.length = 0
     this.isSleeping = false
     this.stack.length = 0
   }
@@ -48,6 +50,26 @@ export default class Island {
 
         this.stack.push(other)
         this.contactKeys.push(key)
+      }
+
+      for (let i = 0; i < body.jointKeys.length; ++i) {
+        const key = body.jointKeys[i]
+        const joint = this.world.joints.get(key)
+
+        if (joint.type == "GrabJoint") {
+          this.isSleeping = false
+          body.awake()
+        } else {
+          const other = joint.bodyA.id == body.id ? joint.bodyB : joint.bodyA
+
+          if (this.visited.has(other.id)) {
+            continue
+          }
+
+          this.stack.push(other)
+        }
+
+        this.jointKeys.push(key)
       }
 
       if (body.sleepingTime <= minSleepingTime) {
@@ -93,11 +115,25 @@ export default class Island {
       return 0
     })
 
+    this.jointKeys.sort((a, b) => {
+      if (a < b) return -1
+      if (a > b) return 1
+      return 0
+    })
+
     const contactSolver = this.world.useBlockSolver
       ? this.#blockSolver
       : this.#contactSolver
 
     // Prepare and Warm start
+    for (let i = 0; i < this.jointKeys.length; ++i) {
+      const key = this.jointKeys[i]
+      const joint = this.world.joints.get(key)
+
+      joint.prepare(dt)
+      joint.warmStart()
+    }
+
     for (let i = 0; i < this.contactKeys.length; ++i) {
       const key = this.contactKeys[i]
       const contact = this.world.contacts.get(key)
@@ -109,6 +145,10 @@ export default class Island {
 
     // Solve
     for (let i = 0; i < this.world.velocityIterations; ++i) {
+      for (let j = 0; j < this.jointKeys.length; ++j) {
+        this.world.joints.get(this.jointKeys[j]).solve(true)
+      }
+
       for (let j = 0; j < this.contactKeys.length; ++j) {
         contactSolver.solve(
           this.world.contacts.get(this.contactKeys[j]),
@@ -142,6 +182,9 @@ export default class Island {
 
     // Relax
     for (let i = 0; i < this.world.positionIterations; ++i) {
+      for (let j = 0; j < this.jointKeys.length; ++j) {
+        this.world.joints.get(this.jointKeys[j]).solve(false)
+      }
       for (let j = 0; j < this.contactKeys.length; ++j) {
         contactSolver.solve(this.world.contacts.get(this.contactKeys[j]), false)
       }
