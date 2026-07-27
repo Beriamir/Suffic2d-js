@@ -43,6 +43,26 @@ document.addEventListener("DOMContentLoaded", _ => {
     joints: 0
   }
 
+  const debugColor = "lightgray"
+  const islandIdColors = [
+    "#e74c3c", // Red
+    "#3498db", // Blue
+    "#2ecc71", // Green
+    "#f1c40f", // Yellow
+    "#9b59b6", // Purple
+    "#e67e22", // Orange
+    "#1abc9c", // Turquoise
+    "#e91e63", // Pink
+    "#795548", // Brown
+    "#607d8b", // Blue Grey
+    "#00bcd4", // Cyan
+    "#8bc34a", // Light Green
+    "#ff9800", // Amber
+    "#3f51b5", // Indigo
+    "#cddc39", // Lime
+    "#ff5722" // Deep Orange
+  ]
+
   const sceneManager = {
     pyramid() {
       const cx = 15 * 0.24
@@ -259,7 +279,6 @@ document.addEventListener("DOMContentLoaded", _ => {
     gfx.setCamera(camera)
 
     const strokeWidth = 1 / camera.scale
-    const debugColor = "lightgray"
 
     for (let i = 0; i < world.bodies.length; ++i) {
       const body = world.bodies[i]
@@ -272,12 +291,16 @@ document.addEventListener("DOMContentLoaded", _ => {
           ? body.velocityColor
           : body.isSleeping
             ? "gray"
-            : s.fillColor
+            : body.isStatic
+              ? "gray"
+              : islandIdColors[body.islandId % islandIdColors.length]
         const strokeColor = debugs.velocity
           ? body.velocityColor
           : body.isSleeping
             ? "dimgray"
-            : s.strokeColor
+            : body.isStatic
+              ? "dimgray"
+              : islandIdColors[body.islandId % islandIdColors.length]
 
         switch (s.type) {
           case "polygon":

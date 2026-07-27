@@ -173,6 +173,7 @@ export default class World {
         }
       }
 
+      let islandId = 0
       for (let i = 0; i < this.#bodies.length; ++i) {
         const body = this.#bodies[i]
 
@@ -183,6 +184,12 @@ export default class World {
         this.island.prepare()
         this.island.build(body)
         this.island.solve(dt)
+
+        islandId++
+
+        for (let j = 0; j < this.island.bodies.length; ++j) {
+          this.island.bodies[j].islandId = islandId
+        }
       }
 
       this.island.visited.clear()
