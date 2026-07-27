@@ -53,6 +53,9 @@ export default class World {
       this.destroyBody(this.#bodies[i])
       --i
     }
+    this.#oldContactPoints.clear()
+    this.#contacts.clear()
+    this.#contactKeys.length = 0
   }
 
   createBody(body) {
@@ -92,11 +95,29 @@ export default class World {
     dt /= this.substeps
 
     for (let step = 0; step < this.substeps; ++step) {
-      this.#contacts.clear()
-      this.#contactKeys.length = 0
-
+      // Reset
+      this.#oldContactPoints.clear()
       for (let i = 0; i < this.#bodies.length; ++i) {
         this.#bodies[i].contactKeys.length = 0
+      }
+
+      // Cache contact points and preserve sleeping contacts
+      for (let i = 0; i < this.#contactKeys.length; ++i) {
+        const key = this.#contactKeys[i]
+        const { bodyA, bodyB, contactPoints } = this.#contacts.get(key)
+
+        this.#oldContactPoints.set(key, contactPoints)
+
+        if (bodyA.isSleeping && bodyB.isSleeping) {
+          bodyA.contactKeys.push(key)
+          bodyB.contactKeys.push(key)
+          continue
+        }
+
+        this.#contacts.delete(key)
+        this.#contactKeys[i] = this.#contactKeys[this.#contactKeys.length - 1]
+        this.#contactKeys.pop()
+        --i
       }
 
       // Collision detection
@@ -115,7 +136,8 @@ export default class World {
           if (
             idA === idB ||
             !bodyA.aabb.overlaps(bodyB.aabb) ||
-            (bodyA.isStatic && bodyB.isStatic)
+            (bodyA.isStatic && bodyB.isStatic) ||
+            (bodyA.isSleeping && bodyB.isSleeping)
           ) {
             continue
           }
@@ -164,15 +186,6 @@ export default class World {
       }
 
       this.island.visited.clear()
-
-      // Cache
-      this.#oldContactPoints.clear()
-      for (let i = 0; i < this.#contactKeys.length; ++i) {
-        const key = this.#contactKeys[i]
-        const contact = this.#contacts.get(key)
-
-        this.#oldContactPoints.set(key, contact.contactPoints)
-      }
     }
   }
 }
