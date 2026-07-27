@@ -34,6 +34,18 @@ export default class Circle {
     return this.#rot
   }
 
+  testPoint(pointX, pointY) {
+    const dx = pointX - this.center.x
+    const dy = pointY - this.center.y
+    const magSq = dx * dx + dy * dy
+
+    if (magSq <= this.radius * this.radius) {
+      return true
+    }
+
+    return false
+  }
+
   updateWorldVertices(x, y, cos, sin) {
     const localX = this.offset.x
     const localY = this.offset.y

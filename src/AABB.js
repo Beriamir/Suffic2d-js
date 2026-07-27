@@ -40,6 +40,14 @@ export default class AABB {
       this.maxY >= aabb.maxY
     )
   }
+  containsPoint(pointX, pointY) {
+    return (
+      this.minX <= pointX &&
+      this.minY <= pointY &&
+      this.maxX >= pointX &&
+      this.maxY >= pointY
+    )
+  }
   union(aabb, out = new AABB()) {
     out.minX = Math.min(this.minX, aabb.minX)
     out.minY = Math.min(this.minY, aabb.minY)

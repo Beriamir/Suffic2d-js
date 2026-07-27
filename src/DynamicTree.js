@@ -577,6 +577,28 @@ export default class DynamicTree {
 
     return result
   }
+  queryPoint(pointX, pointY, result = []) {
+    this.#stack.length = 0
+    this.#stack.push(this.#root)
+
+    while (this.#stack.length) {
+      const node = this.#stack.pop()
+
+      if (node === null) continue
+
+      if (this.#nodes.at(node).aabb.containsPoint(pointX, pointY)) {
+        if (this.#nodes.at(node).height === 0) {
+          result.push(this.#nodes.at(node).data)
+          continue
+        }
+
+        this.#stack.push(this.#nodes.at(node).child1)
+        this.#stack.push(this.#nodes.at(node).child2)
+      }
+    }
+
+    return result
+  }
   traverse(callback) {
     this.#stack.length = 0
     this.#stack.push(this.#root)

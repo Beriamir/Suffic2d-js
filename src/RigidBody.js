@@ -46,6 +46,18 @@ export default class RigidBody {
     this.updateColor()
   }
 
+  testPoint(pointX, pointY) {
+    for (let i = 0; i < this.fixtures.length; ++i) {
+      const s = this.fixtures[i]
+
+      if (s.testPoint(pointX, pointY)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   awake() {
     this.isSleeping = false
     this.sleepingTime = 0

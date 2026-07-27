@@ -91,6 +91,14 @@ export default class World {
     return body
   }
 
+  queryPoint(pointX, pointY, result = []) {
+    return this.#dynamicTree.queryPoint(pointX, pointY, result)
+  }
+
+  queryAABB(aabb, result = []) {
+    return this.#dynamicTree.queryAABB(aabb, result)
+  }
+
   simulate(dt) {
     dt /= this.substeps
 
@@ -127,7 +135,7 @@ export default class World {
 
         // Broadphase
         this.#nearby.length = 0
-        this.#dynamicTree.queryAABB(bodyA.aabb, this.#nearby)
+        this.queryAABB(bodyA.aabb, this.#nearby)
 
         for (let j = 0; j < this.#nearby.length; ++j) {
           const bodyB = this.#nearby[j]

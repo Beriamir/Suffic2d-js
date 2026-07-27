@@ -220,7 +220,17 @@ document.addEventListener("DOMContentLoaded", _ => {
   }
 
   input.onDown = (dx, dy) => {
-    //
+    const centerX = canvas.width * 0.5
+    const centerY = canvas.height * 0.5
+    const x0 = (dx - centerX) / camera.scale
+    const y0 = (dy - centerY) / camera.scale
+
+    const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+    const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+
+    const query = world.queryPoint(pointX, pointY)
+
+    console.log(query[0]?.testPoint(pointX, pointY))
   }
   input.onMove = (dx, dy, x, y) => {
     //

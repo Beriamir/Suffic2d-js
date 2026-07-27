@@ -40,6 +40,33 @@ export default class Line {
     return this.#rot
   }
 
+  testPoint(pointX, pointY) {
+    const abX = this.center2.x - this.center1.x
+    const abY = this.center2.y - this.center1.y
+    const apX = pointX - this.center1.x
+    const apY = pointY - this.center1.y
+
+    const abMagSq = abX * abX + abY * abY
+    const apProj = (apX * abX + apY * abY) / abMagSq
+
+    let t = apProj
+
+    if (t < 0) t = 0
+    else if (t > 1) t = 1
+
+    const projX = this.center1.x + abX * t
+    const projY = this.center1.y + abY * t
+    const dx = pointX - projX
+    const dy = pointY - projY
+    const magSq = dx * dx + dy * dy
+
+    if (magSq <= 1e-6) {
+      return true
+    }
+
+    return false
+  }
+
   updateWorldVertices(x, y, cos, sin) {
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.vertices[i]

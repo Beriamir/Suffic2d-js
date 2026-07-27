@@ -37,6 +37,30 @@ export default class Polygon {
     return this.#rot
   }
 
+  testPoint(pointX, pointY) {
+    const n = this.worldVertices.length
+
+    for (let i = 0; i < n; i += 2) {
+      const j = i < n - 2 ? i + 2 : 0
+
+      const x0 = this.worldVertices[i]
+      const y0 = this.worldVertices[i + 1]
+      const x1 = this.worldVertices[j]
+      const y1 = this.worldVertices[j + 1]
+
+      const edgeX = x1 - x0
+      const edgeY = y1 - y0
+      const abX = pointX - x0
+      const abY = pointY - y0
+
+      if (edgeX * abY - edgeY * abX < 0) {
+        return false
+      }
+    }
+
+    return true
+  }
+
   updateWorldVertices(x, y, cos, sin) {
     for (let i = 0; i < this.vertices.length; i += 2) {
       const x0 = this.vertices[i]
