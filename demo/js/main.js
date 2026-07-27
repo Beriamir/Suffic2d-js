@@ -247,10 +247,6 @@ document.addEventListener("DOMContentLoaded", _ => {
     statsFolGUI.add(stats, stat).listen().name(stat.toUpperCase())
   }
 
-  for (const stat of Object.keys(camera)) {
-    statsFolGUI.add(camera, stat).listen().name(stat.toUpperCase())
-  }
-
   for (const debug of Object.keys(debugs)) {
     debugsFolGUI.add(debugs, debug).name(debug.toUpperCase())
   }
