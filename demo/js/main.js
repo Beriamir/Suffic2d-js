@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const world = new s2.World({
     substeps: 1,
-    velocityIterations: 8,
-    positionIterations: 3,
+    velocityIterations: 10,
+    positionIterations: 2,
     nodeMargin: 0.1,
     gravity: new s2.Vector(0, 9.81),
     useBlockSolver: true
@@ -236,7 +236,7 @@ document.addEventListener("DOMContentLoaded", _ => {
   }
 
   perimetersFolGUI.add(world, "substeps", 1, 10, 1)
-  perimetersFolGUI.add(world, "velocityIterations", 1, 10, 1)
+  perimetersFolGUI.add(world, "velocityIterations", 1, 20, 1)
   perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
   perimetersFolGUI.add(world, "useBlockSolver").listen().name("Block Solver")
 

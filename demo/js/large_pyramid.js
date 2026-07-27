@@ -14,8 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const world = new s2.World({
     substeps: 1,
-    velocityIterations: 8,
-    positionIterations: 3,
+    velocityIterations: 10,
+    positionIterations: 2,
     nodeMargin: 0.1
   })
 
@@ -94,8 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   perimetersFolGUI.add(world, "substeps", 1, 10, 1)
-  perimetersFolGUI.add(world, "velocityIterations", 1, 32, 1)
-  perimetersFolGUI.add(world, "positionIterations", 1, 32, 1)
+  perimetersFolGUI.add(world, "velocityIterations", 1, 20, 1)
+  perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
   perimetersFolGUI.add(sceneManager, "rows", 1, 100, 1)
 
   for (const key of Object.keys(sceneManager)) {
@@ -139,18 +139,35 @@ document.addEventListener("DOMContentLoaded", () => {
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
-        gfx.drawPolygon(position.x, position.y, cos, sin, {
-          offsetX: s.offset.x,
-          offsetY: s.offset.y,
-          cos: s.cos,
-          sin: s.sin,
-          vertices: s.vertices,
-          fillColor: s.fillColor,
-          strokeColor: s.strokeColor,
-          wireframe: debugs.wireframe,
-          noStroke: !debugs.wireframe,
-          strokeWidth
-        })
+        if (debugs.hide_Bodies) continue
+
+        const fillColor = debugs.velocity
+          ? body.velocityColor
+          : body.isSleeping
+            ? "gray"
+            : s.fillColor
+        const strokeColor = debugs.velocity
+          ? body.velocityColor
+          : body.isSleeping
+            ? "dimgray"
+            : s.strokeColor
+
+        switch (s.type) {
+          case "polygon":
+            gfx.drawPolygon(position.x, position.y, cos, sin, {
+              offsetX: s.offset.x,
+              offsetY: s.offset.y,
+              cos: s.cos,
+              sin: s.sin,
+              vertices: s.vertices,
+              fillColor,
+              strokeColor,
+              wireframe: debugs.wireframe,
+              noStroke: !debugs.wireframe,
+              strokeWidth
+            })
+            break
+        }
       }
     }
 
@@ -159,16 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
         world.contacts.get(world.contactKeys[i])
 
       for (const cp of contactPoints) {
-        const nImpulse = new Float32Array(4)
-
-        nImpulse[0] = 0
-        nImpulse[1] = 0
-        nImpulse[2] = normalX * cp.normalImpulse
-        nImpulse[3] = normalY * cp.normalImpulse
-
         if (debugs.impulse) {
-          gfx.drawLine(cp.pointX, cp.pointY, 1, 0, {
-            vertices: nImpulse,
+          gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+            length: cp.normalImpulse,
+            showHead: false,
             strokeColor: debugColor,
             strokeWidth
           })
