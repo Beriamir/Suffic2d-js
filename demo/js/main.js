@@ -44,23 +44,23 @@ document.addEventListener("DOMContentLoaded", _ => {
   }
 
   const debugColor = "lightgray"
-  const islandIdColors = [
-    "#e74c3c", // Red
-    "#3498db", // Blue
-    "#2ecc71", // Green
-    "#f1c40f", // Yellow
-    "#9b59b6", // Purple
-    "#e67e22", // Orange
-    "#1abc9c", // Turquoise
-    "#e91e63", // Pink
-    "#795548", // Brown
-    "#607d8b", // Blue Grey
-    "#00bcd4", // Cyan
-    "#8bc34a", // Light Green
-    "#ff9800", // Amber
-    "#3f51b5", // Indigo
-    "#cddc39", // Lime
-    "#ff5722" // Deep Orange
+  const islandColors = [
+    "#ef4444", // Red
+    "#3b82f6", // Blue
+    "#22c55e", // Green
+    "#eab308", // Yellow
+    "#a855f7", // Purple
+    "#f97316", // Orange
+    "#14b8a6", // Teal
+    "#ec4899", // Pink
+    "#84cc16", // Lime
+    "#06b6d4", // Cyan
+    "#6366f1", // Indigo
+    "#f43f5e", // Rose
+    "#10b981", // Emerald
+    "#8b5cf6", // Violet
+    "#d946ef", // Fuchsia
+    "#0ea5e9" // Sky
   ]
 
   const sceneManager = {
@@ -293,14 +293,14 @@ document.addEventListener("DOMContentLoaded", _ => {
             ? "gray"
             : body.isStatic
               ? "gray"
-              : islandIdColors[body.islandId % islandIdColors.length]
+              : islandColors[body.islandId % islandColors.length]
         const strokeColor = debugs.velocity
           ? body.velocityColor
           : body.isSleeping
             ? "dimgray"
             : body.isStatic
               ? "dimgray"
-              : islandIdColors[body.islandId % islandIdColors.length]
+              : islandColors[body.islandId % islandColors.length]
 
         switch (s.type) {
           case "polygon":
