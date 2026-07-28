@@ -16,7 +16,7 @@ export default class Island {
     this.visited = new Set()
   }
 
-  prepare() {
+  clear() {
     this.bodies.length = 0
     this.contactKeys.length = 0
     this.jointKeys.length = 0
@@ -38,6 +38,7 @@ export default class Island {
       this.bodies.push(body)
       this.visited.add(body.id)
 
+      // Contacts
       for (let i = 0; i < body.contactKeys.length; ++i) {
         const key = body.contactKeys[i]
         const contact = this.world.contacts.get(key)
@@ -52,6 +53,7 @@ export default class Island {
         this.contactKeys.push(key)
       }
 
+      // Joints
       for (let i = 0; i < body.jointKeys.length; ++i) {
         const key = body.jointKeys[i]
         const joint = this.world.joints.get(key)
@@ -72,7 +74,7 @@ export default class Island {
         this.jointKeys.push(key)
       }
 
-      if (body.sleepingTime <= minSleepingTime) {
+      if (body.sleepingTime < minSleepingTime) {
         minSleepingTime = body.sleepingTime
       }
     }
@@ -127,8 +129,7 @@ export default class Island {
 
     // Prepare and Warm start
     for (let i = 0; i < this.jointKeys.length; ++i) {
-      const key = this.jointKeys[i]
-      const joint = this.world.joints.get(key)
+      const joint = this.world.joints.get(this.jointKeys[i])
 
       joint.prepare(dt)
       joint.warmStart()
