@@ -219,24 +219,46 @@ document.addEventListener("DOMContentLoaded", _ => {
     }
   }
 
-  input.onDown = (dx, dy) => {
+  let grabJoint = null
+
+  input.onDown = (x, y) => {
     const centerX = canvas.width * 0.5
     const centerY = canvas.height * 0.5
-    const x0 = (dx - centerX) / camera.scale
-    const y0 = (dy - centerY) / camera.scale
+    const x0 = (x - centerX) / camera.scale
+    const y0 = (y - centerY) / camera.scale
 
-    const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
-    const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+    const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+    const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
 
-    const query = world.queryPoint(pointX, pointY)
+    const query = world.queryPoint(grabX, grabY)
 
-    console.log(query[0]?.testPoint(pointX, pointY))
+    for (let i = 0; i < query.length; ++i) {
+      const body = query[i]
+
+      if (body.testPoint(grabX, grabY)) {
+        grabJoint = new s2.GrabJoint(body, grabX, grabY, {
+          hertz: 5,
+          zeta: 1
+        })
+
+        world.createJoint(grabJoint)
+        break
+      }
+    }
   }
   input.onMove = (dx, dy, x, y) => {
-    //
+    const worldDx = dx * camera.cos + dy * camera.sin
+    const worldDy = -dx * camera.sin + dy * camera.cos
+
+    if (grabJoint) {
+      grabJoint.target.x += worldDx / camera.scale
+      grabJoint.target.y += worldDy / camera.scale
+    }
   }
   input.onUp = () => {
-    //
+    if (grabJoint) {
+      world.destroyJoint(grabJoint)
+    }
   }
 
   input.onPan = (dx, dy) => {
@@ -477,6 +499,29 @@ document.addEventListener("DOMContentLoaded", _ => {
       }
     }
 
+    for (let i = 0; i < world.jointKeys.length; ++i) {
+      const joint = world.joints.get(world.jointKeys[i])
+
+      if (joint.type == "GrabJoint") {
+        const cos = joint.body.cos
+        const sin = joint.body.sin
+        const anchorX = joint.localAnchorX * cos - joint.localAnchorY * sin
+        const anchorY = joint.localAnchorX * sin + joint.localAnchorY * cos
+
+        gfx.drawLine(
+          joint.body.position.x + anchorX,
+          joint.body.position.y + anchorY,
+          joint.target.x,
+          joint.target.y,
+          {
+            strokeColor: debugColor,
+            strokeWidth
+          }
+        )
+        continue
+      }
+    }
+
     gfx.setCamera(null)
   }
 
@@ -492,7 +537,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       render(gfx)
       stats.fps = 1 / dt
       stats.bodies = world.bodies.length
-      stats.joints = 0
+      stats.joints = world.joints.size
 
       requestAnimationFrame(loop)
     }
