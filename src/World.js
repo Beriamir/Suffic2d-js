@@ -47,11 +47,6 @@ export default class World {
     return this.#contactKeys
   }
   get jointKeys() {
-    this.#jointKeys.length = 0
-    for (const key of this.#joints.keys()) {
-      this.#jointKeys.push(key)
-    }
-
     return this.#jointKeys
   }
   get oldContactPoints() {
@@ -85,6 +80,7 @@ export default class World {
       joint.body.jointKeys.push(key)
 
       this.#joints.set(key, joint)
+      this.#jointKeys.push(key)
       this.createBody(joint.body)
     } else {
       const key = `${joint.bodyA.id}-${joint.bodyB.id}`
@@ -93,6 +89,7 @@ export default class World {
       joint.bodyB.jointKeys.push(key)
 
       this.#joints.set(key, joint)
+      this.#jointKeys.push(key)
       this.createBody(joint.bodyA)
       this.createBody(joint.bodyB)
     }
@@ -122,6 +119,13 @@ export default class World {
       }
 
       this.#joints.delete(key)
+      for (let i = 0; i < this.#jointKeys.length; ++i) {
+        if (this.#jointKeys[i] == key) {
+          this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
+          this.#jointKeys.pop()
+          --i
+        }
+      }
     } else {
       const key = `${joint.bodyA.id}-${joint.bodyB.id}`
       const stored = this.#joints.get(key)
@@ -147,6 +151,13 @@ export default class World {
       }
 
       this.#joints.delete(key)
+      for (let i = 0; i < this.#jointKeys.length; ++i) {
+        if (this.#jointKeys[i] == key) {
+          this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
+          this.#jointKeys.pop()
+          --i
+        }
+      }
     }
 
     return joint
