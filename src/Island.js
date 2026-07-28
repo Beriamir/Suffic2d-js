@@ -25,7 +25,7 @@ export default class Island {
   }
 
   build(seed) {
-    let minSleepingTime = 1
+    let minSleepingTime = Infinity
 
     this.stack.push(seed)
     while (this.stack.length > 0) {
