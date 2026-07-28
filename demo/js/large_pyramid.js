@@ -29,6 +29,27 @@ document.addEventListener("DOMContentLoaded", () => {
     fps: 0,
     bodies: 0
   }
+
+  const debugColor = "lightgray"
+  const islandColors = [
+    "#ef4444", // Red
+    "#3b82f6", // Blue
+    "#22c55e", // Green
+    "#eab308", // Yellow
+    "#a855f7", // Purple
+    "#f97316", // Orange
+    "#14b8a6", // Teal
+    "#ec4899", // Pink
+    "#84cc16", // Lime
+    "#06b6d4", // Cyan
+    "#6366f1", // Indigo
+    "#f43f5e", // Rose
+    "#10b981", // Emerald
+    "#8b5cf6", // Violet
+    "#d946ef", // Fuchsia
+    "#0ea5e9" // Sky
+  ]
+
   const sceneManager = {
     rows: 15,
     restart() {
@@ -78,6 +99,52 @@ document.addEventListener("DOMContentLoaded", () => {
       camera.y = 0
       camera.angle = 0
       camera.scale = 100
+    }
+  }
+
+  let grabJoint = null
+
+  input.onDown = (x, y) => {
+    const centerX = canvas.width * 0.5
+    const centerY = canvas.height * 0.5
+    const x0 = (x - centerX) / camera.scale
+    const y0 = (y - centerY) / camera.scale
+
+    const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+    const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+
+    const query = world.queryPoint(grabX, grabY)
+
+    for (let i = 0; i < query.length; ++i) {
+      const body = query[i]
+
+      if (body.testPoint(grabX, grabY)) {
+        if (grabJoint) {
+          world.destroyJoint(grabJoint)
+        }
+
+        grabJoint = new s2.GrabJoint(body, grabX, grabY, {
+          hertz: 5,
+          zeta: 1
+        })
+
+        world.createJoint(grabJoint)
+        break
+      }
+    }
+  }
+  input.onMove = (dx, dy, x, y) => {
+    const worldDx = dx * camera.cos + dy * camera.sin
+    const worldDy = -dx * camera.sin + dy * camera.cos
+
+    if (grabJoint) {
+      grabJoint.target.x += worldDx / camera.scale
+      grabJoint.target.y += worldDy / camera.scale
+    }
+  }
+  input.onUp = () => {
+    if (grabJoint) {
+      world.destroyJoint(grabJoint)
     }
   }
 
@@ -145,12 +212,16 @@ document.addEventListener("DOMContentLoaded", () => {
           ? body.velocityColor
           : body.isSleeping
             ? "gray"
-            : s.fillColor
+            : body.isStatic
+              ? "gray"
+              : islandColors[body.islandId % islandColors.length]
         const strokeColor = debugs.velocity
           ? body.velocityColor
           : body.isSleeping
             ? "dimgray"
-            : s.strokeColor
+            : body.isStatic
+              ? "dimgray"
+              : islandColors[body.islandId % islandColors.length]
 
         switch (s.type) {
           case "polygon":
@@ -201,6 +272,29 @@ document.addEventListener("DOMContentLoaded", () => {
             strokeWidth
           })
         }
+      }
+    }
+
+    for (let i = 0; i < world.jointKeys.length; ++i) {
+      const joint = world.joints.get(world.jointKeys[i])
+
+      if (joint.type == "GrabJoint") {
+        const cos = joint.body.cos
+        const sin = joint.body.sin
+        const anchorX = joint.anchorX * cos - joint.anchorY * sin
+        const anchorY = joint.anchorX * sin + joint.anchorY * cos
+
+        gfx.drawLine(
+          joint.body.position.x + anchorX,
+          joint.body.position.y + anchorY,
+          joint.target.x,
+          joint.target.y,
+          {
+            strokeColor: debugColor,
+            strokeWidth
+          }
+        )
+        continue
       }
     }
 
