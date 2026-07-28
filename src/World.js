@@ -221,7 +221,11 @@ export default class World {
 
         this.#oldContactPoints.set(key, contactPoints)
 
-        if (bodyA.isSleeping && bodyB.isSleeping) {
+        if (
+          (bodyA.isSleeping && bodyB.isSleeping) ||
+          (bodyA.isStatic && bodyB.isSleeping) ||
+          (bodyA.isSleeping && bodyB.isStatic)
+        ) {
           bodyA.contactKeys.push(key)
           bodyB.contactKeys.push(key)
           continue
@@ -250,7 +254,9 @@ export default class World {
             idA === idB ||
             !bodyA.aabb.overlaps(bodyB.aabb) ||
             (bodyA.isStatic && bodyB.isStatic) ||
-            (bodyA.isSleeping && bodyB.isSleeping)
+            (bodyA.isSleeping && bodyB.isSleeping) ||
+            (bodyA.isStatic && bodyB.isSleeping) ||
+            (bodyA.isSleeping && bodyB.isStatic)
           ) {
             continue
           }
@@ -294,7 +300,7 @@ export default class World {
           continue
         }
 
-        this.island.prepare()
+        this.island.clear()
         this.island.build(body)
         this.island.solve(dt)
 
