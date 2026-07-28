@@ -12,8 +12,8 @@ export default class GrabJoint {
     const dx = targetX - body.position.x
     const dy = targetY - body.position.y
 
-    this.localAnchorX = dx * body.cos + dy * body.sin
-    this.localAnchorY = -dx * body.sin + dy * body.cos
+    this.anchorX = dx * body.cos + dy * body.sin
+    this.anchorY = -dx * body.sin + dy * body.cos
     this.normalImpulse = 0
   }
 
@@ -25,8 +25,8 @@ export default class GrabJoint {
 
     const cos = body.cos
     const sin = body.sin
-    const rAX = this.localAnchorX * cos - this.localAnchorY * sin
-    const rAY = this.localAnchorX * sin + this.localAnchorY * cos
+    const rAX = this.anchorX * cos - this.anchorY * sin
+    const rAY = this.anchorX * sin + this.anchorY * cos
 
     const pointX = body.position.x + rAX
     const pointY = body.position.y + rAY

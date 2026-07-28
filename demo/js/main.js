@@ -236,6 +236,10 @@ document.addEventListener("DOMContentLoaded", _ => {
       const body = query[i]
 
       if (body.testPoint(grabX, grabY)) {
+        if (grabJoint) {
+          world.destroyJoint(grabJoint)
+        }
+
         grabJoint = new s2.GrabJoint(body, grabX, grabY, {
           hertz: 5,
           zeta: 1
@@ -505,8 +509,8 @@ document.addEventListener("DOMContentLoaded", _ => {
       if (joint.type == "GrabJoint") {
         const cos = joint.body.cos
         const sin = joint.body.sin
-        const anchorX = joint.localAnchorX * cos - joint.localAnchorY * sin
-        const anchorY = joint.localAnchorX * sin + joint.localAnchorY * cos
+        const anchorX = joint.anchorX * cos - joint.anchorY * sin
+        const anchorY = joint.anchorX * sin + joint.anchorY * cos
 
         gfx.drawLine(
           joint.body.position.x + anchorX,
