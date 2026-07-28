@@ -75,8 +75,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0.02,
         boxWidth: 0.24,
         boxHeight: 0.24,
-        groundWidth: 10,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -93,8 +93,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0.05,
         boxWidth: 0.24,
         boxHeight: 0.24,
-        groundWidth: 10,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -110,8 +110,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         rows: 15,
         spacing: 0.05,
         radius: 0.24,
-        groundWidth: 10,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -128,26 +128,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0.05,
         length: 0.48,
         radius: 0.24,
-        groundWidth: 10,
-        groundHeight: 0.5,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    compound() {
-      const cx = 8 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.compound(s2, world, {
-        columns: 8,
-        rows: 15,
-        spacing: 0.05,
-        boxWidth: 0.24,
-        boxHeight: 0.24,
-        groundWidth: 500,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -162,8 +144,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         levels: 15,
         width: 0.5,
         height: 0.1,
-        groundWidth: 15,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -178,8 +160,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         rows: 1,
         spacing: 0.24,
         radius: 0.24,
-        groundWidth: 10,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -194,8 +176,8 @@ document.addEventListener("DOMContentLoaded", _ => {
         spacing: 0.48 * 3,
         rampWidth: 10,
         rampHeight: 0.1,
-        groundWidth: 30,
-        groundHeight: 0.5,
+        groundWidth: 2000,
+        groundHeight: 0.48,
         centerX: cx,
         bottomY: by
       })
@@ -209,6 +191,24 @@ document.addEventListener("DOMContentLoaded", _ => {
         groundWidth: 10,
         centerX: 0,
         bottomY: 0.5
+      })
+    },
+    compound() {
+      const cx = 8 * 0.24
+      const by = 0
+
+      world.clear()
+      world.useBlockSolver = false
+      Scenes.compound(s2, world, {
+        columns: 8,
+        rows: 15,
+        spacing: 0.05,
+        boxWidth: 0.24,
+        boxHeight: 0.24,
+        groundWidth: 2000,
+        groundHeight: 0.48,
+        centerX: cx,
+        bottomY: by
       })
     },
     reset_Camera() {

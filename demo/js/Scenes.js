@@ -10,7 +10,7 @@ export default class Scenes {
       boxWidth = 0.24,
       boxHeight = 0.24,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -25,6 +25,7 @@ export default class Scenes {
       fillColor: "gray",
       strokeColor: "dimgray"
     })
+
     world.createBody(ground)
 
     const colStep = boxWidth * 2 + spacing
@@ -55,7 +56,7 @@ export default class Scenes {
       boxWidth = 0.24,
       boxHeight = 0.24,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -95,80 +96,6 @@ export default class Scenes {
     }
   }
 
-  static compound(s2, world, option = {}) {
-    const {
-      columns = 1,
-      rows = 20,
-      spacing = 0,
-      boxWidth = 0.24,
-      boxHeight = 0.24,
-      groundWidth = 10,
-      groundHeight = 0.5,
-      centerX = 0,
-      bottomY = 0
-    } = option
-
-    const groundX = centerX
-    const groundY = bottomY + groundHeight
-    const ground = new s2.RigidBody(groundX, groundY, 0, {
-      isStatic: true
-    })
-
-    ground.createLine(groundWidth, {
-      rotation: Math.PI * 0.5,
-      fillColor: "gray",
-      strokeColor: "dimgray"
-    })
-
-    world.createBody(ground)
-
-    const gap = 1.25
-    const colStep = boxWidth * 4 * gap + spacing
-    const rowStep = boxHeight * 4 * gap + spacing
-    const startX = centerX - (columns - 1) * colStep * 0.5
-
-    for (let col = 0; col < columns; ++col) {
-      const x = startX + col * colStep
-
-      for (let row = 0; row < rows; ++row) {
-        const y = bottomY - boxHeight - row * rowStep
-
-        const body = new s2.RigidBody(x, y, 0, {
-          friction: 0.3
-        })
-
-        if (row % 2 == 0) {
-          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
-            offset: new s2.Vector(-boxWidth * gap, -boxHeight * gap)
-          })
-          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
-            offset: new s2.Vector(boxWidth * gap, -boxHeight * gap)
-          })
-          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
-            offset: new s2.Vector(boxWidth * gap, boxHeight * gap)
-          })
-          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
-            offset: new s2.Vector(-boxWidth * gap, boxHeight * gap)
-          })
-        } else {
-          body.createCircle(boxWidth, {
-            offset: new s2.Vector(-boxWidth * gap, -boxHeight * gap)
-          })
-          body.createCircle(boxWidth, {
-            offset: new s2.Vector(boxWidth * gap, -boxHeight * gap)
-          })
-          body.createCircle(boxWidth, {
-            offset: new s2.Vector(boxWidth * gap, boxHeight * gap)
-          })
-          body.createCircle(boxWidth, {
-            offset: new s2.Vector(-boxWidth * gap, boxHeight * gap)
-          })
-        }
-        world.createBody(body)
-      }
-    }
-  }
-
   static circleStack(s2, world, option = {}) {
     const {
       columns = 1,
@@ -176,7 +103,7 @@ export default class Scenes {
       radius = 0.24,
       spacing = 0,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -221,7 +148,7 @@ export default class Scenes {
       radius = 0.24,
       spacing = 0,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -272,7 +199,7 @@ export default class Scenes {
       width = 0.24,
       height = 0.24,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -287,6 +214,7 @@ export default class Scenes {
       fillColor: "gray",
       strokeColor: "dimgray"
     })
+
     world.createBody(ground)
 
     const blockSpacing = width * 2
@@ -318,7 +246,7 @@ export default class Scenes {
       spacing = 0,
       radius = 0.24,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -366,7 +294,7 @@ export default class Scenes {
       rampWidth = 10,
       rampHeight = 0.24,
       groundWidth = 10,
-      groundHeight = 0.5,
+      groundHeight = 0.48,
       centerX = 0,
       bottomY = 0
     } = option
@@ -393,6 +321,7 @@ export default class Scenes {
       fillColor: "gray",
       strokeColor: "dimgray"
     })
+
     world.createBody(ground)
 
     for (let i = 10, j = 0; i >= 0; i--) {
@@ -480,6 +409,79 @@ export default class Scenes {
 
       body.createPolygon(Shapes.rectangle(size, size), {})
       world.createBody(body)
+    }
+  }
+
+  static compound(s2, world, option = {}) {
+    const {
+      columns = 1,
+      rows = 20,
+      spacing = 0,
+      boxWidth = 0.24,
+      boxHeight = 0.24,
+      groundWidth = 10,
+      groundHeight = 0.48,
+      centerX = 0,
+      bottomY = 0
+    } = option
+
+    const groundX = centerX
+    const groundY = bottomY + groundHeight
+    const ground = new s2.RigidBody(groundX, groundY, 0, {
+      isStatic: true
+    })
+
+    ground.createPolygon(Shapes.rectangle(groundWidth, groundHeight), {
+      fillColor: "gray",
+      strokeColor: "dimgray"
+    })
+
+    world.createBody(ground)
+
+    const gap = 1.25
+    const colStep = boxWidth * 4 * gap + spacing
+    const rowStep = boxHeight * 4 * gap + spacing
+    const startX = centerX - (columns - 1) * colStep * 0.5
+
+    for (let col = 0; col < columns; ++col) {
+      const x = startX + col * colStep
+
+      for (let row = 0; row < rows; ++row) {
+        const y = bottomY - boxHeight * 2 - spacing - row * rowStep
+
+        const body = new s2.RigidBody(x, y, 0, {
+          friction: 0.3
+        })
+
+        if (row % 2 == 0) {
+          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
+            offset: new s2.Vector(-boxWidth * gap, -boxHeight * gap)
+          })
+          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
+            offset: new s2.Vector(boxWidth * gap, -boxHeight * gap)
+          })
+          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
+            offset: new s2.Vector(boxWidth * gap, boxHeight * gap)
+          })
+          body.createPolygon(Shapes.rectangle(boxWidth, boxHeight), {
+            offset: new s2.Vector(-boxWidth * gap, boxHeight * gap)
+          })
+        } else {
+          body.createCircle(boxWidth, {
+            offset: new s2.Vector(-boxWidth * gap, -boxHeight * gap)
+          })
+          body.createCircle(boxWidth, {
+            offset: new s2.Vector(boxWidth * gap, -boxHeight * gap)
+          })
+          body.createCircle(boxWidth, {
+            offset: new s2.Vector(boxWidth * gap, boxHeight * gap)
+          })
+          body.createCircle(boxWidth, {
+            offset: new s2.Vector(-boxWidth * gap, boxHeight * gap)
+          })
+        }
+        world.createBody(body)
+      }
     }
   }
 }
