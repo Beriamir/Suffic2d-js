@@ -19,10 +19,7 @@ body {
   height: auto;
 }
 
-.gui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  touch-action: none;
+.dg {
+  user-select: none;
+  -webkit-user-select: none;
 }

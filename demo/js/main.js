@@ -1,47 +1,44 @@
 import s2 from "../../src/index.js"
 import dat from "../../lib/dat.gui.mjs"
-import Scenes from "./Scenes.js"
-import Input from "./Input.js"
-import Graphics from "./Graphics.js"
-import Camera from "./Camera.js"
+import scenes from "./scenes.js"
+import debugs from "./debugs.js"
+
+import Input from "./navigation/Input.js"
+import Graphics from "./render/Graphics.js"
+import Camera from "./render/Camera.js"
 
 document.addEventListener("DOMContentLoaded", _ => {
   const canvas = document.getElementById("canvas")
   const gfx = new Graphics(canvas, {})
-  const camera = new Camera(0, 0, 0, 100) // x, y, angle, scale
+  const camera = new Camera(0, 0, 0, 100)
   const input = new Input(canvas)
-  const gui = new dat.GUI()
-
-  const statsFolGUI = gui.addFolder("Stats")
-  const debugsFolGUI = gui.addFolder("Debugs")
-  const perimetersFolGUI = gui.addFolder("Perimeters")
+  const gui = new dat.GUI({})
 
   const world = new s2.World({
     substeps: 1,
     velocityIterations: 10,
     positionIterations: 2,
-    nodeMargin: 0.1,
+    nodeMargin: 0.12,
     gravity: new s2.Vector(0, 9.81),
     useBlockSolver: true
   })
-  const debugs = {
-    hide_Bodies: false,
-    wireframe: false,
-    epa: false,
-    normal: false,
-    point: false,
-    impulse: false,
-    velocity: false,
-    ref: false,
-    inc: false,
-    aabb: false,
-    bvh: false
+
+  const settings = {
+    scene: "Pyramid",
+    status: {
+      fps: 0,
+      bodies: 0,
+      joints: 0
+    },
+    restart: () => {
+      switchScene(settings.scene)
+    }
   }
-  const stats = {
-    fps: 0,
-    bodies: 0,
-    joints: 0
-  }
+
+  const statusFolGUI = gui.addFolder("status")
+  const cameraFolGUI = gui.addFolder("Camera")
+  const debugsFolGUI = gui.addFolder("Debugs")
+  const worldFolGUI = gui.addFolder("World")
 
   const debugColor = "lightgray"
   const islandColors = [
@@ -62,162 +59,6 @@ document.addEventListener("DOMContentLoaded", _ => {
     "#d946ef", // Fuchsia
     "#0ea5e9" // Sky
   ]
-
-  const sceneManager = {
-    pyramid() {
-      const cx = 15 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.pyramid(s2, world, {
-        rows: 15,
-        spacing: 0.02,
-        boxWidth: 0.24,
-        boxHeight: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    vertical_Stack() {
-      const cx = 15 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = true
-      Scenes.verticalStack(s2, world, {
-        columns: 15,
-        rows: 15,
-        spacing: 0.05,
-        boxWidth: 0.24,
-        boxHeight: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    circle_Stack() {
-      const cx = 15 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.circleStack(s2, world, {
-        columns: 15,
-        rows: 15,
-        spacing: 0.05,
-        radius: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    capsule_Stack() {
-      const cx = 15 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = true
-      Scenes.capsuleStack(s2, world, {
-        columns: 15,
-        rows: 8,
-        spacing: 0.05,
-        length: 0.48,
-        radius: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    jenga() {
-      const cx = 0
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = true
-      Scenes.jenga(s2, world, {
-        levels: 15,
-        width: 0.5,
-        height: 0.1,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    restitution() {
-      const cx = 15 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.restitution(s2, world, {
-        rows: 1,
-        spacing: 0.24,
-        radius: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    friction() {
-      const cx = 6 * 0.48
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.friction(s2, world, {
-        spacing: 0.48 * 3,
-        rampWidth: 10,
-        rampHeight: 0.1,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    mix_Shapes() {
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.mixShapes(s2, world, {
-        count: 300,
-        size: 0.24,
-        groundWidth: 10,
-        centerX: 0,
-        bottomY: 0.5
-      })
-    },
-    compound() {
-      const cx = 8 * 0.24
-      const by = 0
-
-      world.clear()
-      world.useBlockSolver = false
-      Scenes.compound(s2, world, {
-        columns: 8,
-        rows: 15,
-        spacing: 0.05,
-        boxWidth: 0.24,
-        boxHeight: 0.24,
-        groundWidth: 2000,
-        groundHeight: 0.48,
-        centerX: cx,
-        bottomY: by
-      })
-    },
-    reset_Camera() {
-      camera.x = 0
-      camera.y = 0
-      camera.angle = 0
-      camera.scale = 100
-    }
-  }
 
   let grabJoint = null
 
@@ -264,7 +105,6 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.destroyJoint(grabJoint)
     }
   }
-
   input.onPan = (dx, dy) => {
     camera.move(dx, dy)
   }
@@ -279,27 +119,40 @@ document.addEventListener("DOMContentLoaded", _ => {
     canvas.height = h
   }
 
-  for (const stat of Object.keys(stats)) {
-    statsFolGUI.add(stats, stat).listen().name(stat.toUpperCase())
+  for (const stat of Object.keys(settings.status)) {
+    statusFolGUI.add(settings.status, stat).listen()
+  }
+
+  cameraFolGUI.add(camera, "reset").name("Reset")
+  for (const prop of Object.keys(camera)) {
+    cameraFolGUI.add(camera, prop).listen()
   }
 
   for (const debug of Object.keys(debugs)) {
-    debugsFolGUI.add(debugs, debug).name(debug.toUpperCase())
+    debugsFolGUI.add(debugs, debug)
   }
 
-  perimetersFolGUI.add(world, "substeps", 1, 10, 1)
-  perimetersFolGUI.add(world, "velocityIterations", 1, 20, 1)
-  perimetersFolGUI.add(world, "positionIterations", 1, 10, 1)
-  perimetersFolGUI.add(world, "useBlockSolver").listen().name("Block Solver")
+  worldFolGUI.add(world, "substeps", 1, 10, 1)
+  worldFolGUI.add(world, "velocityIterations", 1, 20, 1)
+  worldFolGUI.add(world, "positionIterations", 1, 10, 1)
+  worldFolGUI.add(world, "useBlockSolver")
 
-  for (const key of Object.keys(sceneManager)) {
-    gui.add(sceneManager, key).name(key.toUpperCase())
+  gui
+    .add(settings, "scene", [...Object.keys(scenes)])
+    .onChange(switchScene)
+    .name("Scene")
+
+  gui.add(settings, "restart").name("Restart")
+
+  function switchScene(scene) {
+    world.clear()
+    scenes[scene](s2, world)
   }
 
   function setup() {
     canvas.width = innerWidth
     canvas.height = innerHeight
-    sceneManager.pyramid()
+    settings.restart()
   }
 
   function simulate(dt) {
@@ -317,7 +170,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       const { position, cos, sin } = body
 
       for (const s of body.fixtures) {
-        if (debugs.hide_Bodies) continue
+        if (debugs["hide bodies"]) continue
 
         const fillColor = debugs.velocity
           ? body.velocityColor
@@ -539,9 +392,9 @@ document.addEventListener("DOMContentLoaded", _ => {
 
       simulate(step)
       render(gfx)
-      stats.fps = 1 / dt
-      stats.bodies = world.bodies.length
-      stats.joints = world.joints.size
+      settings.status.fps = 1 / dt
+      settings.status.bodies = world.bodies.length
+      settings.status.joints = world.joints.size
 
       requestAnimationFrame(loop)
     }
