@@ -188,11 +188,12 @@ export default class RigidBody {
     if (this.isStatic) {
       this.invMass = 0
       this.invInertia = 0
-      return
+      return this
     }
 
     this.invMass = 1 / this.mass
     this.invInertia = 1 / this.inertia
+    return this
   }
 
   updateAABB() {
@@ -205,34 +206,34 @@ export default class RigidBody {
       if (s.aabb.maxY > this.aabb.maxY) this.aabb.maxY = s.aabb.maxY
     }
 
-    return this.aabb
+    return this
   }
 
   createPolygon(vertices, option = {}) {
     const polygon = new Polygon(vertices, option)
 
     this.createFixture(polygon)
-    return polygon
+    return this
   }
 
   createCircle(radius, option = {}) {
     const circle = new Circle(radius, option)
 
     this.createFixture(circle)
-    return circle
+    return this
   }
 
   createCapsule(length, radius, option = {}) {
     const capsule = new Capsule(length, radius, option)
 
     this.createFixture(capsule)
-    return capsule
+    return this
   }
 
   createLine(length, option = {}) {
     const line = new Line(length, option)
 
     this.createFixture(line)
-    return line
+    return this
   }
 }
