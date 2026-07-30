@@ -107,6 +107,28 @@ export default class Island {
       }
     }
 
+    const contactSolver = this.world.useBlockSolver
+      ? this.#blockSolver
+      : this.#contactSolver
+
+    // Prepare and Warm start joints
+    for (let i = 0; i < this.jointKeys.length; ++i) {
+      const joint = this.world.joints.get(this.jointKeys[i])
+
+      joint.prepare(dt)
+      joint.warmStart()
+    }
+
+    // Prepare and Warm start contacts
+    for (let i = 0; i < this.contactKeys.length; ++i) {
+      const key = this.contactKeys[i]
+      const contact = this.world.contacts.get(key)
+      const oldContactPoints = this.world.oldContactPoints.get(key)
+
+      contactSolver.prepare(contact, dt)
+      contactSolver.warmStart(contact, oldContactPoints)
+    }
+
     if (this.isSleeping) {
       return
     }
@@ -123,38 +145,13 @@ export default class Island {
       return 0
     })
 
-    const contactSolver = this.world.useBlockSolver
-      ? this.#blockSolver
-      : this.#contactSolver
-
-    // Prepare and Warm start
-    for (let i = 0; i < this.jointKeys.length; ++i) {
-      const joint = this.world.joints.get(this.jointKeys[i])
-
-      joint.prepare(dt)
-      joint.warmStart()
-    }
-
-    for (let i = 0; i < this.contactKeys.length; ++i) {
-      const key = this.contactKeys[i]
-      const contact = this.world.contacts.get(key)
-      const oldContactPoints = this.world.oldContactPoints.get(key)
-
-      contactSolver.prepare(contact, dt)
-      contactSolver.warmStart(contact, oldContactPoints)
-    }
-
-    // Solve
+    // Solve + baumgarte bias
     for (let i = 0; i < this.world.velocityIterations; ++i) {
       for (let j = 0; j < this.jointKeys.length; ++j) {
         this.world.joints.get(this.jointKeys[j]).solve(true)
       }
-
       for (let j = 0; j < this.contactKeys.length; ++j) {
-        contactSolver.solve(
-          this.world.contacts.get(this.contactKeys[j]),
-          true // Apply baumgarte bias
-        )
+        contactSolver.solve(this.world.contacts.get(this.contactKeys[j]), true)
       }
     }
 
@@ -181,7 +178,7 @@ export default class Island {
       this.world.dynamicTree.updateBody(body, this.world.nodeMargin)
     }
 
-    // Relax
+    // Relax + restitution
     for (let i = 0; i < this.world.positionIterations; ++i) {
       for (let j = 0; j < this.jointKeys.length; ++j) {
         this.world.joints.get(this.jointKeys[j]).solve(false)

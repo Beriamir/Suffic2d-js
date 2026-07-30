@@ -209,6 +209,7 @@ export default class World {
 
     for (let step = 0; step < this.substeps; ++step) {
       // Reset
+      this.island.visited.clear()
       this.#oldContactPoints.clear()
       for (let i = 0; i < this.#bodies.length; ++i) {
         this.#bodies[i].contactKeys.length = 0
@@ -310,8 +311,6 @@ export default class World {
           this.island.bodies[j].islandId = islandId
         }
       }
-
-      this.island.visited.clear()
     }
   }
 }
