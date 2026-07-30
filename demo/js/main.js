@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", _ => {
     status: {
       fps: 0,
       bodies: 0,
+      contacts: 0,
       joints: 0
     },
     restart: () => {
@@ -394,6 +395,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       render(gfx)
       settings.status.fps = 1 / dt
       settings.status.bodies = world.bodies.length
+      settings.status.contacts = world.contacts.size
       settings.status.joints = world.joints.size
 
       requestAnimationFrame(loop)
