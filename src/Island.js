@@ -146,7 +146,7 @@ export default class Island {
     })
 
     // Solve + baumgarte bias
-    for (let i = 0; i < this.world.velocityIterations; ++i) {
+    for (let i = 0; i < this.world.primaryIterations; ++i) {
       for (let j = 0; j < this.jointKeys.length; ++j) {
         this.world.joints.get(this.jointKeys[j]).solve(true)
       }
@@ -179,7 +179,7 @@ export default class Island {
     }
 
     // Relax + restitution
-    for (let i = 0; i < this.world.positionIterations; ++i) {
+    for (let i = 0; i < this.world.secondaryIterations; ++i) {
       for (let j = 0; j < this.jointKeys.length; ++j) {
         this.world.joints.get(this.jointKeys[j]).solve(false)
       }

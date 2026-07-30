@@ -16,8 +16,8 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const world = new s2.World({
     substeps: 1,
-    velocityIterations: 10,
-    positionIterations: 2,
+    primaryIterations: 10,
+    secondaryIterations: 2,
     nodeMargin: 0.12,
     gravity: new s2.Vector(0, 9.81),
     useBlockSolver: true
@@ -134,9 +134,9 @@ document.addEventListener("DOMContentLoaded", _ => {
   }
 
   worldFolGUI.add(world, "substeps", 1, 10, 1)
-  worldFolGUI.add(world, "velocityIterations", 1, 20, 1)
-  worldFolGUI.add(world, "positionIterations", 1, 10, 1)
-  worldFolGUI.add(world, "useBlockSolver")
+  worldFolGUI.add(world, "primaryIterations", 1, 20, 1).name("primary")
+  worldFolGUI.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
+  worldFolGUI.add(world, "useBlockSolver").name("block solver")
 
   gui
     .add(settings, "scene", [...Object.keys(scenes)])
