@@ -1,3 +1,9 @@
+/**
+ * Uses GJK to detect overlaps.
+ * EPA to compute penetration depth and collision normal.
+ * Sutherland–Hodgman clipping generates the contact points.
+ */
+
 import Vector from "./Vector.js"
 import Pool from "./Pool.js"
 
@@ -12,16 +18,9 @@ export default class CollidePolygons {
       return null
     }
 
-    // Uses GJK to detect overlaps.
-    // EPA to compute penetration depth and collision normal.
-    // Sutherland–Hodgman clipping generates the contact points.
     const dir = this.#vectors.allocate()
-
     this.#vectors.at(dir).x = sB.center.x - sA.center.x
     this.#vectors.at(dir).y = sB.center.y - sA.center.y
-
-    const verticesA = sA.worldVertices
-    const verticesB = sB.worldVertices
 
     if (this.#vectors.at(dir).isZero()) {
       this.#vectors.at(dir).set(1, 0)
@@ -29,14 +28,18 @@ export default class CollidePolygons {
 
     this.#simplex.length = 0
     this.#simplex.push(
-      this.#getSupportPolygons(verticesA, verticesB, this.#vectors.at(dir))
+      this.#getSupportPolygons(
+        sA.worldVertices,
+        sB.worldVertices,
+        this.#vectors.at(dir)
+      )
     )
     this.#vectors.at(dir).negate()
 
     while (true) {
       const support = this.#getSupportPolygons(
-        verticesA,
-        verticesB,
+        sA.worldVertices,
+        sB.worldVertices,
         this.#vectors.at(dir)
       )
 
@@ -48,7 +51,6 @@ export default class CollidePolygons {
         }
 
         this.#vectors.deallocate(dir)
-
         return null
       }
 
@@ -61,15 +63,15 @@ export default class CollidePolygons {
 
       if (this.#handleTriangleSimplex(this.#simplex, this.#vectors.at(dir))) {
         this.#EPA(
-          verticesA,
-          verticesB,
+          sA.worldVertices,
+          sB.worldVertices,
           this.#simplex,
           this.#vectors.at(dir),
           manifold
         )
-        this.#getContactPoints(verticesA, verticesB, manifold)
-        this.#vectors.deallocate(dir)
+        this.#getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
 
+        this.#vectors.deallocate(dir)
         return manifold
       }
     }
@@ -146,7 +148,6 @@ export default class CollidePolygons {
     }
 
     this.#arrays.deallocate(finalClipping)
-
     return manifold
   }
 
@@ -211,15 +212,17 @@ export default class CollidePolygons {
 
     const edge = []
     let id = index >> 1
+    let dot = bestDot
 
     if (prevDot > nextDot) {
       edge.push(prevX, prevY, bestX, bestY)
       id = prevI >> 1
+      dot = prevDot
     } else {
       edge.push(bestX, bestY, nextX, nextY)
     }
 
-    return { edge, id }
+    return { edge, id, dot }
   }
 
   #EPA(verticesA, verticesB, simplex, dir, manifold = {}) {
@@ -228,7 +231,7 @@ export default class CollidePolygons {
       let index = 0
 
       for (let i = 0; i < simplex.length; ++i) {
-        const j = i + 1 > simplex.length - 1 ? 0 : i + 1
+        const j = i < simplex.length - 1 ? i + 1 : 0
 
         const a = simplex[i]
         const b = simplex[j]
@@ -244,7 +247,6 @@ export default class CollidePolygons {
 
         let dot = this.#vectors.at(a).x * perpX + this.#vectors.at(a).y * perpY
 
-        // You'll thank this check later
         if (dot < 0) {
           dot = -dot
           perpX = -perpX
@@ -277,7 +279,6 @@ export default class CollidePolygons {
         }
 
         this.#vectors.deallocate(support)
-
         return manifold
       }
 
