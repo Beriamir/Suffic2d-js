@@ -8,8 +8,9 @@ export default class GrabJoint {
     this.target = new Vector(targetX, targetY)
 
     this.length = options.length ?? 0.0
-    this.hertz = options.hertz ?? 5
+    this.hertz = options.hertz ?? 1
     this.zeta = options.zeta ?? 1
+    this.friction = options.friction ?? 0
 
     const dx = targetX - body.position.x
     const dy = targetY - body.position.y
@@ -19,6 +20,7 @@ export default class GrabJoint {
     this.anchorY = -dx * body.sin + dy * body.cos
 
     this.normalImpulse = 0
+    this.tangentImpulse = 0
   }
 
   prepare(dt) {
@@ -47,17 +49,26 @@ export default class GrabJoint {
       normalY = dy / dist
     }
 
+    const tangentX = -normalY
+    const tangentY = normalX
+
     const rnA = rAX * normalY - rAY * normalX
+    const rtA = rAX * tangentY - rAY * tangentX
     const kn = mA + rnA * rnA * iA
+    const kt = mA + rtA * rtA * iA
 
     this.rAX = rAX
     this.rAY = rAY
 
     this.normalX = normalX
     this.normalY = normalY
+    this.tangentX = tangentX
+    this.tangentY = tangentY
 
     this.rnA = rnA
+    this.rtA = rtA
     this.effNormalMass = kn === 0 ? 0 : 1 / kn
+    this.effTangentMass = kt === 0 ? 0 : 1 / kt
 
     this.C = length - dist
 
@@ -75,19 +86,42 @@ export default class GrabJoint {
   }
 
   warmStart() {
-    const { body, normalX, normalY, rnA, normalImpulse } = this
+    const {
+      body,
+      normalX,
+      normalY,
+      tangentX,
+      tangentY,
+      rnA,
+      rtA,
+      normalImpulse,
+      tangentImpulse
+    } = this
 
     const mA = body.invMass
     const iA = body.invInertia
 
     body.linearVelocity.x += normalX * normalImpulse * mA
     body.linearVelocity.y += normalY * normalImpulse * mA
-
     body.angularVelocity += rnA * normalImpulse * iA
+
+    body.linearVelocity.x += tangentX * tangentImpulse * mA
+    body.linearVelocity.y += tangentY * tangentImpulse * mA
+    body.angularVelocity += rtA * tangentImpulse * iA
   }
 
   solve(useBias = false) {
-    const { body, normalX, normalY, rnA, effNormalMass } = this
+    const {
+      body,
+      normalX,
+      normalY,
+      tangentX,
+      tangentY,
+      rnA,
+      rtA,
+      effNormalMass,
+      effTangentMass
+    } = this
 
     const mA = body.invMass
     const iA = body.invInertia
@@ -95,8 +129,8 @@ export default class GrabJoint {
     const vA = body.linearVelocity
     let wA = body.angularVelocity
 
-    const relVelX = vA.x - this.rAY * wA
-    const relVelY = vA.y + this.rAX * wA
+    let relVelX = vA.x - this.rAY * wA
+    let relVelY = vA.y + this.rAX * wA
 
     const vn = relVelX * normalX + relVelY * normalY
 
@@ -114,11 +148,41 @@ export default class GrabJoint {
       -effNormalMass * massScale * (vn + bias) -
       impulseScale * this.normalImpulse
 
-    this.normalImpulse += impulse
+    const oldImpulse = this.normalImpulse
+    const newImpulse = oldImpulse + impulse
+
+    this.normalImpulse = newImpulse
+    impulse = newImpulse - oldImpulse
 
     vA.x += normalX * impulse * mA
     vA.y += normalY * impulse * mA
     wA += rnA * impulse * iA
+
+    // Apply friction
+    relVelX = vA.x - this.rAY * wA
+    relVelY = vA.y + this.rAX * wA
+
+    const vt = relVelX * tangentX + relVelY * tangentY
+
+    const lambdaLimit = this.friction * this.normalImpulse
+    let lambda = -vt * this.effTangentMass
+
+    const oldLambda = this.tangentImpulse
+    let newLambda = oldLambda + lambda
+
+    newLambda =
+      newLambda < -lambdaLimit
+        ? -lambdaLimit
+        : newLambda > lambdaLimit
+          ? lambdaLimit
+          : newLambda
+
+    this.tangentImpulse = newLambda
+    lambda = newLambda - oldLambda
+
+    vA.x += tangentX * lambda * mA
+    vA.y += tangentY * lambda * mA
+    wA += rtA * lambda * iA
 
     body.angularVelocity = wA
   }

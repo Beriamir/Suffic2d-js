@@ -83,8 +83,10 @@ document.addEventListener("DOMContentLoaded", _ => {
         }
 
         grabJoint = new s2.GrabJoint(body, grabX, grabY, {
-          hertz: 5,
-          zeta: 1
+          length: 0,
+          hertz: 30,
+          zeta: 10,
+          friction: 0.3
         })
 
         world.createJoint(grabJoint)
