@@ -4,7 +4,9 @@ export default class GrabJoint {
   constructor(body, targetX, targetY, option = {}) {
     this.type = "GrabJoint"
     this.body = body
+
     this.target = new Vector(targetX, targetY)
+
     this.length = option.length ?? 0.0
     this.hertz = option.hertz ?? 5
     this.zeta = option.zeta ?? 1
@@ -12,8 +14,10 @@ export default class GrabJoint {
     const dx = targetX - body.position.x
     const dy = targetY - body.position.y
 
+    // Local anchor
     this.anchorX = dx * body.cos + dy * body.sin
     this.anchorY = -dx * body.sin + dy * body.cos
+
     this.normalImpulse = 0
   }
 
@@ -22,9 +26,9 @@ export default class GrabJoint {
 
     const mA = body.invMass
     const iA = body.invInertia
-
     const cos = body.cos
     const sin = body.sin
+
     const rAX = this.anchorX * cos - this.anchorY * sin
     const rAY = this.anchorX * sin + this.anchorY * cos
 
@@ -33,32 +37,34 @@ export default class GrabJoint {
 
     const dx = target.x - pointX
     const dy = target.y - pointY
-    let dist = Math.sqrt(dx * dx + dy * dy)
+    const dist = Math.sqrt(dx * dx + dy * dy)
 
     let normalX = 0
     let normalY = 0
 
-    if (dist >= 1e-9) {
+    if (dist > 1e-6) {
       normalX = dx / dist
       normalY = dy / dist
     }
 
-    this.rAX = rAX
-    this.rAY = rAY
-    this.normalX = normalX
-    this.normalY = normalY
-
     const rnA = rAX * normalY - rAY * normalX
     const kn = mA + rnA * rnA * iA
 
-    this.effNormalMass = kn === 0 ? 0 : 1 / kn
+    this.rAX = rAX
+    this.rAY = rAY
+
+    this.normalX = normalX
+    this.normalY = normalY
+
     this.rnA = rnA
+    this.effNormalMass = kn === 0 ? 0 : 1 / kn
 
     this.C = length - dist
 
     const zeta = this.zeta
     const hertz = this.hertz
     const omega = 2 * Math.PI * hertz
+
     const a1 = 2 * zeta + dt * omega
     const a2 = dt * omega * a1
     const a3 = 1 / (1 + a2)
@@ -70,24 +76,28 @@ export default class GrabJoint {
 
   warmStart() {
     const { body, normalX, normalY, rnA, normalImpulse } = this
+
     const mA = body.invMass
     const iA = body.invInertia
 
     body.linearVelocity.x += normalX * normalImpulse * mA
     body.linearVelocity.y += normalY * normalImpulse * mA
+
     body.angularVelocity += rnA * normalImpulse * iA
   }
 
   solve(useBias = false) {
-    const { body, normalX, normalY, rAX, rAY, rnA, effNormalMass } = this
+    const { body, normalX, normalY, rnA, effNormalMass } = this
+
     const mA = body.invMass
     const iA = body.invInertia
 
     const vA = body.linearVelocity
     let wA = body.angularVelocity
 
-    const relVelX = vA.x - rAY * wA
-    const relVelY = vA.y + rAX * wA
+    const relVelX = vA.x - this.rAY * wA
+    const relVelY = vA.y + this.rAX * wA
+
     const vn = relVelX * normalX + relVelY * normalY
 
     let bias = 0
@@ -100,7 +110,7 @@ export default class GrabJoint {
       impulseScale = this.impulseCoeff
     }
 
-    const impulse =
+    let impulse =
       -effNormalMass * massScale * (vn + bias) -
       impulseScale * this.normalImpulse
 
