@@ -1,4 +1,4 @@
-export default function friction(s2, world, option = {}) {
+export default (s2, world, options = {}) => {
   const {
     spacing = 1,
     rampWidth = 8,
@@ -7,7 +7,7 @@ export default function friction(s2, world, option = {}) {
     groundHeight = 0.48,
     centerX = 0,
     bottomY = 0
-  } = option
+  } = options
 
   const ramp = new s2.RigidBody(-rampWidth * 0.3, -5, 0.2, {
     isStatic: true

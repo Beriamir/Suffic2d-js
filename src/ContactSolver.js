@@ -1,5 +1,5 @@
 export default class ContactSolver {
-  constructor(option = {}) {}
+  constructor(options = {}) {}
 
   prepare(contact, dt) {
     const { bodyA, bodyB, normalX, normalY, contactPoints } = contact

@@ -1,4 +1,4 @@
-export default function pyramid(s2, world, option = {}) {
+export default (s2, world, options = {}) => {
   const {
     rows = 15,
     spacing = 0.024,
@@ -8,7 +8,7 @@ export default function pyramid(s2, world, option = {}) {
     groundHeight = 0.48,
     centerX = 0,
     bottomY = 0
-  } = option
+  } = options
 
   const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
     isStatic: true

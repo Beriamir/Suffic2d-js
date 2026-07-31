@@ -17,8 +17,8 @@ export default class World {
   #nearby = []
   #collider = new Collider()
 
-  constructor(option = {}) {
-    const gravity = option.gravity
+  constructor(options = {}) {
+    const gravity = options.gravity
 
     if (typeof gravity == "object") {
       this.gravity = gravity
@@ -26,11 +26,11 @@ export default class World {
       this.gravity = new Vector(0, 9.81)
     }
 
-    this.substeps = option.substeps ?? 1
-    this.primaryIterations = option.primaryIterations ?? 10
-    this.secondaryIterations = option.secondaryIterations ?? 2
-    this.nodeMargin = option.nodeMargin ?? 0.1
-    this.useBlockSolver = option.useBlockSolver ?? false
+    this.substeps = options.substeps ?? 1
+    this.primaryIterations = options.primaryIterations ?? 10
+    this.secondaryIterations = options.secondaryIterations ?? 2
+    this.nodeMargin = options.nodeMargin ?? 0.1
+    this.useBlockSolver = options.useBlockSolver ?? false
     this.island = new Island(this)
   }
 

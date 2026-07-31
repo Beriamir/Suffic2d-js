@@ -1,15 +1,15 @@
 import Vector from "./Vector.js"
 
 export default class GrabJoint {
-  constructor(body, targetX, targetY, option = {}) {
+  constructor(body, targetX, targetY, options = {}) {
     this.type = "GrabJoint"
     this.body = body
 
     this.target = new Vector(targetX, targetY)
 
-    this.length = option.length ?? 0.0
-    this.hertz = option.hertz ?? 5
-    this.zeta = option.zeta ?? 1
+    this.length = options.length ?? 0.0
+    this.hertz = options.hertz ?? 5
+    this.zeta = options.zeta ?? 1
 
     const dx = targetX - body.position.x
     const dy = targetY - body.position.y

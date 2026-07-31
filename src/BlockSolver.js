@@ -1,5 +1,5 @@
 export default class BlockSolver {
-  constructor(option = {}) {}
+  constructor(options = {}) {}
 
   prepare(contact, dt) {
     const { bodyA, bodyB, normalX, normalY, contactPoints } = contact

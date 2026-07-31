@@ -1,11 +1,11 @@
-export default function mixShapes(s2, world, option = {}) {
+export default (s2, world, options = {}) => {
   const {
     count = 200,
     size = 0.24,
     groundWidth = 10,
     centerX = 0,
     bottomY = 0
-  } = option
+  } = options
 
   const ground = new s2.RigidBody(centerX, bottomY, 0, {
     isStatic: true
@@ -47,7 +47,9 @@ export default function mixShapes(s2, world, option = {}) {
     const y = Math.random() * -20 - 10
     const body = new s2.RigidBody(x, y, 0, {
       friction: 0.3
-    }).createCapsule(size * 2, size, {})
+    }).createCapsule(size * 2, size, {
+      roundness: 9
+    })
 
     world.createBody(body)
   }

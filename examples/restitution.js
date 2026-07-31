@@ -1,4 +1,4 @@
-export default function restitution(s2, world, option = {}) {
+export default (s2, world, options = {}) => {
   const {
     spacing = 0.24,
     radius = 0.24,
@@ -6,7 +6,7 @@ export default function restitution(s2, world, option = {}) {
     groundHeight = 0.48,
     centerX = 0,
     bottomY = 0
-  } = option
+  } = options
 
   const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
     isStatic: true

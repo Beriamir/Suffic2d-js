@@ -1,15 +1,15 @@
-export default function capsuleStack(s2, world, option = {}) {
+export default (s2, world, options = {}) => {
   const {
     columns = 1,
     rows = 20,
-    length = 0.24,
+    length = 0.48,
     radius = 0.24,
     spacing = 0.024,
     groundWidth = 1000,
     groundHeight = 0.48,
     centerX = 0,
     bottomY = 0
-  } = option
+  } = options
 
   const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
     isStatic: true
@@ -45,7 +45,7 @@ export default function capsuleStack(s2, world, option = {}) {
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
       }).createCapsule(length, radius, {
-        roundness: 15
+        roundness: 9
       })
 
       world.createBody(body)

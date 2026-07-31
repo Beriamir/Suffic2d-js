@@ -11,7 +11,7 @@ export default class Capsule {
     this.vertices = this.#createCapsuleVertices(
       length,
       radius,
-      options.roundness ?? 15
+      options.roundness ?? 9
     )
     this.worldVertices = new Float32Array(this.vertices.length)
     this.center = new Vector()
