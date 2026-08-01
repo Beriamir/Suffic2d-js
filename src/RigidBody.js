@@ -197,15 +197,19 @@ export default class RigidBody {
   }
 
   updateAABB() {
-    this.aabb.set(Infinity, Infinity, -Infinity, -Infinity)
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -minX
+    let maxY = -minY
 
     for (const s of this.fixtures) {
-      if (s.aabb.minX < this.aabb.minX) this.aabb.minX = s.aabb.minX
-      if (s.aabb.minY < this.aabb.minY) this.aabb.minY = s.aabb.minY
-      if (s.aabb.maxX > this.aabb.maxX) this.aabb.maxX = s.aabb.maxX
-      if (s.aabb.maxY > this.aabb.maxY) this.aabb.maxY = s.aabb.maxY
+      if (s.aabb.minX < minX) minX = s.aabb.minX
+      if (s.aabb.minY < minY) minY = s.aabb.minY
+      if (s.aabb.maxX > maxX) maxX = s.aabb.maxX
+      if (s.aabb.maxY > maxY) maxY = s.aabb.maxY
     }
 
+    this.aabb.set(minX, minY, maxX, maxY)
     return this
   }
 
