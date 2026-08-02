@@ -100,19 +100,23 @@ export default class Line {
   }
 
   updateAABB() {
-    this.aabb.set(Infinity, Infinity, -Infinity, -Infinity)
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -minX
+    let maxY = -minY
 
     for (let i = 0; i < this.worldVertices.length; i += 2) {
       const x0 = this.worldVertices[i]
       const y0 = this.worldVertices[i + 1]
 
-      if (x0 < this.aabb.minX) this.aabb.minX = x0
-      if (x0 > this.aabb.maxX) this.aabb.maxX = x0
+      if (x0 < minX) minX = x0
+      if (x0 > maxX) maxX = x0
 
-      if (y0 < this.aabb.minY) this.aabb.minY = y0
-      if (y0 > this.aabb.maxY) this.aabb.maxY = y0
+      if (y0 < minY) minY = y0
+      if (y0 > maxY) maxY = y0
     }
 
+    this.aabb.set(minX, minY, maxX, maxY)
     return this.aabb
   }
 }
