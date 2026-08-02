@@ -27,8 +27,8 @@ export default class World {
     }
 
     this.substeps = options.substeps ?? 1
-    this.primaryIterations = options.primaryIterations ?? 10
-    this.secondaryIterations = options.secondaryIterations ?? 2
+    this.primaryIterations = options.primaryIterations ?? 8
+    this.secondaryIterations = options.secondaryIterations ?? 3
     this.nodeMargin = options.nodeMargin ?? 0.1
     this.useBlockSolver = options.useBlockSolver ?? false
     this.island = new Island(this)

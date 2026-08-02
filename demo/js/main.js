@@ -2,12 +2,13 @@ import s2 from "../../src/index.js"
 import dat from "../../lib/dat.gui.mjs"
 import scenes from "./scenes.js"
 import debugs from "./debugs.js"
+import settings from "./settings.js"
 
 import Input from "./navigation/Input.js"
 import Graphics from "./render/Graphics.js"
 import Camera from "./render/Camera.js"
 
-document.addEventListener("DOMContentLoaded", _ => {
+document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("canvas")
   const gfx = new Graphics(canvas, {})
   const camera = new Camera(0, 0, 0, 100)
@@ -16,49 +17,30 @@ document.addEventListener("DOMContentLoaded", _ => {
 
   const world = new s2.World({
     substeps: 1,
-    primaryIterations: 10,
-    secondaryIterations: 2,
+    primaryIterations: 8,
+    secondaryIterations: 3,
     nodeMargin: 0.12,
-    gravity: new s2.Vector(0, 9.81),
     useBlockSolver: true
   })
 
-  const settings = {
-    scene: "Pyramid",
-    status: {
-      fps: 0,
-      bodies: 0,
-      contacts: 0,
-      joints: 0
-    },
-    restart: () => {
-      switchScene(settings.scene)
-    }
-  }
-
-  const statusFolGUI = gui.addFolder("status")
-  const cameraFolGUI = gui.addFolder("Camera")
-  const debugsFolGUI = gui.addFolder("Debugs")
-  const worldFolGUI = gui.addFolder("World")
-
   const debugColor = "lightgray"
   const islandColors = [
-    "#ef4444", // Red
-    "#3b82f6", // Blue
-    "#22c55e", // Green
-    "#eab308", // Yellow
-    "#a855f7", // Purple
-    "#f97316", // Orange
-    "#14b8a6", // Teal
-    "#ec4899", // Pink
-    "#84cc16", // Lime
-    "#06b6d4", // Cyan
-    "#6366f1", // Indigo
-    "#f43f5e", // Rose
-    "#10b981", // Emerald
-    "#8b5cf6", // Violet
-    "#d946ef", // Fuchsia
-    "#0ea5e9" // Sky
+    "#ef4444",
+    "#3b82f6",
+    "#22c55e",
+    "#eab308",
+    "#a855f7",
+    "#f97316",
+    "#14b8a6",
+    "#ec4899",
+    "#84cc16",
+    "#06b6d4",
+    "#6366f1",
+    "#f43f5e",
+    "#10b981",
+    "#8b5cf6",
+    "#d946ef",
+    "#0ea5e9"
   ]
 
   let grabJoint = null
@@ -108,6 +90,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       world.destroyJoint(grabJoint)
     }
   }
+
   input.onPan = (dx, dy) => {
     camera.move(dx, dy)
   }
@@ -121,6 +104,11 @@ document.addEventListener("DOMContentLoaded", _ => {
     canvas.width = w
     canvas.height = h
   }
+
+  const statusFolGUI = gui.addFolder("status")
+  const cameraFolGUI = gui.addFolder("Camera")
+  const debugsFolGUI = gui.addFolder("Debugs")
+  const worldFolGUI = gui.addFolder("World")
 
   for (const stat of Object.keys(settings.status)) {
     statusFolGUI.add(settings.status, stat).listen()
@@ -145,7 +133,9 @@ document.addEventListener("DOMContentLoaded", _ => {
     .onChange(switchScene)
     .name("Scene")
 
-  gui.add(settings, "restart").name("Restart")
+  gui
+    .add({ restart: () => switchScene(settings.scene) }, "restart")
+    .name("Restart")
 
   function switchScene(scene) {
     world.clear()
@@ -155,19 +145,20 @@ document.addEventListener("DOMContentLoaded", _ => {
   function setup() {
     canvas.width = innerWidth
     canvas.height = innerHeight
-    settings.restart()
+    switchScene(settings.scene)
   }
 
-  function simulate(dt) {
-    world.simulate(dt)
+  function simulate(step) {
+    world.simulate(step)
   }
 
   function render(gfx) {
+    const strokeWidth = 1 / camera.scale
+
     gfx.clear(0, 0, canvas.width, canvas.height)
     gfx.setCamera(camera)
 
-    const strokeWidth = 1 / camera.scale
-
+    // Draw bodies
     for (let i = 0; i < world.bodies.length; ++i) {
       const body = world.bodies[i]
       const { position, cos, sin } = body
@@ -244,121 +235,7 @@ document.addEventListener("DOMContentLoaded", _ => {
       }
     }
 
-    if (debugs.aabb) {
-      for (let i = 0; i < world.bodies.length; ++i) {
-        const body = world.bodies[i]
-
-        for (const s of body.fixtures) {
-          gfx.drawAABB(s.aabb, {
-            strokeColor: debugColor,
-            wireframe: true,
-            strokeWidth
-          })
-        }
-
-        if (body.fixtures.length <= 1) {
-          continue
-        }
-
-        gfx.drawAABB(body.aabb, {
-          strokeColor: debugColor,
-          wireframe: true,
-          strokeWidth
-        })
-      }
-    }
-
-    if (debugs.bvh) {
-      world.dynamicTree.traverse(node => {
-        gfx.drawAABB(node.aabb, {
-          strokeColor: debugColor,
-          wireframe: true,
-          strokeWidth
-        })
-      })
-    }
-
-    for (let i = 0; i < world.contactKeys.length; ++i) {
-      const key = world.contactKeys[i]
-      const contact = world.contacts.get(key)
-      const {
-        bodyA,
-        bodyB,
-        normalX,
-        normalY,
-        ref,
-        inc,
-        overlap,
-        polytope,
-        contactPoints
-      } = contact
-
-      if (debugs.epa && polytope) {
-        const originX = 0
-        const originY = 0
-        const mtvX = normalX * overlap
-        const mtvY = normalY * overlap
-
-        gfx.drawPolygon(originX, originY, 1, 0, {
-          vertices: polytope,
-          wireframe: true,
-          strokeColor: debugColor,
-          strokeWidth
-        })
-        gfx.drawLine(originX, originY, mtvX, mtvY, {
-          strokeColor: debugColor,
-          strokeWidth
-        })
-        gfx.drawCircle(originX, originY, 1, 0, {
-          radius: 2 / camera.scale,
-          fillColor: debugColor,
-          noStroke: true
-        })
-      }
-
-      if (debugs.ref && ref) {
-        gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
-          strokeColor: debugColor,
-          strokeWidth
-        })
-      }
-
-      if (debugs.inc && inc) {
-        gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
-          strokeColor: debugColor,
-          strokeWidth
-        })
-      }
-
-      for (const cp of contactPoints) {
-        if (debugs.impulse) {
-          gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-            length: cp.normalImpulse,
-            showHead: false,
-            strokeColor: debugColor,
-            strokeWidth
-          })
-        }
-
-        if (debugs.point) {
-          gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-            radius: 1.5 / camera.scale,
-            fillColor: debugColor,
-            noStroke: true,
-            strokeWidth
-          })
-        }
-
-        if (debugs.normal) {
-          gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-            length: 8 / camera.scale,
-            strokeColor: debugColor,
-            strokeWidth
-          })
-        }
-      }
-    }
-
+    // Draw joints
     for (let i = 0; i < world.jointKeys.length; ++i) {
       const joint = world.joints.get(world.jointKeys[i])
 
@@ -382,8 +259,119 @@ document.addEventListener("DOMContentLoaded", _ => {
       }
     }
 
+    // Draw debugs
+    {
+      const options = {
+        strokeColor: debugColor,
+        wireframe: true,
+        strokeWidth
+      }
+
+      if (debugs.aabb) {
+        for (let i = 0; i < world.bodies.length; ++i) {
+          const body = world.bodies[i]
+
+          for (const s of body.fixtures) {
+            gfx.drawAABB(s.aabb, options)
+          }
+
+          if (body.fixtures.length > 1) {
+            gfx.drawAABB(body.aabb, options)
+          }
+        }
+      }
+
+      if (debugs.bvh) {
+        world.dynamicTree.traverse(node => {
+          gfx.drawAABB(node.aabb, options)
+        })
+      }
+
+      for (let i = 0; i < world.contactKeys.length; ++i) {
+        const key = world.contactKeys[i]
+        const {
+          bodyA,
+          bodyB,
+          normalX,
+          normalY,
+          ref,
+          inc,
+          overlap,
+          polytope,
+          contactPoints
+        } = world.contacts.get(key)
+
+        if (debugs.epa && polytope) {
+          const originX = 0
+          const originY = 0
+          const mtvX = normalX * overlap
+          const mtvY = normalY * overlap
+
+          gfx.drawPolygon(originX, originY, 1, 0, {
+            vertices: polytope,
+            wireframe: true,
+            strokeColor: debugColor,
+            strokeWidth
+          })
+          gfx.drawLine(originX, originY, mtvX, mtvY, {
+            strokeColor: debugColor,
+            strokeWidth
+          })
+          gfx.drawCircle(originX, originY, 1, 0, {
+            radius: 2 / camera.scale,
+            fillColor: debugColor,
+            noStroke: true
+          })
+        }
+
+        if (debugs.ref && ref) {
+          gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
+            strokeColor: debugColor,
+            strokeWidth
+          })
+        }
+
+        if (debugs.inc && inc) {
+          gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
+            strokeColor: debugColor,
+            strokeWidth
+          })
+        }
+
+        for (const cp of contactPoints) {
+          if (debugs.impulse) {
+            gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+              length: cp.normalImpulse,
+              showHead: false,
+              strokeColor: debugColor,
+              strokeWidth
+            })
+          }
+
+          if (debugs.point) {
+            gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
+              radius: 1.5 / camera.scale,
+              fillColor: debugColor,
+              noStroke: true,
+              strokeWidth
+            })
+          }
+
+          if (debugs.normal) {
+            gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+              length: 8 / camera.scale,
+              strokeColor: debugColor,
+              strokeWidth
+            })
+          }
+        }
+      }
+    }
+
     gfx.setCamera(null)
   }
+
+  setup()
 
   function update() {
     const step = 1 / 60
@@ -394,18 +382,17 @@ document.addEventListener("DOMContentLoaded", _ => {
       last = now
 
       simulate(step)
-      render(gfx)
       settings.status.fps = 1 / dt
       settings.status.bodies = world.bodies.length
       settings.status.contacts = world.contacts.size
       settings.status.joints = world.joints.size
 
+      render(gfx)
       requestAnimationFrame(loop)
     }
 
     requestAnimationFrame(loop)
   }
 
-  setup()
   update()
 })
