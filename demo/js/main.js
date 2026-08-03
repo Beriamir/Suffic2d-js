@@ -106,38 +106,41 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.height = h
   }
 
-  const statusFolGUI = gui.addFolder("status")
-  const cameraFolGUI = gui.addFolder("Camera")
-  const debugsFolGUI = gui.addFolder("Debugs")
-  const worldFolGUI = gui.addFolder("World")
+  // GUI
+  {
+    const statusFolGUI = gui.addFolder("status")
+    const cameraFolGUI = gui.addFolder("Camera")
+    const debugsFolGUI = gui.addFolder("Debugs")
+    const worldFolGUI = gui.addFolder("World")
 
-  for (const stat of Object.keys(settings.status)) {
-    statusFolGUI.add(settings.status, stat).listen()
+    for (const stat of Object.keys(settings.status)) {
+      statusFolGUI.add(settings.status, stat).listen()
+    }
+
+    cameraFolGUI.add(camera, "reset").name("Reset")
+    for (const prop of Object.keys(camera)) {
+      cameraFolGUI.add(camera, prop).listen()
+    }
+
+    for (const debug of Object.keys(debugs)) {
+      debugsFolGUI.add(debugs, debug)
+    }
+
+    worldFolGUI.add(world, "substeps", 1, 10, 1)
+    worldFolGUI.add(world, "primaryIterations", 1, 20, 1).name("primary")
+    worldFolGUI.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
+    worldFolGUI.add(world, "useBlockSolver").name("block solver")
+    worldFolGUI.add(world, "useSleeping").name("sleeping")
+
+    gui
+      .add(settings, "scene", [...Object.keys(scenes)])
+      .onChange(switchScene)
+      .name("Scene")
+
+    gui
+      .add({ restart: () => switchScene(settings.scene) }, "restart")
+      .name("Restart")
   }
-
-  cameraFolGUI.add(camera, "reset").name("Reset")
-  for (const prop of Object.keys(camera)) {
-    cameraFolGUI.add(camera, prop).listen()
-  }
-
-  for (const debug of Object.keys(debugs)) {
-    debugsFolGUI.add(debugs, debug)
-  }
-
-  worldFolGUI.add(world, "substeps", 1, 10, 1)
-  worldFolGUI.add(world, "primaryIterations", 1, 20, 1).name("primary")
-  worldFolGUI.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
-  worldFolGUI.add(world, "useBlockSolver").name("block solver")
-  worldFolGUI.add(world, "useSleeping").name("sleeping")
-
-  gui
-    .add(settings, "scene", [...Object.keys(scenes)])
-    .onChange(switchScene)
-    .name("Scene")
-
-  gui
-    .add({ restart: () => switchScene(settings.scene) }, "restart")
-    .name("Restart")
 
   function switchScene(scene) {
     world.clear()
@@ -161,78 +164,92 @@ document.addEventListener("DOMContentLoaded", () => {
     gfx.setCamera(camera)
 
     // Draw bodies
-    for (let i = 0; i < world.bodies.length; ++i) {
-      const body = world.bodies[i]
-      const { position, cos, sin } = body
-
-      for (const s of body.fixtures) {
-        if (debugs["hide bodies"]) continue
+    if (!debugs["hide bodies"]) {
+      for (let i = 0; i < world.bodies.length; ++i) {
+        const {
+          position,
+          cos,
+          sin,
+          isSleeping,
+          isStatic,
+          islandId,
+          velocityColor,
+          fixtures
+        } = world.bodies[i]
 
         const fillColor = debugs.velocity
-          ? body.velocityColor
-          : body.isSleeping
+          ? velocityColor
+          : isSleeping
             ? "gray"
-            : body.isStatic
+            : isStatic
               ? "gray"
-              : islandColors[body.islandId % islandColors.length]
+              : islandColors[islandId % islandColors.length]
         const strokeColor = debugs.velocity
-          ? body.velocityColor
-          : body.isSleeping
+          ? velocityColor
+          : isSleeping
             ? "dimgray"
-            : body.isStatic
+            : isStatic
               ? "dimgray"
-              : islandColors[body.islandId % islandColors.length]
+              : islandColors[islandId % islandColors.length]
 
-        switch (s.type) {
-          case "polygon":
-            gfx.drawPolygon(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
-              cos: s.cos,
-              sin: s.sin,
-              vertices: s.vertices,
-              fillColor,
-              strokeColor,
-              wireframe: debugs.wireframe,
-              noStroke: !debugs.wireframe,
-              strokeWidth
-            })
-            break
-          case "circle":
-            gfx.drawCircle(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
-              cos: s.cos,
-              sin: s.sin,
-              radius: s.radius,
-              fillColor,
-              strokeColor,
-              wireframe: debugs.wireframe,
-              noStroke: !debugs.wireframe,
-              strokeWidth
-            })
-            break
-          case "capsule":
-            gfx.drawCapsule(position.x, position.y, cos, sin, {
-              offsetX: s.offset.x,
-              offsetY: s.offset.y,
-              cos: s.cos,
-              sin: s.sin,
-              length: s.length,
-              radius: s.radius,
-              fillColor,
-              strokeColor,
-              wireframe: debugs.wireframe,
-              noStroke: !debugs.wireframe,
-              strokeWidth
-            })
-            break
-          case "line":
-            gfx.drawLine(s.center1.x, s.center1.y, s.center2.x, s.center2.y, {
-              strokeColor,
-              strokeWidth
-            })
-            break
+        for (const shape of fixtures) {
+          switch (shape.type) {
+            case "polygon":
+              gfx.drawPolygon(position.x, position.y, cos, sin, {
+                offsetX: shape.offset.x,
+                offsetY: shape.offset.y,
+                cos: shape.cos,
+                sin: shape.sin,
+                vertices: shape.vertices,
+                fillColor,
+                strokeColor,
+                wireframe: debugs.wireframe,
+                noStroke: !debugs.wireframe,
+                strokeWidth
+              })
+              break
+            case "circle":
+              gfx.drawCircle(position.x, position.y, cos, sin, {
+                offsetX: shape.offset.x,
+                offsetY: shape.offset.y,
+                cos: shape.cos,
+                sin: shape.sin,
+                radius: shape.radius,
+                fillColor,
+                strokeColor,
+                wireframe: debugs.wireframe,
+                noStroke: !debugs.wireframe,
+                strokeWidth
+              })
+              break
+            case "capsule":
+              gfx.drawCapsule(position.x, position.y, cos, sin, {
+                offsetX: shape.offset.x,
+                offsetY: shape.offset.y,
+                cos: shape.cos,
+                sin: shape.sin,
+                length: shape.length,
+                radius: shape.radius,
+                fillColor,
+                strokeColor,
+                wireframe: debugs.wireframe,
+                noStroke: !debugs.wireframe,
+                strokeWidth
+              })
+              break
+            case "line":
+              gfx.drawLine(
+                shape.center1.x,
+                shape.center1.y,
+                shape.center2.x,
+                shape.center2.y,
+                {
+                  strokeColor,
+                  strokeWidth
+                }
+              )
+              break
+          }
         }
       }
     }
@@ -290,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       for (let i = 0; i < world.contactKeys.length; ++i) {
-        const key = world.contactKeys[i]
+        const contact = world.contacts.get(world.contactKeys[i])
         const {
           bodyA,
           bodyB,
@@ -301,7 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
           overlap,
           polytope,
           contactPoints
-        } = world.contacts.get(key)
+        } = contact
 
         if (debugs.epa && polytope) {
           const originX = 0
