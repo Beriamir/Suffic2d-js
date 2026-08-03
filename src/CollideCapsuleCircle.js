@@ -21,20 +21,20 @@ export default class CollideCapsuleCircle {
     const projX = sA.center1.x + abX * t
     const projY = sA.center1.y + abY * t
 
-    const dirX = sB.center.x - projX
-    const dirY = sB.center.y - projY
-    const magSq = dirX * dirX + dirY * dirY
-    const radii = sA.radius + sB.radius
+    const deltaX = sB.center.x - projX
+    const deltaY = sB.center.y - projY
+    const magSq = deltaX * deltaX + deltaY * deltaY
+    const radiiSum = sA.radius + sB.radius
 
-    if (magSq == 0 || magSq >= radii * radii) {
+    if (magSq === 0 || magSq >= radiiSum * radiiSum) {
       return null
     }
 
     const distance = Math.sqrt(magSq)
     const invDistance = 1 / distance
-    const normalX = dirX * invDistance
-    const normalY = dirY * invDistance
-    const overlap = radii - distance
+    const normalX = deltaX * invDistance
+    const normalY = deltaY * invDistance
+    const overlap = radiiSum - distance
 
     manifold.normalX = normalX
     manifold.normalY = normalY
