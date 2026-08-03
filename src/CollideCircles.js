@@ -11,16 +11,17 @@ export default class CollideCircles {
     }
 
     const dir = this.#vectors.allocate()
+    const deltaX = sB.center.x - sA.center.x
+    const deltaY = sB.center.y - sA.center.y
 
-    this.#vectors.at(dir).x = sB.center.x - sA.center.x
-    this.#vectors.at(dir).y = sB.center.y - sA.center.y
+    this.#vectors.at(dir).x = deltaX
+    this.#vectors.at(dir).y = deltaY
 
     const magSq = this.#vectors.at(dir).magSq()
-    const radii = sA.radius + sB.radius
+    const radiiSum = sA.radius + sB.radius
 
-    if (magSq == 0 || magSq >= radii * radii) {
+    if (magSq === 0 || magSq >= radiiSum * radiiSum) {
       this.#vectors.deallocate(dir)
-
       return null
     }
 
@@ -28,7 +29,7 @@ export default class CollideCircles {
     const invDistance = 1 / distance
     const normalX = this.#vectors.at(dir).x * invDistance
     const normalY = this.#vectors.at(dir).y * invDistance
-    const overlap = radii - distance
+    const overlap = radiiSum - distance
 
     manifold.normalX = normalX
     manifold.normalY = normalY
