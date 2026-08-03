@@ -20,7 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     primaryIterations: 8,
     secondaryIterations: 3,
     nodeMargin: 0.12,
-    useBlockSolver: true
+    useBlockSolver: true,
+    useSleeping: true
   })
 
   const debugColor = "lightgray"
@@ -127,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
   worldFolGUI.add(world, "primaryIterations", 1, 20, 1).name("primary")
   worldFolGUI.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
   worldFolGUI.add(world, "useBlockSolver").name("block solver")
+  worldFolGUI.add(world, "useSleeping").name("sleeping")
 
   gui
     .add(settings, "scene", [...Object.keys(scenes)])

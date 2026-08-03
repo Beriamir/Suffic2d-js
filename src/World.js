@@ -31,6 +31,7 @@ export default class World {
     this.secondaryIterations = options.secondaryIterations ?? 3
     this.nodeMargin = options.nodeMargin ?? 0.1
     this.useBlockSolver = options.useBlockSolver ?? false
+    this.useSleeping = options.useSleeping ?? false
     this.island = new Island(this)
   }
 

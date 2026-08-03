@@ -79,7 +79,7 @@ export default class Island {
       }
     }
 
-    if (minSleepingTime >= this.sleepingTime) {
+    if (this.world.useSleeping && minSleepingTime >= this.sleepingTime) {
       this.isSleeping = true
     }
   }
