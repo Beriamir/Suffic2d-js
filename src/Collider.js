@@ -60,7 +60,7 @@ export default class Collider {
     }
   }
 
-  collide(sA, sB) {
+  collide(sA, sB, manifold) {
     const shapeA = this.shapes[sA.type]
     const shapeB = this.shapes[sB.type]
     const collider = this.colliders[shapeA][shapeB]
@@ -69,6 +69,6 @@ export default class Collider {
       return null
     }
 
-    return collider.collide(sA, sB)
+    return collider.collide(sA, sB, manifold)
   }
 }
