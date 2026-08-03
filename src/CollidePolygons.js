@@ -19,8 +19,11 @@ export default class CollidePolygons {
     }
 
     const dir = this.#vectors.allocate()
-    this.#vectors.at(dir).x = sB.center.x - sA.center.x
-    this.#vectors.at(dir).y = sB.center.y - sA.center.y
+    const deltaX = sB.center.x - sA.center.x
+    const deltaY = sB.center.y - sA.center.y
+
+    this.#vectors.at(dir).x = deltaX
+    this.#vectors.at(dir).y = deltaY
 
     if (this.#vectors.at(dir).isZero()) {
       this.#vectors.at(dir).set(1, 0)
@@ -34,6 +37,7 @@ export default class CollidePolygons {
         this.#vectors.at(dir)
       )
     )
+
     this.#vectors.at(dir).negate()
 
     while (true) {
@@ -84,15 +88,15 @@ export default class CollidePolygons {
     const ref = this.#bestEdge(verticesA, normalX, normalY)
     const inc = this.#bestEdge(verticesB, -normalX, -normalY)
 
-    const refDirX = ref.edge[2] - ref.edge[0]
-    const refDirY = ref.edge[3] - ref.edge[1]
+    const refDeltaX = ref.edge[2] - ref.edge[0]
+    const refDeltaY = ref.edge[3] - ref.edge[1]
 
     const firstClipping = this.#clipEdge(
       inc.edge,
       ref.edge[0],
       ref.edge[1],
-      refDirX,
-      refDirY
+      refDeltaX,
+      refDeltaY
     )
 
     let secondClipping = firstClipping
@@ -102,8 +106,8 @@ export default class CollidePolygons {
         this.#arrays.at(firstClipping),
         ref.edge[2],
         ref.edge[3],
-        -refDirX,
-        -refDirY
+        -refDeltaX,
+        -refDeltaY
       )
 
       this.#arrays.deallocate(firstClipping)
@@ -116,8 +120,8 @@ export default class CollidePolygons {
         this.#arrays.at(secondClipping),
         ref.edge[0],
         ref.edge[1],
-        -refDirY,
-        refDirX
+        -refDeltaY,
+        refDeltaX
       )
 
       this.#arrays.deallocate(secondClipping)
@@ -168,22 +172,25 @@ export default class CollidePolygons {
     }
 
     if (u0 * u1 < 0) {
-      const deltaX = inc[2] - inc[0]
-      const deltaY = inc[3] - inc[1]
+      const incDeltaX = inc[2] - inc[0]
+      const incDeltaY = inc[3] - inc[1]
       const t = u0 / (u0 - u1)
 
-      this.#arrays.at(result).push(inc[0] + deltaX * t, inc[1] + deltaY * t)
+      const pointX = inc[0] + incDeltaX * t
+      const pointY = inc[1] + incDeltaY * t
+
+      this.#arrays.at(result).push(pointX, pointY)
     }
 
     return result
   }
 
-  #bestEdge(vertices, dx, dy) {
+  #bestEdge(vertices, dirX, dirY) {
     let bestDot = -Infinity
     let index = 0
 
     for (let i = 0; i < vertices.length; i += 2) {
-      const dot = vertices[i] * dx + vertices[i + 1] * dy
+      const dot = vertices[i] * dirX + vertices[i + 1] * dirY
 
       if (dot > bestDot) {
         bestDot = dot
@@ -202,13 +209,13 @@ export default class CollidePolygons {
     const nextX = vertices[nextI]
     const nextY = vertices[nextI + 1]
 
-    const prevDirX = prevX - bestX
-    const prevDirY = prevY - bestY
-    const nextDirX = nextX - bestX
-    const nextDirY = nextY - bestY
+    const prevDeltaX = prevX - bestX
+    const prevDeltaY = prevY - bestY
+    const nextDeltaX = nextX - bestX
+    const nextDeltaY = nextY - bestY
 
-    const prevDot = prevDirX * dx + prevDirY * dy
-    const nextDot = nextDirX * dx + nextDirY * dy
+    const prevDot = prevDeltaX * dirX + prevDeltaY * dirY
+    const nextDot = nextDeltaX * dirX + nextDeltaY * dirY
 
     const edge = []
     let id = index >> 1
@@ -255,8 +262,8 @@ export default class CollidePolygons {
 
         if (dot < minDot) {
           minDot = dot
-          dir.set(perpX, perpY)
           index = j
+          dir.set(perpX, perpY)
         }
       }
 
@@ -307,6 +314,7 @@ export default class CollidePolygons {
         this.#vectors.at(c).x - this.#vectors.at(a).x,
         this.#vectors.at(c).y - this.#vectors.at(a).y
       )
+
     this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
 
     this.#tripleProduct(
@@ -381,6 +389,7 @@ export default class CollidePolygons {
         this.#vectors.at(b).x - this.#vectors.at(a).x,
         this.#vectors.at(b).y - this.#vectors.at(a).y
       )
+
     this.#vectors.at(ao).copy(this.#vectors.at(a)).negate()
 
     this.#tripleProduct(
@@ -410,12 +419,12 @@ export default class CollidePolygons {
     return out
   }
 
-  #bestPoint(vertices, dx, dy) {
+  #bestPoint(vertices, dirX, dirY) {
     let bestDot = -Infinity
     let bestInd = 0
 
     for (let i = 0; i < vertices.length; i += 2) {
-      const dot = vertices[i] * dx + vertices[i + 1] * dy
+      const dot = vertices[i] * dirX + vertices[i + 1] * dirY
 
       if (dot > bestDot) {
         bestDot = dot
