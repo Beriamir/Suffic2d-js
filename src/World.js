@@ -265,10 +265,11 @@ export default class World {
 
           for (const sA of bodyA.fixtures) {
             for (const sB of bodyB.fixtures) {
+              const keyBase = 0xf4240
               const key =
                 idA < idB
-                  ? `${idA}-${sA.id},${idB}-${sB.id}`
-                  : `${idB}-${sB.id},${idA}-${sA.id}`
+                  ? `${idA * keyBase + idB}-${sA.id * keyBase + sB.id}`
+                  : `${idB * keyBase + idA}-${sB.id * keyBase + sA.id}`
 
               if (this.#contacts.has(key)) {
                 continue
