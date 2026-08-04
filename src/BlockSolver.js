@@ -115,7 +115,6 @@ export default class BlockSolver {
         contact.invknD = kn11 * invDet
       } else {
         // The constraints are redundant, just use one.
-        contactPoints.length = 1
         contact.contactCount = 1
         contactPoints[0] = cp1.overlap > cp2.overlap ? cp1 : cp2
       }
