@@ -1,7 +1,6 @@
 import s2 from "../../src/index.js"
 import dat from "../../lib/dat.gui.mjs"
 import scenes from "./scenes.js"
-import debugs from "./debugs.js"
 import settings from "./settings.js"
 
 import Input from "./navigation/Input.js"
@@ -24,43 +23,28 @@ document.addEventListener("DOMContentLoaded", () => {
     useSleeping: true
   })
 
-  const debugColor = "lightgray"
-  const islandColors = [
-    "#ef4444",
-    "#3b82f6",
-    "#22c55e",
-    "#eab308",
-    "#a855f7",
-    "#f97316",
-    "#14b8a6",
-    "#ec4899",
-    "#84cc16",
-    "#06b6d4",
-    "#6366f1",
-    "#f43f5e",
-    "#10b981",
-    "#8b5cf6",
-    "#d946ef",
-    "#0ea5e9"
-  ]
-
   let grabJoint = null
 
-  input.onDown = (x, y) => {
-    const centerX = canvas.width * 0.5
-    const centerY = canvas.height * 0.5
-    const x0 = (x - centerX) / camera.scale
-    const y0 = (y - centerY) / camera.scale
+  // Navigation
+  {
+    input.onDown = (x, y) => {
+      const centerX = canvas.width * 0.5
+      const centerY = canvas.height * 0.5
+      const x0 = (x - centerX) / camera.scale
+      const y0 = (y - centerY) / camera.scale
 
-    const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
-    const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+      const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+      const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
 
-    const query = world.queryPoint(grabX, grabY)
+      const query = world.queryPoint(grabX, grabY)
 
-    for (let i = 0; i < query.length; ++i) {
-      const body = query[i]
+      for (let i = 0; i < query.length; ++i) {
+        const body = query[i]
 
-      if (body.testPoint(grabX, grabY)) {
+        if (!body.testPoint(grabX, grabY)) {
+          continue
+        }
+
         if (grabJoint) {
           world.destroyJoint(grabJoint)
         }
@@ -76,70 +60,77 @@ document.addEventListener("DOMContentLoaded", () => {
         break
       }
     }
-  }
-  input.onMove = (dx, dy, x, y) => {
-    const worldDx = dx * camera.cos + dy * camera.sin
-    const worldDy = -dx * camera.sin + dy * camera.cos
+    input.onMove = (dx, dy, x, y) => {
+      if (!grabJoint) {
+        return
+      }
 
-    if (grabJoint) {
+      const worldDx = dx * camera.cos + dy * camera.sin
+      const worldDy = -dx * camera.sin + dy * camera.cos
+
       grabJoint.target.x += worldDx / camera.scale
       grabJoint.target.y += worldDy / camera.scale
     }
-  }
-  input.onUp = () => {
-    if (grabJoint) {
+    input.onUp = () => {
+      if (!grabJoint) {
+        return
+      }
+
       world.destroyJoint(grabJoint)
     }
-  }
-
-  input.onPan = (dx, dy) => {
-    camera.move(dx, dy)
-  }
-  input.onZoom = factor => {
-    camera.zoom(factor)
-  }
-  input.onRotate = delta => {
-    camera.rotate(delta)
-  }
-  input.onResize = (w, h) => {
-    canvas.width = w
-    canvas.height = h
+    input.onPan = (dx, dy) => {
+      camera.move(dx, dy)
+    }
+    input.onZoom = factor => {
+      camera.zoom(factor)
+    }
+    input.onRotate = delta => {
+      camera.rotate(delta)
+    }
+    input.onResize = (w, h) => {
+      canvas.width = w
+      canvas.height = h
+    }
   }
 
   // GUI
   {
-    const statusFolGUI = gui.addFolder("status")
-    const cameraFolGUI = gui.addFolder("Camera")
-    const debugsFolGUI = gui.addFolder("Debugs")
-    const worldFolGUI = gui.addFolder("World")
+    const statusGui = gui.addFolder("status")
+    const cameraGui = gui.addFolder("Camera")
+    const debugsGui = gui.addFolder("Debugs")
+    const worldGui = gui.addFolder("World")
 
     for (const stat of Object.keys(settings.status)) {
-      statusFolGUI.add(settings.status, stat).listen()
+      statusGui.add(settings.status, stat).listen()
     }
 
-    cameraFolGUI.add(camera, "reset").name("Reset")
-    for (const prop of Object.keys(camera)) {
-      cameraFolGUI.add(camera, prop).listen()
+    cameraGui.add(camera, "reset").name("Reset")
+    for (const key of Object.keys(camera)) {
+      cameraGui.add(camera, key).listen()
     }
 
-    for (const debug of Object.keys(debugs)) {
-      debugsFolGUI.add(debugs, debug)
+    for (const debug of Object.keys(settings.debugs)) {
+      if (debug === "color") {
+        debugsGui.addColor(settings.debugs, debug)
+        continue
+      }
+
+      debugsGui.add(settings.debugs, debug)
     }
 
-    worldFolGUI.add(world, "substeps", 1, 10, 1)
-    worldFolGUI.add(world, "primaryIterations", 1, 20, 1).name("primary")
-    worldFolGUI.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
-    worldFolGUI.add(world, "useBlockSolver").name("block solver")
-    worldFolGUI.add(world, "useSleeping").name("sleeping")
-
-    gui
+    worldGui.add(world, "substeps", 1, 10, 1)
+    worldGui.add(world, "primaryIterations", 1, 20, 1).name("primary")
+    worldGui.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
+    worldGui.add(world, "useBlockSolver").name("block solver")
+    worldGui.add(world, "useSleeping").name("sleeping")
+    worldGui
       .add(settings, "scene", [...Object.keys(scenes)])
       .onChange(switchScene)
       .name("Scene")
-
-    gui
+    worldGui
       .add({ restart: () => switchScene(settings.scene) }, "restart")
       .name("Restart")
+    worldGui.open()
   }
 
   function switchScene(scene) {
@@ -158,13 +149,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function render(gfx) {
+    const debugs = settings.debugs
+    const debugColor = settings.debugs.color
+    const islandColors = settings.islandColors
     const strokeWidth = 1 / camera.scale
 
     gfx.clear(0, 0, canvas.width, canvas.height)
     gfx.setCamera(camera)
 
     // Draw bodies
-    if (!debugs["hide bodies"]) {
+    if (!debugs.bodies) {
       for (let i = 0; i < world.bodies.length; ++i) {
         const {
           position,
@@ -401,12 +395,13 @@ document.addEventListener("DOMContentLoaded", () => {
       last = now
 
       simulate(step)
+      render(gfx)
+
       settings.status.fps = 1 / dt
       settings.status.bodies = world.bodies.length
       settings.status.contacts = world.contacts.size
       settings.status.joints = world.joints.size
 
-      render(gfx)
       requestAnimationFrame(loop)
     }
 
