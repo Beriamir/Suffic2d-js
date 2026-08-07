@@ -96,7 +96,8 @@ export default class CollidePolygons {
       ref.edge[0],
       ref.edge[1],
       refDeltaX,
-      refDeltaY
+      refDeltaY,
+      true
     )
 
     let secondClipping = firstClipping
@@ -107,7 +108,8 @@ export default class CollidePolygons {
         ref.edge[2],
         ref.edge[3],
         -refDeltaX,
-        -refDeltaY
+        -refDeltaY,
+        true
       )
 
       this.#arrays.deallocate(firstClipping)
@@ -121,7 +123,8 @@ export default class CollidePolygons {
         ref.edge[0],
         ref.edge[1],
         -refDeltaY,
-        refDeltaX
+        refDeltaX,
+        false
       )
 
       this.#arrays.deallocate(secondClipping)
@@ -155,7 +158,7 @@ export default class CollidePolygons {
     return manifold
   }
 
-  #clipEdge(inc, startX, startY, dirX, dirY) {
+  #clipEdge(inc, startX, startY, dirX, dirY, clip) {
     const result = this.#arrays.allocate()
     const d0 = startX * dirX + startY * dirY
     const u0 = inc[0] * dirX + inc[1] * dirY - d0
@@ -171,7 +174,7 @@ export default class CollidePolygons {
       this.#arrays.at(result).push(inc[2], inc[3])
     }
 
-    if (u0 * u1 < 0) {
+    if (clip && u0 * u1 < 0) {
       const incDeltaX = inc[2] - inc[0]
       const incDeltaY = inc[3] - inc[1]
       const t = u0 / (u0 - u1)
