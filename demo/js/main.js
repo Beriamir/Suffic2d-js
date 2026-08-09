@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         grabJoint = new s2.GrabJoint(body, grabX, grabY, {
           length: 0,
-          hertz: 30,
-          zeta: 10,
+          hertz: 5,
+          zeta: 1,
           friction: 0.3
         })
 
