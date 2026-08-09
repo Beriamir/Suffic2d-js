@@ -1,8 +1,13 @@
 export default class Graphics {
   #ctx
   constructor(canvas, options = {}) {
-    this.#ctx = canvas.getContext("2d", options)
+    this.#ctx = canvas.getContext('2d', options)
     this.canvas = canvas
+  }
+
+  setSize(w, h) {
+    this.canvas.width = w
+    this.canvas.height = h
   }
 
   clear(x, y, w, h) {
@@ -38,10 +43,10 @@ export default class Graphics {
   }
 
   drawText(x, y, text, options = {}) {
-    const color = options.color ?? "#0e0e0e"
-    const baseline = options.baseline ?? "top"
+    const color = options.color ?? 'dimgray'
+    const baseline = options.baseline ?? 'top'
     const size = options.size ?? 12
-    const align = options.align ?? "start"
+    const align = options.align ?? 'start'
 
     this.#ctx.fillStyle = color
     this.#ctx.font = `normal ${size}px verdana`
@@ -60,7 +65,7 @@ export default class Graphics {
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
     const noLine = options.noLine ?? false
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
 
     if (!radius) {
@@ -107,7 +112,7 @@ export default class Graphics {
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
     const noLine = options.noLine ?? false
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
 
     if (!length || !radius) {
@@ -168,7 +173,7 @@ export default class Graphics {
     const vertices = options.vertices ?? null
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
 
     if (!vertices) {
@@ -211,7 +216,7 @@ export default class Graphics {
   }
 
   drawLine(x0, y0, x1, y1, options = {}) {
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
 
     this.#ctx.beginPath()
@@ -226,7 +231,7 @@ export default class Graphics {
   drawAABB(aabb, options = {}) {
     const wireframe = options.wireframe ?? false
     const noStroke = options.noStroke ?? false
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
 
     this.#ctx.beginPath()
@@ -252,7 +257,7 @@ export default class Graphics {
   }
 
   drawNormal(x, y, normalX, normalY, options = {}) {
-    const strokeColor = options.strokeColor ?? "#0e0e0e"
+    const strokeColor = options.strokeColor ?? 'dimgray'
     const strokeWidth = options.strokeWidth ?? 1
     const length = options.length ?? 20
     const showHead = options.showHead ?? true

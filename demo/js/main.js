@@ -1,14 +1,14 @@
-import s2 from "../../src/index.js"
-import dat from "../../lib/dat.gui.mjs"
-import scenes from "./scenes.js"
-import settings from "./settings.js"
+import s2 from '../../src/index.js'
+import dat from '../../lib/dat.gui.mjs'
+import scenes from './scenes.js'
+import settings from './settings.js'
 
-import Input from "./navigation/Input.js"
-import Graphics from "./render/Graphics.js"
-import Camera from "./render/Camera.js"
+import Input from './navigation/Input.js'
+import Graphics from './render/Graphics.js'
+import Camera from './render/Camera.js'
 
-document.addEventListener("DOMContentLoaded", () => {
-  const canvas = document.getElementById("canvas")
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('canvas')
   const gfx = new Graphics(canvas, {})
   const camera = new Camera(0, 0, 0, 100)
   const input = new Input(canvas)
@@ -78,39 +78,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
       world.destroyJoint(grabJoint)
     }
-    input.onPan = (dx, dy) => {
-      camera.move(dx, dy)
-    }
-    input.onZoom = factor => {
-      camera.zoom(factor)
-    }
-    input.onRotate = delta => {
-      camera.rotate(delta)
-    }
-    input.onResize = (w, h) => {
-      canvas.width = w
-      canvas.height = h
-    }
+    input.onPan = (dx, dy) => camera.move(dx, dy)
+    input.onZoom = factor => camera.zoom(factor)
+    input.onRotate = delta => camera.rotate(delta)
+    input.onResize = (w, h) => gfx.setSize(w, h)
   }
 
   // GUI
   {
-    const statusGui = gui.addFolder("status")
-    const cameraGui = gui.addFolder("Camera")
-    const debugsGui = gui.addFolder("Debugs")
-    const worldGui = gui.addFolder("World")
+    const statusGui = gui.addFolder('Status')
+    const cameraGui = gui.addFolder('Camera')
+    const debugsGui = gui.addFolder('Debugs')
+    const worldGui = gui.addFolder('World')
 
     for (const stat of Object.keys(settings.status)) {
       statusGui.add(settings.status, stat).listen()
     }
 
-    cameraGui.add(camera, "reset").name("Reset")
+    cameraGui.add(camera, 'reset').name('Reset')
     for (const key of Object.keys(camera)) {
       cameraGui.add(camera, key).listen()
     }
 
     for (const debug of Object.keys(settings.debugs)) {
-      if (debug === "color") {
+      if (debug === 'color') {
         debugsGui.addColor(settings.debugs, debug)
         continue
       }
@@ -118,18 +109,18 @@ document.addEventListener("DOMContentLoaded", () => {
       debugsGui.add(settings.debugs, debug)
     }
 
-    worldGui.add(world, "substeps", 1, 10, 1)
-    worldGui.add(world, "primaryIterations", 1, 20, 1).name("primary")
-    worldGui.add(world, "secondaryIterations", 1, 10, 1).name("secondary")
-    worldGui.add(world, "useBlockSolver").name("block solver")
-    worldGui.add(world, "useSleeping").name("sleeping")
+    worldGui.add(world, 'substeps', 1, 10, 1)
+    worldGui.add(world, 'primaryIterations', 1, 20, 1).name('primary')
+    worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary')
+    worldGui.add(world, 'useBlockSolver').name('block solver')
+    worldGui.add(world, 'useSleeping').name('sleeping')
     worldGui
-      .add(settings, "scene", [...Object.keys(scenes)])
+      .add(settings, 'scene', [...Object.keys(scenes)])
       .onChange(switchScene)
-      .name("Scene")
+      .name('Scene')
     worldGui
-      .add({ restart: () => switchScene(settings.scene) }, "restart")
-      .name("Restart")
+      .add({ restart: () => switchScene(settings.scene) }, 'restart')
+      .name('Restart')
     worldGui.open()
   }
 
@@ -139,8 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setup() {
-    canvas.width = innerWidth
-    canvas.height = innerHeight
+    gfx.setSize(innerWidth, innerHeight)
     switchScene(settings.scene)
   }
 
@@ -173,22 +163,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const fillColor = debugs.velocity
           ? velocityColor
-          : isSleeping
-            ? "gray"
-            : isStatic
-              ? "gray"
-              : islandColors[islandId % islandColors.length]
+          : isSleeping || isStatic
+            ? 'gray'
+            : islandColors[islandId % islandColors.length]
         const strokeColor = debugs.velocity
           ? velocityColor
-          : isSleeping
-            ? "dimgray"
-            : isStatic
-              ? "dimgray"
-              : islandColors[islandId % islandColors.length]
+          : isSleeping || isStatic
+            ? 'dimgray'
+            : islandColors[islandId % islandColors.length]
 
         for (const shape of fixtures) {
           switch (shape.type) {
-            case "polygon":
+            case 'polygon':
               gfx.drawPolygon(position.x, position.y, cos, sin, {
                 offsetX: shape.offset.x,
                 offsetY: shape.offset.y,
@@ -202,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 strokeWidth
               })
               break
-            case "circle":
+            case 'circle':
               gfx.drawCircle(position.x, position.y, cos, sin, {
                 offsetX: shape.offset.x,
                 offsetY: shape.offset.y,
@@ -216,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 strokeWidth
               })
               break
-            case "capsule":
+            case 'capsule':
               gfx.drawCapsule(position.x, position.y, cos, sin, {
                 offsetX: shape.offset.x,
                 offsetY: shape.offset.y,
@@ -231,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 strokeWidth
               })
               break
-            case "line":
+            case 'line':
               gfx.drawLine(
                 shape.center1.x,
                 shape.center1.y,
@@ -252,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < world.jointKeys.length; ++i) {
       const joint = world.joints.get(world.jointKeys[i])
 
-      if (joint.type == "GrabJoint") {
+      if (joint.type == 'GrabJoint') {
         const cos = joint.body.cos
         const sin = joint.body.sin
         const anchorX = joint.anchorX * cos - joint.anchorY * sin
