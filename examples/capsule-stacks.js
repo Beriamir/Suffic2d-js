@@ -2,7 +2,7 @@ export default (s2, world, options = {}) => {
   const {
     columns = 1,
     rows = 20,
-    length = 0.48,
+    length = 0.24,
     radius = 0.24,
     spacing = 0.024,
     groundWidth = 1000,
@@ -25,8 +25,8 @@ export default (s2, world, options = {}) => {
       groundHeight
     ]),
     {
-      fillColor: "gray",
-      strokeColor: "dimgray"
+      fillColor: 'gray',
+      strokeColor: 'dimgray'
     }
   )
 
@@ -44,7 +44,7 @@ export default (s2, world, options = {}) => {
 
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
-      }).createCapsule(length, radius, {
+      }).createCapsule(length * 1.25, radius * 0.75, {
         roundness: 9
       })
 
