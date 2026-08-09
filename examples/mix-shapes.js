@@ -47,7 +47,7 @@ export default (s2, world, options = {}) => {
     const y = Math.random() * -20 - 10
     const body = new s2.RigidBody(x, y, 0, {
       friction: 0.3
-    }).createCapsule(size * 2, size, {
+    }).createCapsule(size * 1.25, size * 0.75, {
       roundness: 9
     })
 
