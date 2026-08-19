@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function render(gfx) {
     const debugs = settings.debugs
-    const debugColor = settings.debugs.color
+    const debugsColor = settings.debugs.color
     const islandColors = settings.islandColors
     const strokeWidth = 1 / camera.scale
 
@@ -157,20 +157,16 @@ document.addEventListener('DOMContentLoaded', () => {
           isSleeping,
           isStatic,
           islandId,
-          velocityColor,
           fixtures
         } = world.bodies[i]
 
-        const fillColor = debugs.velocity
-          ? velocityColor
-          : isSleeping || isStatic
-            ? 'gray'
-            : islandColors[islandId % islandColors.length]
-        const strokeColor = debugs.velocity
-          ? velocityColor
-          : isSleeping || isStatic
-            ? 'dimgray'
-            : islandColors[islandId % islandColors.length]
+        const strokeColor = debugs.wireframe
+          ? debugsColor
+          : 'black'
+        const fillColor = isSleeping || isStatic
+          ? 'gray'
+          : islandColors[islandId % islandColors.length]
+        
 
         for (const shape of fixtures) {
           switch (shape.type) {
@@ -184,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fillColor,
                 strokeColor,
                 wireframe: debugs.wireframe,
-                noStroke: !debugs.wireframe,
                 strokeWidth
               })
               break
@@ -198,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fillColor,
                 strokeColor,
                 wireframe: debugs.wireframe,
-                noStroke: !debugs.wireframe,
                 strokeWidth
               })
               break
@@ -213,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fillColor,
                 strokeColor,
                 wireframe: debugs.wireframe,
-                noStroke: !debugs.wireframe,
                 strokeWidth
               })
               break
@@ -224,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 shape.center2.x,
                 shape.center2.y,
                 {
-                  strokeColor,
+                  strokeColor: fillColor,
                   strokeWidth
                 }
               )
@@ -250,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
           joint.target.x,
           joint.target.y,
           {
-            strokeColor: debugColor,
+            strokeColor: debugsColor,
             strokeWidth
           }
         )
@@ -261,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Draw debugs
     {
       const options = {
-        strokeColor: debugColor,
+        strokeColor: debugsColor,
         wireframe: true,
         strokeWidth
       }
@@ -309,30 +302,30 @@ document.addEventListener('DOMContentLoaded', () => {
           gfx.drawPolygon(originX, originY, 1, 0, {
             vertices: polytope,
             wireframe: true,
-            strokeColor: debugColor,
+            strokeColor: debugsColor,
             strokeWidth
           })
           gfx.drawLine(originX, originY, mtvX, mtvY, {
-            strokeColor: debugColor,
+            strokeColor: debugsColor,
             strokeWidth
           })
           gfx.drawCircle(originX, originY, 1, 0, {
             radius: 2 / camera.scale,
-            fillColor: debugColor,
+            fillColor: debugsColor,
             noStroke: true
           })
         }
 
         if (debugs.ref && ref) {
           gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
-            strokeColor: debugColor,
+            strokeColor: debugsColor,
             strokeWidth
           })
         }
 
         if (debugs.inc && inc) {
           gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
-            strokeColor: debugColor,
+            strokeColor: debugsColor,
             strokeWidth
           })
         }
@@ -342,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
               length: cp.normalImpulse,
               showHead: false,
-              strokeColor: debugColor,
+              strokeColor: debugsColor,
               strokeWidth
             })
           }
@@ -350,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (debugs.point) {
             gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
               radius: 1.5 / camera.scale,
-              fillColor: debugColor,
+              fillColor: debugsColor,
               noStroke: true,
               strokeWidth
             })
@@ -359,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (debugs.normal) {
             gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
               length: 8 / camera.scale,
-              strokeColor: debugColor,
+              strokeColor: debugsColor,
               strokeWidth
             })
           }

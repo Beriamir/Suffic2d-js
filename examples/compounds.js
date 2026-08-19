@@ -23,10 +23,7 @@ export default (s2, world, options = {}) => {
       -groundWidth,
       groundHeight
     ]),
-    {
-      fillColor: "gray",
-      strokeColor: "dimgray"
-    }
+    {}
   )
 
   world.createBody(ground)

@@ -21,10 +21,6 @@ export default class Polygon {
     this.mass = this.density * this.area * this.thickness
     this.inertia = Vertices.getInertia(vertices, this.mass)
 
-    const hue = Math.random() * 360
-    this.fillColor = options.fillColor ?? `hsl(${hue}, 50%, 40%)`
-    this.strokeColor = options.strokeColor ?? `hsl(${hue}, 50%, 60%)`
-
     this.aabb = new AABB()
   }
 

@@ -11,21 +11,15 @@ export default (s2, world, options = {}) => {
     isStatic: true
   })
     .createLine(groundWidth, {
-      rotation: Math.PI * 0.5,
-      fillColor: "gray",
-      strokeColor: "dimgray"
+      rotation: Math.PI * 0.5
     })
     .createLine(groundWidth, {
       offset: new s2.Vector(-groundWidth * 0.5, -groundWidth * 0.5),
-      rotation: 0,
-      fillColor: "gray",
-      strokeColor: "dimgray"
+      rotation: 0
     })
     .createLine(groundWidth, {
       offset: new s2.Vector(groundWidth * 0.5, -groundWidth * 0.5),
-      rotation: 0,
-      fillColor: "gray",
-      strokeColor: "dimgray"
+      rotation: 0
     })
 
   world.createBody(ground)

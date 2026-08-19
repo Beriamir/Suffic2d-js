@@ -25,10 +25,6 @@ export default class Line {
     this.mass = this.density * this.area * this.thickness
     this.inertia = 0.0833333333 * this.mass * this.length ** 2
 
-    const hue = Math.random() * 360
-    this.fillColor = options.fillColor ?? `hsl(${hue}, 50%, 40%)`
-    this.strokeColor = options.strokeColor ?? `hsl(${hue}, 50%, 60%)`
-
     this.aabb = new AABB()
   }
   set rotation(value) {
