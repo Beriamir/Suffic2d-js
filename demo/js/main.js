@@ -65,17 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
       statusGui.add(status, key).listen()
     }
     
-    for (const key of Object.keys(s2Renderer)) {
-      if (
-        key === null || 
-        key === 'debugsColor' || 
-        typeof s2Renderer[key] === 'object' ||
-        typeof s2Renderer[key] === 'function'
-      ) {
-        continue
-      }
-      
-      renderGui.add(s2Renderer, key)
+    for (const key of s2Renderer.getDebugList()) {
+      renderGui.add(s2Renderer.debugs, key)
     }
     
     s2WorldGui.add(s2World, 'substeps', 1, 10, 1)

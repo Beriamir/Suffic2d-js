@@ -14,17 +14,20 @@ export default class Renderer {
     this.onUp = null
     this.setup()
     
-    this.bodies = options.bodies ?? true
-    this.wireframe = options.wireframe ?? false
-    this.epa = options.epa ?? false
-    this.normal = options.normal ?? false
-    this.point = options.point ?? false
-    this.impulse = options.impulse ?? false
-    this.ref = options.ref ?? false
-    this.inc = options.inc ?? false
-    this.aabb = options.aabb ?? false
-    this.bvh = options.bvh ?? false
-    this.debugsColor = '#ffffff'
+    this.debugs = {
+      bodies: options.bodies ?? true,
+      wireframe: options.wireframe ?? false,
+      epa: options.epa ?? false,
+      normal: options.normal ?? false,
+      point: options.point ?? false,
+      impulse: options.impulse ?? false,
+      ref: options.ref ?? false,
+      inc: options.inc ?? false,
+      aabb: options.aabb ?? false,
+      bvh: options.bvh ?? false
+    }
+
+    this.debugColor = '#ffffff'
     this.islandColors = [
       '#0ea5e9',
       '#3b82f6',
@@ -94,15 +97,23 @@ export default class Renderer {
     this.gfx.setSize(width, height)
   }
   
+  getDebugList(out = []) {
+    for (const key of Object.keys(this.debugs)) {
+      out.push(key)
+    }
+    
+    return out
+  }
+  
   draw(world) {
-    const { gfx, camera, canvas, wireframe, islandColors } = this
-    const debugsColor = this.debugsColor
+    const { gfx, camera, canvas, debugs, islandColors } = this
+    const debugColor = this.debugColor
     const strokeWidth = 1 / camera.scale
     
     gfx.clear(0, 0, canvas.width, canvas.height)
     gfx.setCamera(camera)
 
-    if (this.bodies) {
+    if (debugs.bodies) {
       // Draw bodies
       for (let i = 0; i < world.bodies.length; ++i) {
         const {
@@ -115,8 +126,8 @@ export default class Renderer {
           fixtures
         } = world.bodies[i]
 
-        const strokeColor = wireframe
-          ? debugsColor
+        const strokeColor = debugs.wireframe
+          ? debugColor
           : 'black'
         const fillColor = isSleeping || isStatic
           ? 'gray'
@@ -133,7 +144,7 @@ export default class Renderer {
                 vertices: shape.vertices,
                 fillColor,
                 strokeColor,
-                wireframe,
+                wireframe: debugs.wireframe,
                 strokeWidth
               })
               break
@@ -146,7 +157,7 @@ export default class Renderer {
                 radius: shape.radius,
                 fillColor,
                 strokeColor,
-                wireframe,
+                wireframe: debugs.wireframe,
                 strokeWidth
               })
               break
@@ -160,7 +171,7 @@ export default class Renderer {
                 radius: shape.radius,
                 fillColor,
                 strokeColor,
-                wireframe,
+                wireframe: debugs.wireframe,
                 strokeWidth
               })
               break
@@ -196,7 +207,7 @@ export default class Renderer {
             joint.target.x,
             joint.target.y,
             {
-              strokeColor: debugsColor,
+              strokeColor: debugColor,
               strokeWidth
             }
           )
@@ -208,12 +219,12 @@ export default class Renderer {
     // Draw debugs
     {
       const options = {
-        strokeColor: debugsColor,
+        strokeColor: debugColor,
         wireframe: true,
         strokeWidth
       }
 
-      if (this.aabb) {
+      if (debugs.aabb) {
         for (let i = 0; i < world.bodies.length; ++i) {
           const body = world.bodies[i]
 
@@ -227,7 +238,7 @@ export default class Renderer {
         }
       }
 
-      if (this.bvh) {
+      if (debugs.bvh) {
         world.dynamicTree.traverse(node => {
           gfx.drawAABB(node.aabb, options)
         })
@@ -247,7 +258,7 @@ export default class Renderer {
           contactPoints
         } = contact
 
-        if (this.epa && polytope) {
+        if (debugs.epa && polytope) {
           const originX = 0
           const originY = 0
           const mtvX = normalX * overlap
@@ -256,57 +267,57 @@ export default class Renderer {
           gfx.drawPolygon(originX, originY, 1, 0, {
             vertices: polytope,
             wireframe: true,
-            strokeColor: debugsColor,
+            strokeColor: debugColor,
             strokeWidth
           })
           gfx.drawLine(originX, originY, mtvX, mtvY, {
-            strokeColor: debugsColor,
+            strokeColor: debugColor,
             strokeWidth
           })
           gfx.drawCircle(originX, originY, 1, 0, {
             radius: 2 / camera.scale,
-            fillColor: debugsColor,
+            fillColor: debugColor,
             noStroke: true
           })
         }
 
-        if (this.ref && ref) {
+        if (debugs.ref && ref) {
           gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
-            strokeColor: debugsColor,
+            strokeColor: debugColor,
             strokeWidth
           })
         }
 
-        if (this.inc && inc) {
+        if (debugs.inc && inc) {
           gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
-            strokeColor: debugsColor,
+            strokeColor: debugColor,
             strokeWidth
           })
         }
 
         for (const cp of contactPoints) {
-          if (this.impulse) {
+          if (debugs.impulse) {
             gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
               length: cp.normalImpulse,
               showHead: false,
-              strokeColor: debugsColor,
+              strokeColor: debugColor,
               strokeWidth
             })
           }
 
-          if (this.point) {
+          if (debugs.point) {
             gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
               radius: 1.5 / camera.scale,
-              fillColor: debugsColor,
+              fillColor: debugColor,
               noStroke: true,
               strokeWidth
             })
           }
 
-          if (this.normal) {
+          if (debugs.normal) {
             gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
               length: 8 / camera.scale,
-              strokeColor: debugsColor,
+              strokeColor: debugColor,
               strokeWidth
             })
           }
