@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   {
     const statusGui = gui.addFolder('Status')
     const renderGui = gui.addFolder('Render')
-    const s2WorldGui = gui.addFolder('s2World')
+    const worldGui = gui.addFolder('s2World')
     
     for (const key of Object.keys(status)) {
       statusGui.add(status, key).listen()
@@ -71,19 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
       renderGui.add(s2Renderer.debugs, key)
     }
     
-    s2WorldGui.add(s2World, 'substeps', 1, 10, 1)
-    s2WorldGui.add(s2World, 'primaryIterations', 1, 20, 1).name('primary')
-    s2WorldGui.add(s2World, 'secondaryIterations', 1, 10, 1).name('secondary')
-    s2WorldGui.add(s2World, 'useBlockSolver').name('block solver')
-    s2WorldGui.add(s2World, 'useSleeping').name('sleeping')
-    s2WorldGui
+    worldGui.add(s2World, 'substeps', 1, 10, 1)
+    worldGui.add(s2World, 'primaryIterations', 1, 20, 1).name('primary')
+    worldGui.add(s2World, 'secondaryIterations', 1, 10, 1).name('secondary')
+    worldGui.add(s2World, 'useBlockSolver').name('block solver')
+    worldGui.add(s2World, 'useSleeping').name('sleeping')
+    worldGui
       .add(sceneManager, 'scene', sceneManager.getList())
       .onChange(scene => sceneManager.switch(scene))
       .name('Scene')
-    s2WorldGui
+    worldGui
       .add(sceneManager, 'restart')
       .name('Restart')
-    s2WorldGui.open()
+    worldGui.open()
   }
 
   function setup() {
