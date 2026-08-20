@@ -1,369 +1,108 @@
 import s2 from '../../src/index.js'
 import dat from '../../lib/dat.gui.mjs'
 import scenes from './scenes.js'
-import settings from './settings.js'
-
-import Input from './navigation/Input.js'
-import Graphics from './render/Graphics.js'
-import Camera from './render/Camera.js'
+import status from './status.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.getElementById('canvas')
-  const gfx = new Graphics(canvas, {})
-  const camera = new Camera(0, 0, 0, 100)
-  const input = new Input(canvas)
-  const gui = new dat.GUI({})
+  const s2Renderer = new s2.Renderer(document.getElementById('canvas'))
+  const s2World = new s2.World()
+  const gui = new dat.GUI()
 
-  const world = new s2.World({
-    substeps: 1,
-    primaryIterations: 8,
-    secondaryIterations: 3,
-    nodeMargin: 0.12,
-    useBlockSolver: true,
-    useSleeping: true
-  })
-
-  let grabJoint = null
-
-  // Navigation
+  // Grab
   {
-    input.onDown = (x, y) => {
-      const centerX = canvas.width * 0.5
-      const centerY = canvas.height * 0.5
-      const x0 = (x - centerX) / camera.scale
-      const y0 = (y - centerY) / camera.scale
+    let s2GrabJoint = null
 
-      const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
-      const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
-
-      const query = world.queryPoint(grabX, grabY)
+    s2Renderer.onDown = (x, y) => {
+      const query = s2World.queryPoint(x, y)
 
       for (let i = 0; i < query.length; ++i) {
         const body = query[i]
 
-        if (!body.testPoint(grabX, grabY)) {
+        if (!body.testPoint(x, y)) {
           continue
         }
 
-        if (grabJoint) {
-          world.destroyJoint(grabJoint)
+        if (s2GrabJoint) {
+          s2World.destroyJoint(s2GrabJoint)
         }
 
-        grabJoint = new s2.GrabJoint(body, grabX, grabY, {
+        s2GrabJoint = new s2.GrabJoint(body, x, y, {
           length: 0,
           hertz: 5,
           zeta: 1,
           friction: 0.3
         })
 
-        world.createJoint(grabJoint)
+        s2World.createJoint(s2GrabJoint)
         break
       }
     }
-    input.onMove = (dx, dy, x, y) => {
-      if (!grabJoint) {
+    s2Renderer.onMove = (dx, dy, x, y) => {
+      if (!s2GrabJoint) {
         return
       }
 
-      const worldDx = dx * camera.cos + dy * camera.sin
-      const worldDy = -dx * camera.sin + dy * camera.cos
-
-      grabJoint.target.x += worldDx / camera.scale
-      grabJoint.target.y += worldDy / camera.scale
+      s2GrabJoint.target.x += dx
+      s2GrabJoint.target.y += dy
     }
-    input.onUp = () => {
-      if (!grabJoint) {
+    s2Renderer.onUp = () => {
+      if (!s2GrabJoint) {
         return
       }
 
-      world.destroyJoint(grabJoint)
+      s2World.destroyJoint(s2GrabJoint)
     }
-    input.onPan = (dx, dy) => camera.move(dx, dy)
-    input.onZoom = factor => camera.zoom(factor)
-    input.onRotate = delta => camera.rotate(delta)
-    input.onResize = (w, h) => gfx.setSize(w, h)
   }
 
   // GUI
   {
     const statusGui = gui.addFolder('Status')
-    const cameraGui = gui.addFolder('Camera')
-    const debugsGui = gui.addFolder('Debugs')
-    const worldGui = gui.addFolder('World')
-
-    for (const stat of Object.keys(settings.status)) {
-      statusGui.add(settings.status, stat).listen()
-    }
-
-    cameraGui.add(camera, 'reset').name('Reset')
-    for (const key of Object.keys(camera)) {
-      cameraGui.add(camera, key).listen()
-    }
-
-    for (const debug of Object.keys(settings.debugs)) {
-      if (debug === 'color') {
-        debugsGui.addColor(settings.debugs, debug)
+    const renderGui = gui.addFolder('Render')
+    const s2WorldGui = gui.addFolder('s2World')
+    
+    for (const key of Object.keys(status)) {
+      if (key === 'scene') {
         continue
       }
-
-      debugsGui.add(settings.debugs, debug)
+  
+      statusGui.add(status, key).listen()
     }
-
-    worldGui.add(world, 'substeps', 1, 10, 1)
-    worldGui.add(world, 'primaryIterations', 1, 20, 1).name('primary')
-    worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary')
-    worldGui.add(world, 'useBlockSolver').name('block solver')
-    worldGui.add(world, 'useSleeping').name('sleeping')
-    worldGui
-      .add(settings, 'scene', [...Object.keys(scenes)])
+    
+    for (const key of Object.keys(s2Renderer)) {
+      if (
+        key === null || 
+        key === 'debugsColor' || 
+        typeof s2Renderer[key] === 'object' ||
+        typeof s2Renderer[key] === 'function'
+      ) {
+        continue
+      }
+      
+      renderGui.add(s2Renderer, key)
+    }
+    
+    s2WorldGui.add(s2World, 'substeps', 1, 10, 1)
+    s2WorldGui.add(s2World, 'primaryIterations', 1, 20, 1).name('primary')
+    s2WorldGui.add(s2World, 'secondaryIterations', 1, 10, 1).name('secondary')
+    s2WorldGui.add(s2World, 'useBlockSolver').name('block solver')
+    s2WorldGui.add(s2World, 'useSleeping').name('sleeping')
+    s2WorldGui
+      .add(status, 'scene', [...Object.keys(scenes)])
       .onChange(switchScene)
       .name('Scene')
-    worldGui
-      .add({ restart: () => switchScene(settings.scene) }, 'restart')
+    s2WorldGui
+      .add({ restart: () => switchScene(status.scene) }, 'restart')
       .name('Restart')
-    worldGui.open()
+    s2WorldGui.open()
   }
 
   function switchScene(scene) {
-    world.clear()
-    scenes[scene](s2, world)
+    scenes[scene](s2, s2World)
   }
 
   function setup() {
-    gfx.setSize(innerWidth, innerHeight)
-    switchScene(settings.scene)
+    switchScene(status.scene)
   }
-
-  function simulate(step) {
-    world.simulate(step)
-  }
-
-  function render(gfx) {
-    const debugs = settings.debugs
-    const debugsColor = settings.debugs.color
-    const islandColors = settings.islandColors
-    const strokeWidth = 1 / camera.scale
-
-    gfx.clear(0, 0, canvas.width, canvas.height)
-    gfx.setCamera(camera)
-
-    // Draw bodies
-    if (!debugs.bodies) {
-      for (let i = 0; i < world.bodies.length; ++i) {
-        const {
-          position,
-          cos,
-          sin,
-          isSleeping,
-          isStatic,
-          islandId,
-          fixtures
-        } = world.bodies[i]
-
-        const strokeColor = debugs.wireframe
-          ? debugsColor
-          : 'black'
-        const fillColor = isSleeping || isStatic
-          ? 'gray'
-          : islandColors[islandId % islandColors.length]
-        
-
-        for (const shape of fixtures) {
-          switch (shape.type) {
-            case 'polygon':
-              gfx.drawPolygon(position.x, position.y, cos, sin, {
-                offsetX: shape.offset.x,
-                offsetY: shape.offset.y,
-                cos: shape.cos,
-                sin: shape.sin,
-                vertices: shape.vertices,
-                fillColor,
-                strokeColor,
-                wireframe: debugs.wireframe,
-                strokeWidth
-              })
-              break
-            case 'circle':
-              gfx.drawCircle(position.x, position.y, cos, sin, {
-                offsetX: shape.offset.x,
-                offsetY: shape.offset.y,
-                cos: shape.cos,
-                sin: shape.sin,
-                radius: shape.radius,
-                fillColor,
-                strokeColor,
-                wireframe: debugs.wireframe,
-                strokeWidth
-              })
-              break
-            case 'capsule':
-              gfx.drawCapsule(position.x, position.y, cos, sin, {
-                offsetX: shape.offset.x,
-                offsetY: shape.offset.y,
-                cos: shape.cos,
-                sin: shape.sin,
-                length: shape.length,
-                radius: shape.radius,
-                fillColor,
-                strokeColor,
-                wireframe: debugs.wireframe,
-                strokeWidth
-              })
-              break
-            case 'line':
-              gfx.drawLine(
-                shape.center1.x,
-                shape.center1.y,
-                shape.center2.x,
-                shape.center2.y,
-                {
-                  strokeColor: fillColor,
-                  strokeWidth
-                }
-              )
-              break
-          }
-        }
-      }
-    }
-
-    // Draw joints
-    for (let i = 0; i < world.jointKeys.length; ++i) {
-      const joint = world.joints.get(world.jointKeys[i])
-
-      if (joint.type == 'GrabJoint') {
-        const cos = joint.body.cos
-        const sin = joint.body.sin
-        const anchorX = joint.anchorX * cos - joint.anchorY * sin
-        const anchorY = joint.anchorX * sin + joint.anchorY * cos
-
-        gfx.drawLine(
-          joint.body.position.x + anchorX,
-          joint.body.position.y + anchorY,
-          joint.target.x,
-          joint.target.y,
-          {
-            strokeColor: debugsColor,
-            strokeWidth
-          }
-        )
-        continue
-      }
-    }
-
-    // Draw debugs
-    {
-      const options = {
-        strokeColor: debugsColor,
-        wireframe: true,
-        strokeWidth
-      }
-
-      if (debugs.aabb) {
-        for (let i = 0; i < world.bodies.length; ++i) {
-          const body = world.bodies[i]
-
-          for (const s of body.fixtures) {
-            gfx.drawAABB(s.aabb, options)
-          }
-
-          if (body.fixtures.length > 1) {
-            gfx.drawAABB(body.aabb, options)
-          }
-        }
-      }
-
-      if (debugs.bvh) {
-        world.dynamicTree.traverse(node => {
-          gfx.drawAABB(node.aabb, options)
-        })
-      }
-
-      for (let i = 0; i < world.contactKeys.length; ++i) {
-        const contact = world.contacts.get(world.contactKeys[i])
-        const {
-          bodyA,
-          bodyB,
-          normalX,
-          normalY,
-          ref,
-          inc,
-          overlap,
-          polytope,
-          contactPoints
-        } = contact
-
-        if (debugs.epa && polytope) {
-          const originX = 0
-          const originY = 0
-          const mtvX = normalX * overlap
-          const mtvY = normalY * overlap
-
-          gfx.drawPolygon(originX, originY, 1, 0, {
-            vertices: polytope,
-            wireframe: true,
-            strokeColor: debugsColor,
-            strokeWidth
-          })
-          gfx.drawLine(originX, originY, mtvX, mtvY, {
-            strokeColor: debugsColor,
-            strokeWidth
-          })
-          gfx.drawCircle(originX, originY, 1, 0, {
-            radius: 2 / camera.scale,
-            fillColor: debugsColor,
-            noStroke: true
-          })
-        }
-
-        if (debugs.ref && ref) {
-          gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
-            strokeColor: debugsColor,
-            strokeWidth
-          })
-        }
-
-        if (debugs.inc && inc) {
-          gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
-            strokeColor: debugsColor,
-            strokeWidth
-          })
-        }
-
-        for (const cp of contactPoints) {
-          if (debugs.impulse) {
-            gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-              length: cp.normalImpulse,
-              showHead: false,
-              strokeColor: debugsColor,
-              strokeWidth
-            })
-          }
-
-          if (debugs.point) {
-            gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-              radius: 1.5 / camera.scale,
-              fillColor: debugsColor,
-              noStroke: true,
-              strokeWidth
-            })
-          }
-
-          if (debugs.normal) {
-            gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-              length: 8 / camera.scale,
-              strokeColor: debugsColor,
-              strokeWidth
-            })
-          }
-        }
-      }
-    }
-
-    gfx.setCamera(null)
-  }
-
-  setup()
 
   function update() {
     const step = 1 / 60
@@ -373,13 +112,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const dt = (now - last) * 0.001
       last = now
 
-      simulate(step)
-      render(gfx)
+      s2World.simulate(step)
+      s2Renderer.draw(s2World)
 
-      settings.status.fps = 1 / dt
-      settings.status.bodies = world.bodies.length
-      settings.status.contacts = world.contacts.size
-      settings.status.joints = world.joints.size
+      status.fps = 1 / dt
+      status.bodies = s2World.bodies.length
+      status.contacts = s2World.contacts.size
+      status.joints = s2World.joints.size
 
       requestAnimationFrame(loop)
     }
@@ -387,5 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(loop)
   }
 
+  setup()
   update()
 })

@@ -1,4 +1,6 @@
 export default (s2, world, options = {}) => {
+  world.clear()
+
   const {
     spacing = 1,
     rampWidth = 8,

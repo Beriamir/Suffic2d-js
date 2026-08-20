@@ -1,4 +1,6 @@
 export default (s2, world, options = {}) => {
+  world.clear()
+
   const {
     rows = 15,
     spacing = 0.024,

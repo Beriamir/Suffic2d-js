@@ -1,4 +1,6 @@
 export default (s2, world, options = {}) => {
+  world.clear()
+
   const {
     spacing = 0.24,
     radius = 0.24,

@@ -17,6 +17,8 @@ import Collider from "./Collider.js"
 
 import GrabJoint from "./GrabJoint.js"
 
+import Renderer from './render/Renderer.js'
+
 export default {
   Vector,
   AABB,
@@ -34,5 +36,6 @@ export default {
   CollideCapsuleCircle,
   CollideLines,
   Collider,
-  GrabJoint
+  GrabJoint,
+  Renderer
 }
