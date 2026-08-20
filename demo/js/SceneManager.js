@@ -1,5 +1,5 @@
 import pyramid from "../../examples/pyramid.js"
-import verticalStacks from "../../examples/vertical-stacks.js"
+import boxStacks from "../../examples/box-stacks.js"
 import circleStacks from "../../examples/circle-stacks.js"
 import capsuleStacks from "../../examples/capsule-stacks.js"
 import jenga from "../../examples/jenga.js"
@@ -15,7 +15,7 @@ export default class SceneManager {
     this.scene = 'Pyramid'
     this.scenes = {
       Pyramid: pyramid,
-      "Vertical Stacks": verticalStacks,
+      "Box Stacks": boxStacks,
       "Circle Stacks": circleStacks,
       "Capsule Stacks": capsuleStacks,
       Jenga: jenga,
