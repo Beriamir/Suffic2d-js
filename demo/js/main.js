@@ -33,11 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
           s2World.destroyJoint(s2GrabJoint)
         }
 
-        s2GrabJoint = new s2.GrabJoint(body, x, y, {
-          length: 0,
-          hertz: 5,
-          zeta: 1,
-          friction: 0.3
+        s2GrabJoint = new s2.GrabJoint(x, y, body, {
+          damping: 0.3,
+          stiffness: 0.1
         })
 
         s2World.createJoint(s2GrabJoint)

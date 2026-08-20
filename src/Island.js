@@ -114,7 +114,7 @@ export default class Island {
     for (let i = 0; i < this.jointKeys.length; ++i) {
       const joint = this.world.joints.get(this.jointKeys[i])
 
-      joint.prepare(dt)
+      joint.prepare()
       joint.warmStart()
     }
 
