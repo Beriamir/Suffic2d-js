@@ -1,7 +1,12 @@
 export default class ContactSolver {
-  constructor(options = {}) {}
+  constructor(options = {}) {
+    this.biasSlop = options.biasSlop ?? 0.01
+    this.biasBeta = options.biasBeta ?? 0.1
+    this.restitutionSlop = options.restitutionSlop ?? 0.5
+    this.invDt = options.invDt ?? 60
+  }
 
-  prepare(contact, dt) {
+  prepare(contact) {
     const { bodyA, bodyB, normalX, normalY, contactPoints } = contact
 
     const mA = bodyA.invMass
@@ -20,17 +25,6 @@ export default class ContactSolver {
     const tangentX = (contact.tangentX = -normalY)
     const tangentY = (contact.tangentY = normalX)
     const contactCount = (contact.contactCount = contactPoints.length)
-
-    // const zeta = 1 // damping
-    // const hertz = mA == 0 || mB == 0 ? 60 : 30 // cycles per second
-    // const omega = 2 * Math.PI * hertz // angular frequency
-    // const a1 = 2 * zeta + omega * dt
-    // const a2 = dt * omega * a1
-    // const a3 = 1 / (1 + a2)
-
-    // const biasCoeff = omega / a1
-    // const massCoeff = a2 * a3
-    // const impulseCoeff = a3
 
     for (let i = 0; i < contactCount; ++i) {
       const cp = contactPoints[i]
@@ -67,11 +61,10 @@ export default class ContactSolver {
       cp.effNormalMass = kn == 0 ? 0 : 1 / kn
       cp.effTangentMass = kt == 0 ? 0 : 1 / kt
 
-      const biasSlop = 0.01 // meter
-      const biasBeta = mA == 0 || mB == 0 ? 0.3 : 0.1 // 0 -> 1
+      const beta = mA == 0 || mB == 0 ? this.biasBeta * 3 : this.biasBeta 
 
-      cp.velRestitution = -restitution * vn
-      cp.velBias = Math.max(cp.overlap - biasSlop, 0) * (biasBeta / dt)
+      cp.velBias = Math.max(cp.overlap - this.biasSlop, 0) * (beta * this.invDt)
+      cp.velRestitution = vn <= -this.restitutionSlop ? -restitution * vn : 0
     }
   }
 
@@ -160,14 +153,11 @@ export default class ContactSolver {
 
       let velBias = 0
       let velRestitution = 0
-      const restitutionSlop = 0.5
 
       if (useBias) {
         velBias = cp.velBias
       } else {
-        if (cp.vn <= -restitutionSlop) {
-          velRestitution = cp.velRestitution
-        }
+        velRestitution = cp.velRestitution
       }
 
       let impulse = (-vn + velRestitution + velBias) * cp.effNormalMass

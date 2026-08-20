@@ -2,11 +2,10 @@ import BlockSolver from "./BlockSolver.js"
 import ContactSolver from "./ContactSolver.js"
 
 export default class Island {
-  #blockSolver = new BlockSolver()
-  #contactSolver = new ContactSolver()
-
-  constructor(world) {
+  constructor(world, options = {}) {
     this.world = world
+    this.blockSolver = new BlockSolver(options)
+    this.contactSolver = new ContactSolver(options)
     this.bodies = []
     this.contactKeys = []
     this.jointKeys = []
@@ -108,8 +107,8 @@ export default class Island {
     }
 
     const contactSolver = this.world.useBlockSolver
-      ? this.#blockSolver
-      : this.#contactSolver
+      ? this.blockSolver
+      : this.contactSolver
 
     // Prepare and Warm start joints
     for (let i = 0; i < this.jointKeys.length; ++i) {
@@ -125,7 +124,7 @@ export default class Island {
       const contact = this.world.contacts.get(key)
       const oldContactPoints = this.world.oldContactPoints.get(key)
 
-      contactSolver.prepare(contact, dt)
+      contactSolver.prepare(contact)
       contactSolver.warmStart(contact, oldContactPoints)
     }
 

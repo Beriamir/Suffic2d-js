@@ -18,21 +18,14 @@ export default class World {
   #collider = new Collider()
 
   constructor(options = {}) {
-    const gravity = options.gravity
-
-    if (typeof gravity == "object") {
-      this.gravity = gravity
-    } else {
-      this.gravity = new Vector(0, 9.81)
-    }
-
+    this.gravity = options.gravity ?? new Vector(0, 9.81)
     this.substeps = options.substeps ?? 1
-    this.primaryIterations = options.primaryIterations ?? 8
+    this.primaryIterations = options.primaryIterations ?? 7
     this.secondaryIterations = options.secondaryIterations ?? 3
     this.nodeMargin = options.nodeMargin ?? 0.1
     this.useBlockSolver = options.useBlockSolver ?? true
     this.useSleeping = options.useSleeping ?? true
-    this.island = new Island(this)
+    this.island = new Island(this, options)
   }
 
   get bodies() {
