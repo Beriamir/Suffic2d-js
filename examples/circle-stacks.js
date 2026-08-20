@@ -1,6 +1,4 @@
 export default (s2, world, options = {}) => {
-  world.clear()
-
   const {
     columns = 1,
     rows = 20,

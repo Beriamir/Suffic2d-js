@@ -1,11 +1,12 @@
 import s2 from '../../src/index.js'
 import dat from '../../lib/dat.gui.mjs'
-import scenes from './scenes.js'
+import SceneManager from './SceneManager.js'
 import status from './status.js'
 
 document.addEventListener('DOMContentLoaded', () => {
   const s2Renderer = new s2.Renderer(document.getElementById('canvas'))
   const s2World = new s2.World()
+  const sceneManager = new SceneManager(s2, s2World)
   const gui = new dat.GUI()
 
   // Grab
@@ -61,10 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const s2WorldGui = gui.addFolder('s2World')
     
     for (const key of Object.keys(status)) {
-      if (key === 'scene') {
-        continue
-      }
-  
       statusGui.add(status, key).listen()
     }
     
@@ -87,21 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
     s2WorldGui.add(s2World, 'useBlockSolver').name('block solver')
     s2WorldGui.add(s2World, 'useSleeping').name('sleeping')
     s2WorldGui
-      .add(status, 'scene', [...Object.keys(scenes)])
-      .onChange(switchScene)
+      .add(sceneManager, 'scene', sceneManager.getList())
+      .onChange(scene => sceneManager.switch(scene))
       .name('Scene')
     s2WorldGui
-      .add({ restart: () => switchScene(status.scene) }, 'restart')
+      .add(sceneManager, 'restart')
       .name('Restart')
     s2WorldGui.open()
   }
 
-  function switchScene(scene) {
-    scenes[scene](s2, s2World)
-  }
-
   function setup() {
-    switchScene(status.scene)
+    sceneManager.switch(sceneManager.scene)
   }
 
   function update() {

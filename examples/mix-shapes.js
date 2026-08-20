@@ -1,6 +1,4 @@
 export default (s2, world, options = {}) => {
-  world.clear()
-
   const {
     count = 200,
     size = 0.24,

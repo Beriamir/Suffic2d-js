@@ -1,6 +1,4 @@
 export default (s2, world, options = {}) => {
-  world.clear()
-
   const {
     levels = 9,
     width = 0.48,
