@@ -1,13 +1,19 @@
 import s2 from '../../src/index.js'
 import dat from '../../lib/dat.gui.mjs'
 import SceneManager from './SceneManager.js'
-import status from './status.js'
 
 document.addEventListener('DOMContentLoaded', () => {
   const s2Renderer = new s2.Renderer(document.getElementById('canvas'))
   const s2World = new s2.World()
   const sceneManager = new SceneManager(s2, s2World)
   const gui = new dat.GUI()
+  
+  const status = {
+    fps: 0,
+    bodies: 0,
+    contacts: 0,
+    joints: 0
+  }
 
   // Grab
   {
@@ -39,19 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     s2Renderer.onMove = (dx, dy, x, y) => {
-      if (!s2GrabJoint) {
-        return
+      if (s2GrabJoint) {
+        s2GrabJoint.target.x += dx
+        s2GrabJoint.target.y += dy
       }
-
-      s2GrabJoint.target.x += dx
-      s2GrabJoint.target.y += dy
     }
     s2Renderer.onUp = () => {
-      if (!s2GrabJoint) {
-        return
+      if (s2GrabJoint) {
+        s2World.destroyJoint(s2GrabJoint)
       }
-
-      s2World.destroyJoint(s2GrabJoint)
     }
   }
 
