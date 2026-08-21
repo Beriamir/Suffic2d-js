@@ -7,6 +7,8 @@ import restitution from "../../examples/restitution.js"
 import friction from "../../examples/friction.js"
 import mixShapes from "../../examples/mix-shapes.js"
 import compounds from "../../examples/compounds.js"
+import stress0 from "../../examples/stress-0.js"
+import stress1 from "../../examples/stress-1.js"
 
 export default class SceneManager {
   constructor(s2, world) {
@@ -22,7 +24,9 @@ export default class SceneManager {
       Restitution: restitution,
       Friction: friction,
       "Mix Shapes": mixShapes,
-      Compounds: compounds
+      Compounds: compounds,
+      "Stress 0": stress0,
+      "Stress 1": stress1
     }
   }
   
