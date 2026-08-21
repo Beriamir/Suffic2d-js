@@ -70,7 +70,12 @@ export default class World {
 
     if (joint.type === "GrabJoint") {
       const key = `grab-${joint.body.id}`
+      
+      if (this.#joints.has(key)) {
+        this.destroyJoint(joint)
+      }
 
+      joint.key = key
       joint.body.jointKeys.push(key)
 
       this.#joints.set(key, joint)
@@ -78,7 +83,12 @@ export default class World {
       this.createBody(joint.body)
     } else {
       const key = `${joint.bodyA.id}-${joint.bodyB.id}`
+      
+      if (this.#joints.has(key)) {
+        this.destroyJoint(joint)
+      }
 
+      joint.key = key
       joint.bodyA.jointKeys.push(key)
       joint.bodyB.jointKeys.push(key)
 
@@ -97,7 +107,7 @@ export default class World {
     }
 
     if (joint.type === "GrabJoint") {
-      const key = `grab-${joint.body.id}`
+      const key = joint.key
       const stored = this.#joints.get(key)
 
       if (!stored) return joint
@@ -121,7 +131,7 @@ export default class World {
         }
       }
     } else {
-      const key = `${joint.bodyA.id}-${joint.bodyB.id}`
+      const key = joint.key
       const stored = this.#joints.get(key)
 
       if (!stored) return joint
