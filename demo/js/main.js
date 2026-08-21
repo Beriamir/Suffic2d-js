@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   {
     const statusGui = gui.addFolder('Status')
     const renderGui = gui.addFolder('Render')
-    const worldGui = gui.addFolder('s2World')
+    const worldGui = gui.addFolder('World')
     
     for (const key of Object.keys(status)) {
       statusGui.add(status, key).listen()
