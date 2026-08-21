@@ -5,13 +5,15 @@ export default class GrabJoint {
     this.type = "GrabJoint"
     this.target = new Vector(targetX, targetY)
     this.body = body
-
-    const dx = targetX - body.position.x
-    const dy = targetY - body.position.y
-
-    // Local
-    this.anchorX = dx * body.cos + dy * body.sin
-    this.anchorY = -dx * body.sin + dy * body.cos
+    
+    if (this.body) {
+      const dx = targetX - body.position.x
+      const dy = targetY - body.position.y
+  
+      // Local
+      this.anchorX = dx * body.cos + dy * body.sin
+      this.anchorY = -dx * body.sin + dy * body.cos
+    }
 
     this.damping = options.damping ?? 0.3
     this.stiffness = options.stiffness ?? 0.1
@@ -21,6 +23,28 @@ export default class GrabJoint {
 
     this.normalImpulse = 0
     this.tangentImpulse = 0
+  }
+  
+  set(x, y) {
+    const { target, body } = this 
+    
+    target.set(x, y)
+    
+    if (!body) {
+      return
+    }
+    
+    const dx = target.x - body.position.x
+    const dy = target.y - body.position.y
+
+    // Local
+    this.anchorX = dx * body.cos + dy * body.sin
+    this.anchorY = -dx * body.sin + dy * body.cos
+  }
+  
+  move(dx, dy) {
+    this.target.x += dx
+    this.target.y += dy
   }
 
   prepare() {
