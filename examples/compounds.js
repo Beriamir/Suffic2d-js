@@ -1,8 +1,7 @@
 export default (s2, world, options = {}) => {
   const {
     columns = 4,
-    rows = 10,
-    spacing = 0.024,
+    rows = 4,
     size = 0.24,
     groundWidth = 1000,
     groundHeight = 0.48,
@@ -29,15 +28,15 @@ export default (s2, world, options = {}) => {
   world.createBody(ground)
 
   const gap = 1.25
-  const colStep = size * 4 * gap + spacing
-  const rowStep = size * 4 * gap + spacing
+  const colStep = size * 4 * gap
+  const rowStep = size * 4 * gap
   const startX = centerX - (columns - 1) * colStep * 0.5
 
   for (let col = 0; col < columns; ++col) {
     const x = startX + col * colStep
 
     for (let row = 0; row < rows; ++row) {
-      const y = bottomY - size * 2 - spacing - row * rowStep
+      const y = bottomY - size * 2 - row * rowStep
 
       const body = new s2.RigidBody(x, y, 0, {
         friction: 0.3
@@ -61,6 +60,7 @@ export default (s2, world, options = {}) => {
           })
       } else {
         const radius = size
+        const gap = 1
 
         body
           .createCircle(radius, {

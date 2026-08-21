@@ -1,7 +1,7 @@
 export default (s2, world, options = {}) => {
   const {
-    columns = 1,
-    rows = 20,
+    columns = 8,
+    rows = 10,
     radius = 0.24,
     spacing = 0.024,
     groundWidth = 1000,

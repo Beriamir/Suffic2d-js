@@ -1,6 +1,6 @@
 export default (s2, world, options = {}) => {
   const {
-    levels = 9,
+    levels = 7,
     width = 0.48,
     height = 0.12,
     groundWidth = 1000,

@@ -1,8 +1,8 @@
 export default (s2, world, options = {}) => {
   const {
-    count = 200,
+    count = 50,
     size = 0.24,
-    groundWidth = 10,
+    groundWidth = 5,
     centerX = 0,
     bottomY = 0
   } = options
@@ -28,7 +28,7 @@ export default (s2, world, options = {}) => {
 
   for (let i = 0; i < eachCount; i++) {
     const x = Math.random() * groundWidth - groundWidth * 0.5
-    const y = Math.random() * -20 - 10
+    const y = Math.random() * -10 - 5
     const body = new s2.RigidBody(x, y, 0, {
       friction: 0.3
     }).createCircle(size, {})
@@ -38,7 +38,7 @@ export default (s2, world, options = {}) => {
 
   for (let i = 0; i < eachCount; i++) {
     const x = Math.random() * groundWidth - groundWidth * 0.5
-    const y = Math.random() * -20 - 10
+    const y = Math.random() * -10 - 5
     const body = new s2.RigidBody(x, y, 0, {
       friction: 0.3
     }).createCapsule(size * 1.25, size * 0.75, {
@@ -50,7 +50,7 @@ export default (s2, world, options = {}) => {
 
   for (let i = 0; i < eachCount; i++) {
     const x = Math.random() * groundWidth - groundWidth * 0.5
-    const y = Math.random() * -20 - 10
+    const y = Math.random() * -10 - 5
     const body = new s2.RigidBody(x, y, 0, {
       friction: 0.3
     }).createPolygon(
