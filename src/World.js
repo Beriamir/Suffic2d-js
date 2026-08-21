@@ -20,8 +20,8 @@ export default class World {
   constructor(options = {}) {
     this.gravity = options.gravity ?? new Vector(0, 9.81)
     this.substeps = options.substeps ?? 1
-    this.primaryIterations = options.primaryIterations ?? 7
-    this.secondaryIterations = options.secondaryIterations ?? 3
+    this.primaryIterations = options.primaryIterations ?? 8
+    this.secondaryIterations = options.secondaryIterations ?? 4
     this.nodeMargin = options.nodeMargin ?? 0.1
     this.useBlockSolver = options.useBlockSolver ?? true
     this.useSleeping = options.useSleeping ?? true
