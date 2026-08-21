@@ -69,7 +69,7 @@ export default class World {
     }
 
     if (joint.type === "GrabJoint") {
-      const key = `grab-${joint.body.id}`
+      const key = `${joint.type}-${joint.id}`
       
       if (this.#joints.has(key)) {
         this.destroyJoint(joint)
@@ -77,12 +77,12 @@ export default class World {
 
       joint.key = key
       joint.body.jointKeys.push(key)
-
+  
+      this.createBody(joint.body)
       this.#joints.set(key, joint)
       this.#jointKeys.push(key)
-      this.createBody(joint.body)
     } else {
-      const key = `${joint.bodyA.id}-${joint.bodyB.id}`
+      const key = `${joint.type}-${joint.id}`
       
       if (this.#joints.has(key)) {
         this.destroyJoint(joint)
@@ -92,10 +92,10 @@ export default class World {
       joint.bodyA.jointKeys.push(key)
       joint.bodyB.jointKeys.push(key)
 
-      this.#joints.set(key, joint)
-      this.#jointKeys.push(key)
       this.createBody(joint.bodyA)
       this.createBody(joint.bodyB)
+      this.#joints.set(key, joint)
+      this.#jointKeys.push(key)
     }
 
     return joint
@@ -105,13 +105,15 @@ export default class World {
     if (!joint) {
       return joint
     }
+    
+    const key = joint.key
+    const stored = this.#joints.get(key)
+
+    if (!stored) {
+      return joint
+    }
 
     if (joint.type === "GrabJoint") {
-      const key = joint.key
-      const stored = this.#joints.get(key)
-
-      if (!stored) return joint
-
       const body = stored.body
 
       for (let i = 0; i < body.jointKeys.length; ++i) {
@@ -121,21 +123,7 @@ export default class World {
           --i
         }
       }
-
-      this.#joints.delete(key)
-      for (let i = 0; i < this.#jointKeys.length; ++i) {
-        if (this.#jointKeys[i] == key) {
-          this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
-          this.#jointKeys.pop()
-          --i
-        }
-      }
     } else {
-      const key = joint.key
-      const stored = this.#joints.get(key)
-
-      if (!stored) return joint
-
       const { bodyA, bodyB } = stored
 
       for (let i = 0; i < bodyA.jointKeys.length; ++i) {
@@ -153,14 +141,14 @@ export default class World {
           --i
         }
       }
-
-      this.#joints.delete(key)
-      for (let i = 0; i < this.#jointKeys.length; ++i) {
-        if (this.#jointKeys[i] == key) {
-          this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
-          this.#jointKeys.pop()
-          --i
-        }
+    }
+    
+    this.#joints.delete(key)
+    for (let i = 0; i < this.#jointKeys.length; ++i) {
+      if (this.#jointKeys[i] == key) {
+        this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
+        this.#jointKeys.pop()
+        --i
       }
     }
 

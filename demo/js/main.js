@@ -17,47 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Grab
   {
-    let s2GrabJoint = null
-    const grabPool = [new s2.GrabJoint(0, 0, null, { 
+    const s2GrabJoint = new s2.GrabJoint(0, 0, null, { 
       damping: 0.3,
       stiffness: 0.1
-    })]
+    })
 
     s2Renderer.onDown = (x, y) => {
-      if (s2GrabJoint) {
-        s2World.destroyJoint(s2GrabJoint)
-        grabPool.push(s2GrabJoint)
-        s2GrabJoint = null
-      }
-
-      const query = s2World.queryPoint(x, y)
-
-      for (let i = 0; i < query.length; ++i) {
-        const body = query[i]
-
-        if (!body.testPoint(x, y)) {
-          continue
+      for (const body of s2World.queryPoint(x, y)) {
+        if (body.testPoint(x, y)) {
+          s2GrabJoint.set(x, y, body)
+          s2World.createJoint(s2GrabJoint)
+          break
         }
-
-        s2GrabJoint = grabPool.pop()
-        s2GrabJoint.body = body
-        s2GrabJoint.set(x, y)
-
-        s2World.createJoint(s2GrabJoint)
-        break
       }
     }
     s2Renderer.onMove = (dx, dy, x, y) => {
-      if (s2GrabJoint) {
-        s2GrabJoint.move(dx, dy)
-      }
+      s2GrabJoint.move(dx, dy)
     }
     s2Renderer.onUp = () => {
-      if (s2GrabJoint) {
-        s2World.destroyJoint(s2GrabJoint)
-        grabPool.push(s2GrabJoint)
-        s2GrabJoint = null
-      }
+      s2World.destroyJoint(s2GrabJoint)
     }
   }
 

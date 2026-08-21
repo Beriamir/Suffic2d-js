@@ -56,6 +56,10 @@ export default class Island {
       for (let i = 0; i < body.jointKeys.length; ++i) {
         const key = body.jointKeys[i]
         const joint = this.world.joints.get(key)
+        
+        if (!joint) {
+          continue
+        }
 
         if (joint.type == "GrabJoint") {
           this.isSleeping = false

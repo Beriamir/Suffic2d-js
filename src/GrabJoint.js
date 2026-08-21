@@ -1,7 +1,9 @@
 import Vector from "./Vector.js"
 
 export default class GrabJoint {
+  static #uid = 0
   constructor(targetX, targetY, body, options = {}) {
+    this.id = GrabJoint.#uid++
     this.type = "GrabJoint"
     this.target = new Vector(targetX, targetY)
     this.body = body
@@ -22,13 +24,25 @@ export default class GrabJoint {
     this.normalImpulse = 0
   }
   
-  set(x, y) {
-    const { target, body } = this 
-    
-    target.set(x, y)
+  set(x, y, body) {
+    const target = this.target.set(x, y)
+  
+    if (this.body && this.key) {
+      for (let i = 0; i < this.body.jointKeys.length; ++i) {
+        if (this.body.jointKeys[i] == this.key) {
+          this.body.jointKeys[i] = this.body.jointKeys[this.body.jointKeys.length - 1]
+          this.body.jointKeys.pop()
+          --i
+        }
+      }
+    }
     
     if (!body) {
-      return
+      body = this.body
+    }
+    
+    if (!body) {
+      return null
     }
     
     const dx = target.x - body.position.x
@@ -37,6 +51,7 @@ export default class GrabJoint {
     // Local
     this.anchorX = dx * body.cos + dy * body.sin
     this.anchorY = -dx * body.sin + dy * body.cos
+    this.body = body
   }
   
   move(dx, dy) {
