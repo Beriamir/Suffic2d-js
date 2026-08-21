@@ -17,12 +17,9 @@ export default class GrabJoint {
 
     this.damping = options.damping ?? 0.3
     this.stiffness = options.stiffness ?? 0.1
-    this.friction = options.friction ?? 0.1
     this.maxDistance = options.maxDistance ?? 0.0
     this.invDt = options.invDt ?? 60
-
     this.normalImpulse = 0
-    this.tangentImpulse = 0
   }
   
   set(x, y) {
@@ -67,50 +64,23 @@ export default class GrabJoint {
 
     let normalX = 0
     let normalY = 0
-    let tangentX = 0
-    let tangentY = 0
 
     if (dist >= 1e-6) {
       normalX = dx / dist
       normalY = dy / dist
     }
-    
-    const vA = body.linearVelocity
-    const wA = body.angularVelocity
-
-    const relVelX = -(vA.x - rAY * wA)
-    const relVelY = -(vA.y + rAX * wA)
-    const vn = relVelX * normalX + relVelY * normalY
-    
-    tangentX = (relVelX - (normalX * vn))
-    tangentY = (relVelY - (normalY * vn))
-    
-    const tMagSq = tangentX * tangentX + tangentY * tangentY
-    
-    if (tMagSq >= 1e-6) {
-      const magSq = Math.sqrt(tMagSq)
-      
-      tangentX /= magSq
-      tangentY /= magSq
-    }
 
     const rnA = rAX * normalY - rAY * normalX
-    const rtA = rAX * tangentY - rAY * tangentX
     const kn = mA + rnA * rnA * iA
-    const kt = mA + rtA * rtA * iA
 
     this.rAX = rAX
     this.rAY = rAY
 
     this.normalX = normalX
     this.normalY = normalY
-    this.tangentX = tangentX
-    this.tangentY = tangentY
 
     this.rnA = rnA
-    this.rtA = rtA
     this.effNormalMass = kn == 0 ? 0 : 1 / kn
-    this.effTangentMass = kt == 0 ? 0 : 1 / kt
 
     this.C = (maxDistance - dist) * (this.stiffness * this.invDt)
   }
@@ -121,11 +91,7 @@ export default class GrabJoint {
       normalX,
       normalY,
       rnA,
-      tangentX,
-      tangentY,
-      rtA,
-      normalImpulse,
-      tangentImpulse
+      normalImpulse
     } = this
 
     const mA = body.invMass
@@ -134,10 +100,6 @@ export default class GrabJoint {
     body.linearVelocity.x -= normalX * normalImpulse * mA
     body.linearVelocity.y -= normalY * normalImpulse * mA
     body.angularVelocity -= rnA * normalImpulse * iA
-    
-    body.linearVelocity.x -= tangentX * tangentImpulse * mA
-    body.linearVelocity.y -= tangentY * tangentImpulse * mA
-    body.angularVelocity -= rtA * tangentImpulse * iA
   }
 
   solve(useBias = false) {
@@ -146,11 +108,7 @@ export default class GrabJoint {
       normalX,
       normalY,
       rnA,
-      tangentX,
-      tangentY,
-      rtA,
-      effNormalMass,
-      effTangentMass
+      effNormalMass
     } = this
 
     const mA = body.invMass
@@ -158,8 +116,8 @@ export default class GrabJoint {
     const vA = body.linearVelocity
     let wA = body.angularVelocity
 
-    let relVelX = -(vA.x - this.rAY * wA)
-    let relVelY = -(vA.y + this.rAX * wA)
+    const relVelX = -(vA.x - this.rAY * wA)
+    const relVelY = -(vA.y + this.rAX * wA)
     const vn = relVelX * normalX + relVelY * normalY
 
     const bias = useBias ? this.C : 0
@@ -174,31 +132,6 @@ export default class GrabJoint {
     vA.x -= normalX * impulse * mA
     vA.y -= normalY * impulse * mA
     wA -= rnA * impulse * iA
-    
-    // Friction 
-    relVelX = -(vA.x - this.rAY * wA)
-    relVelY = -(vA.y + this.rAX * wA)
-    
-    const vt = relVelX * tangentX + relVelY * tangentY
-    
-    let lambda = vt * effTangentMass
-    const maxLambda = this.friction * this.normalImpulse
-    const oldLambda = this.tangentImpulse
-    let newLambda = oldLambda + lambda
-    
-    newLambda = 
-      newLambda < -maxLambda
-        ? -maxLambda
-        : newLambda > maxLambda 
-          ? maxLambda
-          : newLambda
-    
-    this.tangentImpulse = newLambda
-    lambda = newLambda - oldLambda
-    
-    vA.x -= tangentX * lambda * mA
-    vA.y -= tangentY * lambda * mA
-    wA -= rtA * lambda * iA
 
     body.angularVelocity = wA
   }
