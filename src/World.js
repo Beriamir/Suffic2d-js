@@ -69,7 +69,7 @@ export default class World {
     }
 
     if (joint.type === "GrabJoint") {
-      const key = `${joint.body.id}-grab`
+      const key = `grab-${joint.body.id}`
 
       joint.body.jointKeys.push(key)
 
@@ -97,7 +97,7 @@ export default class World {
     }
 
     if (joint.type === "GrabJoint") {
-      const key = `${joint.body.id}-grab`
+      const key = `grab-${joint.body.id}`
       const stored = this.#joints.get(key)
 
       if (!stored) return joint
