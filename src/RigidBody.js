@@ -1,224 +1,224 @@
-import Vector from "./Vector.js"
-import AABB from "./AABB.js"
-import Polygon from "./Polygon.js"
-import Circle from "./Circle.js"
-import Capsule from "./Capsule.js"
-import Line from "./Line.js"
+import Vector from './Vector.js'
+import AABB from './AABB.js'
+import Polygon from './Polygon.js'
+import Circle from './Circle.js'
+import Capsule from './Capsule.js'
+import Line from './Line.js'
 
 export default class RigidBody {
-  #rot
-  static #uid = 0
-  constructor(x, y, rot, options = {}) {
-    this.id = RigidBody.#uid++
-    this.type = "rigid"
+	#rot
+	static #uid = 0
+	constructor(x, y, rot, options = {}) {
+		this.id = RigidBody.#uid++
+		this.type = 'rigid'
 
-    this.position = new Vector(x, y)
-    this.#rot = rot
-    this.cos = Math.cos(rot)
-    this.sin = Math.sin(rot)
+		this.position = new Vector(x, y)
+		this.#rot = rot
+		this.cos = Math.cos(rot)
+		this.sin = Math.sin(rot)
 
-    this.linearVelocity = options.linearVelocity ?? new Vector()
-    this.angularVelocity = options.angularVelocity ?? 0
-    this.surfaceSpeed = options.surfaceSpeed ?? new Vector()
+		this.linearVelocity = options.linearVelocity ?? new Vector()
+		this.angularVelocity = options.angularVelocity ?? 0
+		this.surfaceSpeed = options.surfaceSpeed ?? new Vector()
 
-    this.isStatic = options.isStatic ?? false
-    this.isSensor = options.isSensor ?? false
-    this.isSleeping = options.isSleeping ?? false
-    this.sleepingTime = 0
-    this.islandId = 0
+		this.isStatic = options.isStatic ?? false
+		this.isSensor = options.isSensor ?? false
+		this.isSleeping = options.isSleeping ?? false
+		this.sleepingTime = 0
+		this.islandId = 0
 
-    this.contactKeys = []
-    this.jointKeys = []
+		this.contactKeys = []
+		this.jointKeys = []
 
-    this.restitution = options.restitution ?? 0.0
-    this.friction = options.friction ?? 0.0
-    this.density = 0
-    this.area = 0
-    this.mass = 0
-    this.inertia = 0
+		this.restitution = options.restitution ?? 0.0
+		this.friction = options.friction ?? 0.0
+		this.density = 0
+		this.area = 0
+		this.mass = 0
+		this.inertia = 0
 
-    this.invMass = 0
-    this.invInertia = 0
+		this.invMass = 0
+		this.invInertia = 0
 
-    this.fixtureUid = 0
-    this.fixtures = []
-    this.anchors = []
-    this.aabb = new AABB()
-  }
+		this.fixtureUid = 0
+		this.fixtures = []
+		this.anchors = []
+		this.aabb = new AABB()
+	}
 
-  testPoint(pointX, pointY) {
-    for (let i = 0; i < this.fixtures.length; ++i) {
-      const s = this.fixtures[i]
+	testPoint(pointX, pointY) {
+		for (let i = 0; i < this.fixtures.length; ++i) {
+			const s = this.fixtures[i]
 
-      if (s.testPoint(pointX, pointY)) {
-        return true
-      }
-    }
+			if (s.testPoint(pointX, pointY)) {
+				return true
+			}
+		}
 
-    return false
-  }
+		return false
+	}
 
-  awake() {
-    this.isSleeping = false
-    this.sleepingTime = 0
-  }
+	awake() {
+		this.isSleeping = false
+		this.sleepingTime = 0
+	}
 
-  canSleep() {
-    const linearTol = 0.01
-    const angularTol = 0.03
+	canSleep() {
+		const linearTol = 0.01
+		const angularTol = 0.03
 
-    return (
-      this.contactKeys.length > 0 &&
-      this.linearVelocity.magSq() <= linearTol * linearTol &&
-      this.angularVelocity * this.angularVelocity <= angularTol * angularTol
-    )
-  }
+		return (
+			this.contactKeys.length > 0 &&
+			this.linearVelocity.magSq() <= linearTol * linearTol &&
+			this.angularVelocity * this.angularVelocity <= angularTol * angularTol
+		)
+	}
 
-  set rotation(value) {
-    this.#rot = value
-    this.cos = Math.cos(this.#rot)
-    this.sin = Math.sin(this.#rot)
-  }
+	set rotation(value) {
+		this.#rot = value
+		this.cos = Math.cos(this.#rot)
+		this.sin = Math.sin(this.#rot)
+	}
 
-  get rotation() {
-    return this.#rot
-  }
+	get rotation() {
+		return this.#rot
+	}
 
-  createFixture(shape) {
-    if (shape.index > 0) {
-      return
-    }
+	createFixture(shape) {
+		if (shape.index > 0) {
+			return
+		}
 
-    this.fixtures.push(shape)
-    shape.id = this.fixtureUid++
-    shape.index = this.fixtures.length - 1
-    shape.updateWorldVertices(
-      this.position.x,
-      this.position.y,
-      this.cos,
-      this.sin
-    )
+		this.fixtures.push(shape)
+		shape.id = this.fixtureUid++
+		shape.index = this.fixtures.length - 1
+		shape.updateWorldVertices(
+			this.position.x,
+			this.position.y,
+			this.cos,
+			this.sin
+		)
 
-    this.updateMass()
-    this.updateAABB()
-    return this
-  }
+		this.updateMass()
+		this.updateAABB()
+		return this
+	}
 
-  destroyFixture(shape) {
-    const index = shape.index
-    const last = this.fixtures.length - 1
+	destroyFixture(shape) {
+		const index = shape.index
+		const last = this.fixtures.length - 1
 
-    if (index < 0 || index > last) {
-      return
-    }
+		if (index < 0 || index > last) {
+			return
+		}
 
-    if (index != last) {
-      this.fixtures[index] = this.fixtures[last]
-      this.fixtures[index].index = index
-    }
+		if (index != last) {
+			this.fixtures[index] = this.fixtures[last]
+			this.fixtures[index].index = index
+		}
 
-    this.fixtures.pop()
-    shape.index = -1
+		this.fixtures.pop()
+		shape.index = -1
 
-    this.updateMass()
-    this.updateAABB()
-    return this
-  }
+		this.updateMass()
+		this.updateAABB()
+		return this
+	}
 
-  createAnchor(anchor) {
-    if (anchor.index > 0) {
-      return
-    }
+	createAnchor(anchor) {
+		if (anchor.index > 0) {
+			return
+		}
 
-    this.anchors.push(anchor)
-    anchor.index = this.anchors.length - 1
-    return this
-  }
+		this.anchors.push(anchor)
+		anchor.index = this.anchors.length - 1
+		return this
+	}
 
-  destroyAnchor(anchor) {
-    const index = anchor.index
-    const last = this.anchors.length - 1
+	destroyAnchor(anchor) {
+		const index = anchor.index
+		const last = this.anchors.length - 1
 
-    if (index < 0 || index > last) {
-      return
-    }
+		if (index < 0 || index > last) {
+			return
+		}
 
-    if (index != last) {
-      this.anchors[index] = this.anchors[last]
-      this.anchors[index].index = index
-    }
+		if (index != last) {
+			this.anchors[index] = this.anchors[last]
+			this.anchors[index].index = index
+		}
 
-    this.anchors.pop()
-    anchor.index = -1
-    return this
-  }
+		this.anchors.pop()
+		anchor.index = -1
+		return this
+	}
 
-  updateMass() {
-    this.density = 0
-    this.area = 0
-    this.mass = 0
-    this.inertia = 0
+	updateMass() {
+		this.density = 0
+		this.area = 0
+		this.mass = 0
+		this.inertia = 0
 
-    for (const s of this.fixtures) {
-      this.density += s.density
-      this.area += s.area
-      this.mass += s.mass
-      this.inertia += s.inertia
-    }
+		for (const s of this.fixtures) {
+			this.density += s.density
+			this.area += s.area
+			this.mass += s.mass
+			this.inertia += s.inertia
+		}
 
-    if (this.isStatic) {
-      this.invMass = 0
-      this.invInertia = 0
-      return this
-    }
+		if (this.isStatic) {
+			this.invMass = 0
+			this.invInertia = 0
+			return this
+		}
 
-    this.invMass = 1 / this.mass
-    this.invInertia = 1 / this.inertia
-    return this
-  }
+		this.invMass = 1 / this.mass
+		this.invInertia = 1 / this.inertia
+		return this
+	}
 
-  updateAABB() {
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -minX
-    let maxY = -minY
+	updateAABB() {
+		let minX = Infinity
+		let minY = Infinity
+		let maxX = -minX
+		let maxY = -minY
 
-    for (const s of this.fixtures) {
-      if (s.aabb.minX < minX) minX = s.aabb.minX
-      if (s.aabb.minY < minY) minY = s.aabb.minY
-      if (s.aabb.maxX > maxX) maxX = s.aabb.maxX
-      if (s.aabb.maxY > maxY) maxY = s.aabb.maxY
-    }
+		for (const s of this.fixtures) {
+			if (s.aabb.minX < minX) minX = s.aabb.minX
+			if (s.aabb.minY < minY) minY = s.aabb.minY
+			if (s.aabb.maxX > maxX) maxX = s.aabb.maxX
+			if (s.aabb.maxY > maxY) maxY = s.aabb.maxY
+		}
 
-    this.aabb.set(minX, minY, maxX, maxY)
-    return this
-  }
+		this.aabb.set(minX, minY, maxX, maxY)
+		return this
+	}
 
-  createPolygon(vertices, option = {}) {
-    const polygon = new Polygon(vertices, option)
+	createPolygon(vertices, option = {}) {
+		const polygon = new Polygon(vertices, option)
 
-    this.createFixture(polygon)
-    return this
-  }
+		this.createFixture(polygon)
+		return this
+	}
 
-  createCircle(radius, option = {}) {
-    const circle = new Circle(radius, option)
+	createCircle(radius, option = {}) {
+		const circle = new Circle(radius, option)
 
-    this.createFixture(circle)
-    return this
-  }
+		this.createFixture(circle)
+		return this
+	}
 
-  createCapsule(length, radius, option = {}) {
-    const capsule = new Capsule(length, radius, option)
+	createCapsule(length, radius, option = {}) {
+		const capsule = new Capsule(length, radius, option)
 
-    this.createFixture(capsule)
-    return this
-  }
+		this.createFixture(capsule)
+		return this
+	}
 
-  createLine(length, option = {}) {
-    const line = new Line(length, option)
+	createLine(length, option = {}) {
+		const line = new Line(length, option)
 
-    this.createFixture(line)
-    return this
-  }
+		this.createFixture(line)
+		return this
+	}
 }

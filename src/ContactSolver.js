@@ -1,212 +1,212 @@
 export default class ContactSolver {
-  constructor(options = {}) {
-    this.biasSlop = options.biasSlop ?? 0.01
-    this.biasBeta = options.biasBeta ?? 0.1
-    this.restitutionSlop = options.restitutionSlop ?? 0.5
-    this.invDt = options.invDt ?? 60
-  }
+	constructor(options = {}) {
+		this.biasSlop = options.biasSlop ?? 0.01
+		this.biasBeta = options.biasBeta ?? 0.1
+		this.restitutionSlop = options.restitutionSlop ?? 0.5
+		this.invDt = options.invDt ?? 60
+	}
 
-  prepare(contact) {
-    const { bodyA, bodyB, normalX, normalY, contactPoints } = contact
+	prepare(contact) {
+		const { bodyA, bodyB, normalX, normalY, contactPoints } = contact
 
-    const mA = bodyA.invMass
-    const mB = bodyB.invMass
-    const iA = bodyA.invInertia
-    const iB = bodyB.invInertia
+		const mA = bodyA.invMass
+		const mB = bodyB.invMass
+		const iA = bodyA.invInertia
+		const iB = bodyB.invInertia
 
-    const vA = bodyA.linearVelocity
-    const vB = bodyB.linearVelocity
-    const wA = bodyA.angularVelocity
-    const wB = bodyB.angularVelocity
+		const vA = bodyA.linearVelocity
+		const vB = bodyB.linearVelocity
+		const wA = bodyA.angularVelocity
+		const wB = bodyB.angularVelocity
 
-    const restitution = Math.max(bodyA.restitution, bodyB.restitution)
-    contact.friction = Math.max(bodyA.friction, bodyB.friction)
+		const restitution = Math.max(bodyA.restitution, bodyB.restitution)
+		contact.friction = Math.max(bodyA.friction, bodyB.friction)
 
-    const tangentX = (contact.tangentX = -normalY)
-    const tangentY = (contact.tangentY = normalX)
-    const contactCount = (contact.contactCount = contactPoints.length)
+		const tangentX = (contact.tangentX = -normalY)
+		const tangentY = (contact.tangentY = normalX)
+		const contactCount = (contact.contactCount = contactPoints.length)
 
-    for (let i = 0; i < contactCount; ++i) {
-      const cp = contactPoints[i]
+		for (let i = 0; i < contactCount; ++i) {
+			const cp = contactPoints[i]
 
-      const raX = cp.pointX - bodyA.position.x
-      const raY = cp.pointY - bodyA.position.y
-      const rbX = cp.pointX - bodyB.position.x
-      const rbY = cp.pointY - bodyB.position.y
+			const raX = cp.pointX - bodyA.position.x
+			const raY = cp.pointY - bodyA.position.y
+			const rbX = cp.pointX - bodyB.position.x
+			const rbY = cp.pointY - bodyB.position.y
 
-      const relVelX = vB.x - rbY * wB - (vA.x - raY * wA)
-      const relVelY = vB.y + rbX * wB - (vA.y + raX * wA)
-      const vn = relVelX * normalX + relVelY * normalY
+			const relVelX = vB.x - rbY * wB - (vA.x - raY * wA)
+			const relVelY = vB.y + rbX * wB - (vA.y + raX * wA)
+			const vn = relVelX * normalX + relVelY * normalY
 
-      const rnA = raX * normalY - raY * normalX
-      const rnB = rbX * normalY - rbY * normalX
-      const rtA = raX * tangentY - raY * tangentX
-      const rtB = rbX * tangentY - rbY * tangentX
+			const rnA = raX * normalY - raY * normalX
+			const rnB = rbX * normalY - rbY * normalX
+			const rtA = raX * tangentY - raY * tangentX
+			const rtB = rbX * tangentY - rbY * tangentX
 
-      const kn = mA + mB + rnA * rnA * iA + rnB * rnB * iB
-      const kt = mA + mB + rtA * rtA * iA + rtB * rtB * iB
+			const kn = mA + mB + rnA * rnA * iA + rnB * rnB * iB
+			const kt = mA + mB + rtA * rtA * iA + rtB * rtB * iB
 
-      cp.raX = raX
-      cp.raY = raY
-      cp.rbX = rbX
-      cp.rbY = rbY
+			cp.raX = raX
+			cp.raY = raY
+			cp.rbX = rbX
+			cp.rbY = rbY
 
-      cp.vn = vn
+			cp.vn = vn
 
-      cp.rnA = rnA
-      cp.rnB = rnB
-      cp.rtA = rtA
-      cp.rtB = rtB
+			cp.rnA = rnA
+			cp.rnB = rnB
+			cp.rtA = rtA
+			cp.rtB = rtB
 
-      cp.effNormalMass = kn == 0 ? 0 : 1 / kn
-      cp.effTangentMass = kt == 0 ? 0 : 1 / kt
+			cp.effNormalMass = kn == 0 ? 0 : 1 / kn
+			cp.effTangentMass = kt == 0 ? 0 : 1 / kt
 
-      const beta = mA == 0 || mB == 0 ? this.biasBeta * 3 : this.biasBeta 
+			const beta = mA == 0 || mB == 0 ? this.biasBeta * 3 : this.biasBeta
 
-      cp.velBias = Math.max(cp.overlap - this.biasSlop, 0) * (beta * this.invDt)
-      cp.velRestitution = vn <= -this.restitutionSlop ? -restitution * vn : 0
-    }
-  }
+			cp.velBias = Math.max(cp.overlap - this.biasSlop, 0) * (beta * this.invDt)
+			cp.velRestitution = vn <= -this.restitutionSlop ? -restitution * vn : 0
+		}
+	}
 
-  warmStart(newContact, oldContactPoints) {
-    if (!oldContactPoints) {
-      return
-    }
+	warmStart(newContact, oldContactPoints) {
+		if (!oldContactPoints) {
+			return
+		}
 
-    const {
-      bodyA,
-      bodyB,
-      normalX,
-      normalY,
-      tangentX,
-      tangentY,
-      contactPoints,
-      contactCount
-    } = newContact
+		const {
+			bodyA,
+			bodyB,
+			normalX,
+			normalY,
+			tangentX,
+			tangentY,
+			contactPoints,
+			contactCount
+		} = newContact
 
-    const mA = bodyA.invMass
-    const mB = bodyB.invMass
-    const iA = bodyA.invInertia
-    const iB = bodyB.invInertia
+		const mA = bodyA.invMass
+		const mB = bodyB.invMass
+		const iA = bodyA.invInertia
+		const iB = bodyB.invInertia
 
-    for (let i = 0; i < contactCount; ++i) {
-      const cp = contactPoints[i]
+		for (let i = 0; i < contactCount; ++i) {
+			const cp = contactPoints[i]
 
-      for (const oldCp of oldContactPoints) {
-        if (cp.id == oldCp.id) {
-          cp.normalImpulse = oldCp.normalImpulse
-          cp.tangentImpulse = oldCp.tangentImpulse
-          cp.persistent = true
-          break
-        }
-      }
+			for (const oldCp of oldContactPoints) {
+				if (cp.id == oldCp.id) {
+					cp.normalImpulse = oldCp.normalImpulse
+					cp.tangentImpulse = oldCp.tangentImpulse
+					cp.persistent = true
+					break
+				}
+			}
 
-      if (!cp.persistent) {
-        continue
-      }
+			if (!cp.persistent) {
+				continue
+			}
 
-      bodyA.linearVelocity.x -= normalX * cp.normalImpulse * mA
-      bodyA.linearVelocity.y -= normalY * cp.normalImpulse * mA
-      bodyB.linearVelocity.x += normalX * cp.normalImpulse * mB
-      bodyB.linearVelocity.y += normalY * cp.normalImpulse * mB
-      bodyA.angularVelocity -= cp.rnA * cp.normalImpulse * iA
-      bodyB.angularVelocity += cp.rnB * cp.normalImpulse * iB
+			bodyA.linearVelocity.x -= normalX * cp.normalImpulse * mA
+			bodyA.linearVelocity.y -= normalY * cp.normalImpulse * mA
+			bodyB.linearVelocity.x += normalX * cp.normalImpulse * mB
+			bodyB.linearVelocity.y += normalY * cp.normalImpulse * mB
+			bodyA.angularVelocity -= cp.rnA * cp.normalImpulse * iA
+			bodyB.angularVelocity += cp.rnB * cp.normalImpulse * iB
 
-      bodyA.linearVelocity.x -= tangentX * cp.tangentImpulse * mA
-      bodyA.linearVelocity.y -= tangentY * cp.tangentImpulse * mA
-      bodyB.linearVelocity.x += tangentX * cp.tangentImpulse * mB
-      bodyB.linearVelocity.y += tangentY * cp.tangentImpulse * mB
-      bodyA.angularVelocity -= cp.rtA * cp.tangentImpulse * iA
-      bodyB.angularVelocity += cp.rtB * cp.tangentImpulse * iB
-    }
-  }
+			bodyA.linearVelocity.x -= tangentX * cp.tangentImpulse * mA
+			bodyA.linearVelocity.y -= tangentY * cp.tangentImpulse * mA
+			bodyB.linearVelocity.x += tangentX * cp.tangentImpulse * mB
+			bodyB.linearVelocity.y += tangentY * cp.tangentImpulse * mB
+			bodyA.angularVelocity -= cp.rtA * cp.tangentImpulse * iA
+			bodyB.angularVelocity += cp.rtB * cp.tangentImpulse * iB
+		}
+	}
 
-  solve(contact, useBias = false) {
-    const {
-      bodyA,
-      bodyB,
-      normalX,
-      normalY,
-      tangentX,
-      tangentY,
-      contactPoints,
-      contactCount,
-      friction
-    } = contact
+	solve(contact, useBias = false) {
+		const {
+			bodyA,
+			bodyB,
+			normalX,
+			normalY,
+			tangentX,
+			tangentY,
+			contactPoints,
+			contactCount,
+			friction
+		} = contact
 
-    const mA = bodyA.invMass
-    const mB = bodyB.invMass
-    const iA = bodyA.invInertia
-    const iB = bodyB.invInertia
+		const mA = bodyA.invMass
+		const mB = bodyB.invMass
+		const iA = bodyA.invInertia
+		const iB = bodyB.invInertia
 
-    const vA = bodyA.linearVelocity
-    const vB = bodyB.linearVelocity
-    let wA = bodyA.angularVelocity
-    let wB = bodyB.angularVelocity
+		const vA = bodyA.linearVelocity
+		const vB = bodyB.linearVelocity
+		let wA = bodyA.angularVelocity
+		let wB = bodyB.angularVelocity
 
-    for (let i = 0; i < contactCount; ++i) {
-      const cp = contactPoints[i]
+		for (let i = 0; i < contactCount; ++i) {
+			const cp = contactPoints[i]
 
-      const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
-      const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
-      const vn = relVelX * normalX + relVelY * normalY
+			const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
+			const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
+			const vn = relVelX * normalX + relVelY * normalY
 
-      let velBias = 0
-      let velRestitution = 0
+			let velBias = 0
+			let velRestitution = 0
 
-      if (useBias) {
-        velBias = cp.velBias
-      } else {
-        velRestitution = cp.velRestitution
-      }
+			if (useBias) {
+				velBias = cp.velBias
+			} else {
+				velRestitution = cp.velRestitution
+			}
 
-      let impulse = (-vn + velRestitution + velBias) * cp.effNormalMass
-      const oldImpulse = cp.normalImpulse
-      const newImpulse = Math.max(oldImpulse + impulse, 0)
+			let impulse = (-vn + velRestitution + velBias) * cp.effNormalMass
+			const oldImpulse = cp.normalImpulse
+			const newImpulse = Math.max(oldImpulse + impulse, 0)
 
-      cp.normalImpulse = newImpulse
-      impulse = newImpulse - oldImpulse
+			cp.normalImpulse = newImpulse
+			impulse = newImpulse - oldImpulse
 
-      vA.x -= normalX * impulse * mA
-      vA.y -= normalY * impulse * mA
-      vB.x += normalX * impulse * mB
-      vB.y += normalY * impulse * mB
-      wA -= cp.rnA * impulse * iA
-      wB += cp.rnB * impulse * iB
-    }
+			vA.x -= normalX * impulse * mA
+			vA.y -= normalY * impulse * mA
+			vB.x += normalX * impulse * mB
+			vB.y += normalY * impulse * mB
+			wA -= cp.rnA * impulse * iA
+			wB += cp.rnB * impulse * iB
+		}
 
-    for (let i = 0; i < contactCount; ++i) {
-      const cp = contactPoints[i]
+		for (let i = 0; i < contactCount; ++i) {
+			const cp = contactPoints[i]
 
-      const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
-      const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
-      const vt = relVelX * tangentX + relVelY * tangentY
+			const relVelX = vB.x - cp.rbY * wB - (vA.x - cp.raY * wA)
+			const relVelY = vB.y + cp.rbX * wB - (vA.y + cp.raX * wA)
+			const vt = relVelX * tangentX + relVelY * tangentY
 
-      const lambdaLimit = friction * cp.normalImpulse
-      let lambda = -vt * cp.effTangentMass
+			const lambdaLimit = friction * cp.normalImpulse
+			let lambda = -vt * cp.effTangentMass
 
-      const oldLambda = cp.tangentImpulse
-      let newLambda = oldLambda + lambda
+			const oldLambda = cp.tangentImpulse
+			let newLambda = oldLambda + lambda
 
-      newLambda =
-        newLambda < -lambdaLimit
-          ? -lambdaLimit
-          : newLambda > lambdaLimit
-            ? lambdaLimit
-            : newLambda
+			newLambda =
+				newLambda < -lambdaLimit
+					? -lambdaLimit
+					: newLambda > lambdaLimit
+						? lambdaLimit
+						: newLambda
 
-      cp.tangentImpulse = newLambda
-      lambda = newLambda - oldLambda
+			cp.tangentImpulse = newLambda
+			lambda = newLambda - oldLambda
 
-      vA.x -= tangentX * lambda * mA
-      vA.y -= tangentY * lambda * mA
-      vB.x += tangentX * lambda * mB
-      vB.y += tangentY * lambda * mB
-      wA -= cp.rtA * lambda * iA
-      wB += cp.rtB * lambda * iB
-    }
+			vA.x -= tangentX * lambda * mA
+			vA.y -= tangentY * lambda * mA
+			vB.x += tangentX * lambda * mB
+			vB.y += tangentY * lambda * mB
+			wA -= cp.rtA * lambda * iA
+			wB += cp.rtB * lambda * iB
+		}
 
-    bodyA.angularVelocity = wA
-    bodyB.angularVelocity = wB
-  }
+		bodyA.angularVelocity = wA
+		bodyB.angularVelocity = wB
+	}
 }

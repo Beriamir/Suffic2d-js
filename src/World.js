@@ -1,309 +1,309 @@
-import DynamicTree from "./DynamicTree.js"
-import Vector from "./Vector.js"
-import Vertices from "./Vertices.js"
-import RigidBody from "./RigidBody.js"
-import Circle from "./Circle.js"
-import Collider from "./Collider.js"
-import Island from "./Island.js"
+import DynamicTree from './DynamicTree.js'
+import Vector from './Vector.js'
+import Vertices from './Vertices.js'
+import RigidBody from './RigidBody.js'
+import Circle from './Circle.js'
+import Collider from './Collider.js'
+import Island from './Island.js'
 
 export default class World {
-  #bodies = []
-  #joints = new Map()
-  #contacts = new Map()
-  #contactKeys = []
-  #jointKeys = []
-  #oldContactPoints = new Map()
-  #dynamicTree = new DynamicTree()
-  #nearby = []
-  #collider = new Collider()
+	#bodies = []
+	#joints = new Map()
+	#contacts = new Map()
+	#contactKeys = []
+	#jointKeys = []
+	#oldContactPoints = new Map()
+	#dynamicTree = new DynamicTree()
+	#nearby = []
+	#collider = new Collider()
 
-  constructor(options = {}) {
-    this.gravity = options.gravity ?? new Vector(0, 9.81)
-    this.substeps = options.substeps ?? 1
-    this.primaryIterations = options.primaryIterations ?? 8
-    this.secondaryIterations = options.secondaryIterations ?? 4
-    this.nodeMargin = options.nodeMargin ?? 0.1
-    this.useBlockSolver = options.useBlockSolver ?? true
-    this.useSleeping = options.useSleeping ?? true
-    this.island = new Island(this, options)
-  }
+	constructor(options = {}) {
+		this.gravity = options.gravity ?? new Vector(0, 9.81)
+		this.substeps = options.substeps ?? 1
+		this.primaryIterations = options.primaryIterations ?? 8
+		this.secondaryIterations = options.secondaryIterations ?? 4
+		this.nodeMargin = options.nodeMargin ?? 0.1
+		this.useBlockSolver = options.useBlockSolver ?? true
+		this.useSleeping = options.useSleeping ?? true
+		this.island = new Island(this, options)
+	}
 
-  get bodies() {
-    return this.#bodies
-  }
-  get contacts() {
-    return this.#contacts
-  }
-  get joints() {
-    return this.#joints
-  }
-  get contactKeys() {
-    return this.#contactKeys
-  }
-  get jointKeys() {
-    return this.#jointKeys
-  }
-  get oldContactPoints() {
-    return this.#oldContactPoints
-  }
-  get dynamicTree() {
-    return this.#dynamicTree
-  }
+	get bodies() {
+		return this.#bodies
+	}
+	get contacts() {
+		return this.#contacts
+	}
+	get joints() {
+		return this.#joints
+	}
+	get contactKeys() {
+		return this.#contactKeys
+	}
+	get jointKeys() {
+		return this.#jointKeys
+	}
+	get oldContactPoints() {
+		return this.#oldContactPoints
+	}
+	get dynamicTree() {
+		return this.#dynamicTree
+	}
 
-  clear() {
-    for (let i = 0; i < this.#bodies.length; ++i) {
-      this.destroyBody(this.#bodies[i])
-      --i
-    }
-    this.#oldContactPoints.clear()
-    this.#contacts.clear()
-    this.#contactKeys.length = 0
+	clear() {
+		for (let i = 0; i < this.#bodies.length; ++i) {
+			this.destroyBody(this.#bodies[i])
+			--i
+		}
+		this.#oldContactPoints.clear()
+		this.#contacts.clear()
+		this.#contactKeys.length = 0
 
-    this.#joints.clear()
-    this.#jointKeys.length = 0
-  }
+		this.#joints.clear()
+		this.#jointKeys.length = 0
+	}
 
-  createJoint(joint) {
-    if (!joint) {
-      return joint
-    }
+	createJoint(joint) {
+		if (!joint) {
+			return joint
+		}
 
-    if (joint.type === "GrabJoint") {
-      const key = `${joint.type}-${joint.id}`
-      
-      if (this.#joints.has(key)) {
-        this.destroyJoint(joint)
-      }
+		if (joint.type === 'GrabJoint') {
+			const key = `${joint.type}-${joint.id}`
 
-      joint.key = key
-      joint.body.jointKeys.push(key)
-  
-      this.createBody(joint.body)
-      this.#joints.set(key, joint)
-      this.#jointKeys.push(key)
-    } else {
-      const key = `${joint.type}-${joint.id}`
-      
-      if (this.#joints.has(key)) {
-        this.destroyJoint(joint)
-      }
+			if (this.#joints.has(key)) {
+				this.destroyJoint(joint)
+			}
 
-      joint.key = key
-      joint.bodyA.jointKeys.push(key)
-      joint.bodyB.jointKeys.push(key)
+			joint.key = key
+			joint.body.jointKeys.push(key)
 
-      this.createBody(joint.bodyA)
-      this.createBody(joint.bodyB)
-      this.#joints.set(key, joint)
-      this.#jointKeys.push(key)
-    }
+			this.createBody(joint.body)
+			this.#joints.set(key, joint)
+			this.#jointKeys.push(key)
+		} else {
+			const key = `${joint.type}-${joint.id}`
 
-    return joint
-  }
+			if (this.#joints.has(key)) {
+				this.destroyJoint(joint)
+			}
 
-  destroyJoint(joint) {
-    if (!joint) {
-      return joint
-    }
-    
-    const key = joint.key
-    const stored = this.#joints.get(key)
+			joint.key = key
+			joint.bodyA.jointKeys.push(key)
+			joint.bodyB.jointKeys.push(key)
 
-    if (!stored) {
-      return joint
-    }
+			this.createBody(joint.bodyA)
+			this.createBody(joint.bodyB)
+			this.#joints.set(key, joint)
+			this.#jointKeys.push(key)
+		}
 
-    if (joint.type === "GrabJoint") {
-      const body = stored.body
+		return joint
+	}
 
-      for (let i = 0; i < body.jointKeys.length; ++i) {
-        if (body.jointKeys[i] == key) {
-          body.jointKeys[i] = body.jointKeys[body.jointKeys.length - 1]
-          body.jointKeys.pop()
-          --i
-        }
-      }
-    } else {
-      const { bodyA, bodyB } = stored
+	destroyJoint(joint) {
+		if (!joint) {
+			return joint
+		}
 
-      for (let i = 0; i < bodyA.jointKeys.length; ++i) {
-        if (bodyA.jointKeys[i] == key) {
-          bodyA.jointKeys[i] = bodyA.jointKeys[bodyA.jointKeys.length - 1]
-          bodyA.jointKeys.pop()
-          --i
-        }
-      }
+		const key = joint.key
+		const stored = this.#joints.get(key)
 
-      for (let i = 0; i < bodyB.jointKeys.length; ++i) {
-        if (bodyB.jointKeys[i] == key) {
-          bodyB.jointKeys[i] = bodyB.jointKeys[bodyB.jointKeys.length - 1]
-          bodyB.jointKeys.pop()
-          --i
-        }
-      }
-    }
-    
-    this.#joints.delete(key)
-    for (let i = 0; i < this.#jointKeys.length; ++i) {
-      if (this.#jointKeys[i] == key) {
-        this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
-        this.#jointKeys.pop()
-        --i
-      }
-    }
+		if (!stored) {
+			return joint
+		}
 
-    return joint
-  }
+		if (joint.type === 'GrabJoint') {
+			const body = stored.body
 
-  createBody(body) {
-    if (body.index >= 0) {
-      return body
-    }
+			for (let i = 0; i < body.jointKeys.length; ++i) {
+				if (body.jointKeys[i] == key) {
+					body.jointKeys[i] = body.jointKeys[body.jointKeys.length - 1]
+					body.jointKeys.pop()
+					--i
+				}
+			}
+		} else {
+			const { bodyA, bodyB } = stored
 
-    this.#dynamicTree.insertBody(body, this.nodeMargin)
-    this.#bodies.push(body)
-    body.index = this.#bodies.length - 1
+			for (let i = 0; i < bodyA.jointKeys.length; ++i) {
+				if (bodyA.jointKeys[i] == key) {
+					bodyA.jointKeys[i] = bodyA.jointKeys[bodyA.jointKeys.length - 1]
+					bodyA.jointKeys.pop()
+					--i
+				}
+			}
 
-    return body
-  }
+			for (let i = 0; i < bodyB.jointKeys.length; ++i) {
+				if (bodyB.jointKeys[i] == key) {
+					bodyB.jointKeys[i] = bodyB.jointKeys[bodyB.jointKeys.length - 1]
+					bodyB.jointKeys.pop()
+					--i
+				}
+			}
+		}
 
-  destroyBody(body) {
-    const index = body.index
-    const last = this.#bodies.length - 1
+		this.#joints.delete(key)
+		for (let i = 0; i < this.#jointKeys.length; ++i) {
+			if (this.#jointKeys[i] == key) {
+				this.#jointKeys[i] = this.#jointKeys[this.#jointKeys.length - 1]
+				this.#jointKeys.pop()
+				--i
+			}
+		}
 
-    if (index < 0 || index > last) {
-      return body
-    }
+		return joint
+	}
 
-    this.#dynamicTree.removeBody(body)
+	createBody(body) {
+		if (body.index >= 0) {
+			return body
+		}
 
-    if (index != last) {
-      this.#bodies[index] = this.#bodies[last]
-      this.#bodies[index].index = index
-    }
+		this.#dynamicTree.insertBody(body, this.nodeMargin)
+		this.#bodies.push(body)
+		body.index = this.#bodies.length - 1
 
-    this.#bodies.pop()
-    body.index = -1
+		return body
+	}
 
-    return body
-  }
+	destroyBody(body) {
+		const index = body.index
+		const last = this.#bodies.length - 1
 
-  queryPoint(pointX, pointY, result = []) {
-    return this.#dynamicTree.queryPoint(pointX, pointY, result)
-  }
+		if (index < 0 || index > last) {
+			return body
+		}
 
-  queryAABB(aabb, result = []) {
-    return this.#dynamicTree.queryAABB(aabb, result)
-  }
+		this.#dynamicTree.removeBody(body)
 
-  simulate(dt) {
-    dt /= this.substeps
+		if (index != last) {
+			this.#bodies[index] = this.#bodies[last]
+			this.#bodies[index].index = index
+		}
 
-    for (let step = 0; step < this.substeps; ++step) {
-      // Reset
-      this.island.visited.clear()
-      this.#oldContactPoints.clear()
-      for (let i = 0; i < this.#bodies.length; ++i) {
-        this.#bodies[i].contactKeys.length = 0
-      }
+		this.#bodies.pop()
+		body.index = -1
 
-      // Cache contact points and preserve sleeping contacts
-      for (let i = 0; i < this.#contactKeys.length; ++i) {
-        const key = this.#contactKeys[i]
-        const { bodyA, bodyB, contactPoints } = this.#contacts.get(key)
+		return body
+	}
 
-        this.#oldContactPoints.set(key, contactPoints)
+	queryPoint(pointX, pointY, result = []) {
+		return this.#dynamicTree.queryPoint(pointX, pointY, result)
+	}
 
-        if (
-          (bodyA.isSleeping && bodyB.isSleeping) ||
-          (bodyA.isStatic && bodyB.isSleeping) ||
-          (bodyA.isSleeping && bodyB.isStatic)
-        ) {
-          bodyA.contactKeys.push(key)
-          bodyB.contactKeys.push(key)
-          continue
-        }
+	queryAABB(aabb, result = []) {
+		return this.#dynamicTree.queryAABB(aabb, result)
+	}
 
-        this.#contacts.delete(key)
-        this.#contactKeys[i] = this.#contactKeys[this.#contactKeys.length - 1]
-        this.#contactKeys.pop()
-        --i
-      }
+	simulate(dt) {
+		dt /= this.substeps
 
-      // Collision detection
-      for (let i = 0; i < this.#bodies.length; ++i) {
-        const bodyA = this.#bodies[i]
-        const idA = bodyA.id
+		for (let step = 0; step < this.substeps; ++step) {
+			// Reset
+			this.island.visited.clear()
+			this.#oldContactPoints.clear()
+			for (let i = 0; i < this.#bodies.length; ++i) {
+				this.#bodies[i].contactKeys.length = 0
+			}
 
-        // Broadphase
-        this.#nearby.length = 0
-        this.queryAABB(bodyA.aabb, this.#nearby)
+			// Cache contact points and preserve sleeping contacts
+			for (let i = 0; i < this.#contactKeys.length; ++i) {
+				const key = this.#contactKeys[i]
+				const { bodyA, bodyB, contactPoints } = this.#contacts.get(key)
 
-        for (let j = 0; j < this.#nearby.length; ++j) {
-          const bodyB = this.#nearby[j]
-          const idB = bodyB.id
+				this.#oldContactPoints.set(key, contactPoints)
 
-          if (
-            idA === idB ||
-            !bodyA.aabb.overlaps(bodyB.aabb) ||
-            (bodyA.isStatic && bodyB.isStatic) ||
-            (bodyA.isSleeping && bodyB.isSleeping) ||
-            (bodyA.isStatic && bodyB.isSleeping) ||
-            (bodyA.isSleeping && bodyB.isStatic)
-          ) {
-            continue
-          }
+				if (
+					(bodyA.isSleeping && bodyB.isSleeping) ||
+					(bodyA.isStatic && bodyB.isSleeping) ||
+					(bodyA.isSleeping && bodyB.isStatic)
+				) {
+					bodyA.contactKeys.push(key)
+					bodyB.contactKeys.push(key)
+					continue
+				}
 
-          for (const sA of bodyA.fixtures) {
-            for (const sB of bodyB.fixtures) {
-              const keyBase = 0xf4240
-              const key =
-                idA < idB
-                  ? `${idA * keyBase + idB}-${sA.id * keyBase + sB.id}`
-                  : `${idB * keyBase + idA}-${sB.id * keyBase + sA.id}`
+				this.#contacts.delete(key)
+				this.#contactKeys[i] = this.#contactKeys[this.#contactKeys.length - 1]
+				this.#contactKeys.pop()
+				--i
+			}
 
-              if (this.#contacts.has(key)) {
-                continue
-              }
+			// Collision detection
+			for (let i = 0; i < this.#bodies.length; ++i) {
+				const bodyA = this.#bodies[i]
+				const idA = bodyA.id
 
-              // Narrowphase
-              const contact = this.#collider.collide(sA, sB)
+				// Broadphase
+				this.#nearby.length = 0
+				this.queryAABB(bodyA.aabb, this.#nearby)
 
-              if (!contact) {
-                continue
-              }
+				for (let j = 0; j < this.#nearby.length; ++j) {
+					const bodyB = this.#nearby[j]
+					const idB = bodyB.id
 
-              contact.bodyA = bodyA
-              contact.bodyB = bodyB
+					if (
+						idA === idB ||
+						!bodyA.aabb.overlaps(bodyB.aabb) ||
+						(bodyA.isStatic && bodyB.isStatic) ||
+						(bodyA.isSleeping && bodyB.isSleeping) ||
+						(bodyA.isStatic && bodyB.isSleeping) ||
+						(bodyA.isSleeping && bodyB.isStatic)
+					) {
+						continue
+					}
 
-              bodyA.contactKeys.push(key)
-              bodyB.contactKeys.push(key)
+					for (const sA of bodyA.fixtures) {
+						for (const sB of bodyB.fixtures) {
+							const keyBase = 0xf4240
+							const key =
+								idA < idB
+									? `${idA * keyBase + idB}-${sA.id * keyBase + sB.id}`
+									: `${idB * keyBase + idA}-${sB.id * keyBase + sA.id}`
 
-              this.#contactKeys.push(key)
-              this.#contacts.set(key, contact)
-            }
-          }
-        }
-      }
+							if (this.#contacts.has(key)) {
+								continue
+							}
 
-      let islandId = 0
-      for (let i = 0; i < this.#bodies.length; ++i) {
-        const body = this.#bodies[i]
+							// Narrowphase
+							const contact = this.#collider.collide(sA, sB)
 
-        if (this.island.visited.has(body.id) || body.isStatic) {
-          continue
-        }
+							if (!contact) {
+								continue
+							}
 
-        this.island.clear()
-        this.island.build(body)
-        this.island.solve(dt)
+							contact.bodyA = bodyA
+							contact.bodyB = bodyB
 
-        islandId++
+							bodyA.contactKeys.push(key)
+							bodyB.contactKeys.push(key)
 
-        for (let j = 0; j < this.island.bodies.length; ++j) {
-          this.island.bodies[j].islandId = islandId
-        }
-      }
-    }
-  }
+							this.#contactKeys.push(key)
+							this.#contacts.set(key, contact)
+						}
+					}
+				}
+			}
+
+			let islandId = 0
+			for (let i = 0; i < this.#bodies.length; ++i) {
+				const body = this.#bodies[i]
+
+				if (this.island.visited.has(body.id) || body.isStatic) {
+					continue
+				}
+
+				this.island.clear()
+				this.island.build(body)
+				this.island.solve(dt)
+
+				islandId++
+
+				for (let j = 0; j < this.island.bodies.length; ++j) {
+					this.island.bodies[j].islandId = islandId
+				}
+			}
+		}
+	}
 }

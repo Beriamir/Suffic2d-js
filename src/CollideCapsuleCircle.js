@@ -1,56 +1,56 @@
 export default class CollideCapsuleCircle {
-  constructor() {}
+	constructor() {}
 
-  collide(sA, sB, manifold = {}) {
-    if (!sA.aabb.overlaps(sB.aabb)) {
-      return null
-    }
+	collide(sA, sB, manifold = {}) {
+		if (!sA.aabb.overlaps(sB.aabb)) {
+			return null
+		}
 
-    const abX = sA.center2.x - sA.center1.x
-    const abY = sA.center2.y - sA.center1.y
-    const apX = sB.center.x - sA.center1.x
-    const apY = sB.center.y - sA.center1.y
+		const abX = sA.center2.x - sA.center1.x
+		const abY = sA.center2.y - sA.center1.y
+		const apX = sB.center.x - sA.center1.x
+		const apY = sB.center.y - sA.center1.y
 
-    const abMagSq = abX * abX + abY * abY
-    const apProj = (apX * abX + apY * abY) / abMagSq
-    let t = apProj
+		const abMagSq = abX * abX + abY * abY
+		const apProj = (apX * abX + apY * abY) / abMagSq
+		let t = apProj
 
-    if (t < 0) t = 0
-    else if (t > 1) t = 1
+		if (t < 0) t = 0
+		else if (t > 1) t = 1
 
-    const projX = sA.center1.x + abX * t
-    const projY = sA.center1.y + abY * t
+		const projX = sA.center1.x + abX * t
+		const projY = sA.center1.y + abY * t
 
-    const deltaX = sB.center.x - projX
-    const deltaY = sB.center.y - projY
-    const magSq = deltaX * deltaX + deltaY * deltaY
-    const radiiSum = sA.radius + sB.radius
+		const deltaX = sB.center.x - projX
+		const deltaY = sB.center.y - projY
+		const magSq = deltaX * deltaX + deltaY * deltaY
+		const radiiSum = sA.radius + sB.radius
 
-    if (magSq === 0 || magSq >= radiiSum * radiiSum) {
-      return null
-    }
+		if (magSq === 0 || magSq >= radiiSum * radiiSum) {
+			return null
+		}
 
-    const distance = Math.sqrt(magSq)
-    const invDistance = 1 / distance
-    const normalX = deltaX * invDistance
-    const normalY = deltaY * invDistance
-    const overlap = radiiSum - distance
+		const distance = Math.sqrt(magSq)
+		const invDistance = 1 / distance
+		const normalX = deltaX * invDistance
+		const normalY = deltaY * invDistance
+		const overlap = radiiSum - distance
 
-    manifold.normalX = normalX
-    manifold.normalY = normalY
-    manifold.overlap = overlap
-    manifold.contactPoints = [
-      {
-        id: `${sA.id}-${sB.id},0`,
-        pointX: sB.center.x - normalX * sB.radius,
-        pointY: sB.center.y - normalY * sB.radius,
-        overlap,
-        normalImpulse: 0,
-        tangentImpulse: 0,
-        persistent: false
-      }
-    ]
+		manifold.normalX = normalX
+		manifold.normalY = normalY
+		manifold.overlap = overlap
+		manifold.contactPoints = [
+			{
+				id: `${sA.id}-${sB.id},0`,
+				pointX: sB.center.x - normalX * sB.radius,
+				pointY: sB.center.y - normalY * sB.radius,
+				overlap,
+				normalImpulse: 0,
+				tangentImpulse: 0,
+				persistent: false
+			}
+		]
 
-    return manifold
-  }
+		return manifold
+	}
 }
