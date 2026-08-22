@@ -1,8 +1,9 @@
 export default class CollidePolygonCircle {
-	#axes = []
-	#projA = {}
-	#projB = {}
-	constructor() {}
+	constructor() {
+		this.axes = []
+		this.projA = {}
+		this.projB = {}
+	}
 
 	collide(sA, sB, manifold = {}) {
 		if (!sA.aabb.overlaps(sB.aabb)) {
@@ -13,13 +14,13 @@ export default class CollidePolygonCircle {
 		const dirY = sB.center.y - sA.center.y
 		const best = this.#bestPoint(sA.worldVertices, dirX, dirY)
 
-		this.#axes.length = 0
-		this.#axes.push(
+		this.axes.length = 0
+		this.axes.push(
 			sB.center.x - sA.worldVertices[best],
 			sB.center.y - sA.worldVertices[best + 1]
 		)
 
-		const axes = this.#getAxes(sA.worldVertices, this.#axes)
+		const axes = this.#getAxes(sA.worldVertices, this.axes)
 
 		let normalX = dirX
 		let normalY = dirY
@@ -41,19 +42,16 @@ export default class CollidePolygonCircle {
 			this.#projVertices(sA.worldVertices, axisX, axisY)
 
 			const projB = sB.center.x * axisX + sB.center.y * axisY
-			this.#projB.min = projB - sB.radius
-			this.#projB.max = projB + sB.radius
+			this.projB.min = projB - sB.radius
+			this.projB.max = projB + sB.radius
 
-			if (
-				this.#projA.min > this.#projB.max ||
-				this.#projB.min > this.#projA.max
-			) {
+			if (this.projA.min > this.projB.max || this.projB.min > this.projA.max) {
 				return null
 			}
 
 			const minOverlap = Math.min(
-				this.#projA.max - this.#projB.min,
-				this.#projB.max - this.#projA.min
+				this.projA.max - this.projB.min,
+				this.projB.max - this.projA.min
 			)
 
 			if (minOverlap < overlap) {
@@ -120,14 +118,14 @@ export default class CollidePolygonCircle {
 	}
 
 	#projVertices(vertices, dx, dy) {
-		this.#projA.min = Infinity
-		this.#projA.max = -Infinity
+		this.projA.min = Infinity
+		this.projA.max = -Infinity
 
 		for (let i = 0; i < vertices.length; i += 2) {
 			const proj = vertices[i] * dx + vertices[i + 1] * dy
 
-			if (proj < this.#projA.min) this.#projA.min = proj
-			if (proj > this.#projA.max) this.#projA.max = proj
+			if (proj < this.projA.min) this.projA.min = proj
+			if (proj > this.projA.max) this.projA.max = proj
 		}
 	}
 }
