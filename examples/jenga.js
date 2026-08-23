@@ -1,4 +1,6 @@
-export default (s2, world, options = {}) => {
+import { RigidBody } from '../src/suffic2d.js'
+
+export default (world, options = {}) => {
 	const {
 		levels = 7,
 		width = 0.48,
@@ -9,7 +11,7 @@ export default (s2, world, options = {}) => {
 		bottomY = 0
 	} = options
 
-	const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
+	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
 	}).createPolygon(
 		new Float32Array([
@@ -41,7 +43,7 @@ export default (s2, world, options = {}) => {
 			const x = centerX - block * blockSpacing
 			const angle = horizontal ? 0 : Math.PI * 0.5
 
-			const body = new s2.RigidBody(x, y, angle, {
+			const body = new RigidBody(x, y, angle, {
 				friction: 0.3
 			}).createPolygon(
 				new Float32Array([

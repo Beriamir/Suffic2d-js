@@ -1,7 +1,6 @@
 import boxStacks from './box-stacks.js'
 
 export default (
-	s2,
 	world,
 	options = {
 		columns: 35,
@@ -15,5 +14,5 @@ export default (
 		bottomY: 0
 	}
 ) => {
-	boxStacks(s2, world, options)
+	boxStacks(world, options)
 }

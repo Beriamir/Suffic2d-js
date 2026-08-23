@@ -1,4 +1,6 @@
-export default (s2, world, options = {}) => {
+import { RigidBody } from '../src/suffic2d.js'
+
+export default (world, options = {}) => {
 	const {
 		spacing = 1,
 		rampWidth = 8,
@@ -9,7 +11,7 @@ export default (s2, world, options = {}) => {
 		bottomY = 0
 	} = options
 
-	const ramp = new s2.RigidBody(-rampWidth * 0.3, -5, 0.2, {
+	const ramp = new RigidBody(-rampWidth * 0.3, -5, 0.2, {
 		isStatic: true
 	}).createPolygon(
 		new Float32Array([
@@ -27,7 +29,7 @@ export default (s2, world, options = {}) => {
 
 	world.createBody(ramp)
 
-	const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
+	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
 	}).createPolygon(
 		new Float32Array([
@@ -47,7 +49,7 @@ export default (s2, world, options = {}) => {
 
 	for (let i = 10, j = 0; i >= 0; i--, j++) {
 		const size = 0.24
-		const body = new s2.RigidBody(
+		const body = new RigidBody(
 			-rampWidth + j * spacing,
 			-10 + size * j,
 			ramp.rotation,

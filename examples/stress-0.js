@@ -1,7 +1,6 @@
 import pyramid from './pyramid.js'
 
 export default (
-	s2,
 	world,
 	options = {
 		rows: 45,
@@ -14,5 +13,5 @@ export default (
 		bottomY: 0
 	}
 ) => {
-	pyramid(s2, world, options)
+	pyramid(world, options)
 }

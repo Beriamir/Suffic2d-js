@@ -1,4 +1,6 @@
-export default (s2, world, options = {}) => {
+import { RigidBody, Vector } from '../src/suffic2d.js'
+
+export default (world, options = {}) => {
 	const {
 		columns = 4,
 		rows = 4,
@@ -9,7 +11,7 @@ export default (s2, world, options = {}) => {
 		bottomY = 0
 	} = options
 
-	const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
+	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
 	}).createPolygon(
 		new Float32Array([
@@ -38,7 +40,7 @@ export default (s2, world, options = {}) => {
 		for (let row = 0; row < rows; ++row) {
 			const y = bottomY - size * 2 - row * rowStep
 
-			const body = new s2.RigidBody(x, y, 0, {
+			const body = new RigidBody(x, y, 0, {
 				friction: 0.3
 			})
 
@@ -47,16 +49,16 @@ export default (s2, world, options = {}) => {
 
 				body
 					.createPolygon(new Float32Array(rectangle), {
-						offset: new s2.Vector(-size * gap, -size * gap)
+						offset: new Vector(-size * gap, -size * gap)
 					})
 					.createPolygon(new Float32Array(rectangle), {
-						offset: new s2.Vector(size * gap, -size * gap)
+						offset: new Vector(size * gap, -size * gap)
 					})
 					.createPolygon(new Float32Array(rectangle), {
-						offset: new s2.Vector(size * gap, size * gap)
+						offset: new Vector(size * gap, size * gap)
 					})
 					.createPolygon(new Float32Array(rectangle), {
-						offset: new s2.Vector(-size * gap, size * gap)
+						offset: new Vector(-size * gap, size * gap)
 					})
 			} else {
 				const radius = size
@@ -64,16 +66,16 @@ export default (s2, world, options = {}) => {
 
 				body
 					.createCircle(radius, {
-						offset: new s2.Vector(-size * gap, -size * gap)
+						offset: new Vector(-size * gap, -size * gap)
 					})
 					.createCircle(radius, {
-						offset: new s2.Vector(size * gap, -size * gap)
+						offset: new Vector(size * gap, -size * gap)
 					})
 					.createCircle(radius, {
-						offset: new s2.Vector(size * gap, size * gap)
+						offset: new Vector(size * gap, size * gap)
 					})
 					.createCircle(radius, {
-						offset: new s2.Vector(-size * gap, size * gap)
+						offset: new Vector(-size * gap, size * gap)
 					})
 			}
 			world.createBody(body)

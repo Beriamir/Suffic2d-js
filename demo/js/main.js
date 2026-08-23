@@ -1,11 +1,11 @@
-import * as s2 from '../../src/suffic2d.js'
+import { Renderer, World, GrabJoint } from '../../src/suffic2d.js'
 import dat from '../../lib/dat.gui.js'
 import SceneManager from './SceneManager.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-	const renderer = new s2.Renderer(document.getElementById('canvas'))
-	const world = new s2.World()
-	const sceneManager = new SceneManager(s2, world)
+	const renderer = new Renderer(document.getElementById('canvas'))
+	const world = new World()
+	const sceneManager = new SceneManager(world)
 	const gui = new dat.GUI()
 
 	const status = {
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Grab
 	{
-		const s2GrabJoint = new s2.GrabJoint(0, 0, null, {
+		const grabJoint = new GrabJoint(0, 0, null, {
 			damping: 0.3,
 			stiffness: 0.1
 		})
@@ -25,14 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		renderer.onDown = (x, y) => {
 			for (const body of world.queryPoint(x, y)) {
 				if (body.testPoint(x, y)) {
-					s2GrabJoint.set(x, y, body)
-					world.createJoint(s2GrabJoint)
+					grabJoint.set(x, y, body)
+					world.createJoint(grabJoint)
 					break
 				}
 			}
 		}
-		renderer.onMove = (dx, dy) => s2GrabJoint.move(dx, dy)
-		renderer.onUp = () => world.destroyJoint(s2GrabJoint)
+		renderer.onMove = (dx, dy) => grabJoint.move(dx, dy)
+		renderer.onUp = () => world.destroyJoint(grabJoint)
 	}
 
 	// GUI
@@ -56,9 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		worldGui.add(world, 'useSleeping').name('sleeping')
 		worldGui
 			.add(sceneManager, 'scene', sceneManager.getList())
-			.onChange(scene => sceneManager.switch(scene))
+			.onChange(scene => sceneManager.load(scene))
 			.name('Scene')
-		worldGui.add(sceneManager, 'restart').name('Restart')
+		worldGui.add(sceneManager, 'load').name('Restart')
 		worldGui.open()
 	}
 
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		let last = performance.now()
 
 		// Initial scene
-		sceneManager.switch(sceneManager.scene)
+		sceneManager.load(sceneManager.scene)
 
 		const update = now => {
 			const dt = now - last

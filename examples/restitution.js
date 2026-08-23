@@ -1,4 +1,6 @@
-export default (s2, world, options = {}) => {
+import { RigidBody } from '../src/suffic2d.js'
+
+export default (world, options = {}) => {
 	const {
 		spacing = 0.24,
 		radius = 0.24,
@@ -8,7 +10,7 @@ export default (s2, world, options = {}) => {
 		bottomY = 0
 	} = options
 
-	const ground = new s2.RigidBody(centerX, bottomY + groundHeight, 0, {
+	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
 	}).createPolygon(
 		new Float32Array([
@@ -35,7 +37,7 @@ export default (s2, world, options = {}) => {
 		const x = startX + col * colStep
 		const y = bottomY - radius * 5 - rowStep
 
-		const body = new s2.RigidBody(x, y, 0, {
+		const body = new RigidBody(x, y, 0, {
 			friction: 0.3,
 			restitution: col / 10
 		}).createCircle(radius, {})

@@ -1,7 +1,6 @@
 import mixShapes from './mix-shapes.js'
 
 export default (
-	s2,
 	world,
 	options = {
 		count: 1000,
@@ -11,5 +10,5 @@ export default (
 		bottomY: 0
 	}
 ) => {
-	mixShapes(s2, world, options)
+	mixShapes(world, options)
 }

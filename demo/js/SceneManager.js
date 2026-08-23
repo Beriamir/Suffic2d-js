@@ -13,8 +13,7 @@ import stress1 from '../../examples/stress-1.js'
 import stress2 from '../../examples/stress-2.js'
 
 export default class SceneManager {
-	constructor(s2, world) {
-		this.s2 = s2
+	constructor(world) {
 		this.world = world
 		this.scene = 'Pyramid'
 		this.scenes = {
@@ -34,13 +33,15 @@ export default class SceneManager {
 		}
 	}
 
-	restart() {
-		this.switch(this.scene)
-	}
+	load(scene = this.scene) {
+		const loadScene = this.scenes[scene]
 
-	switch(scene) {
+		if (!loadScene) {
+			throw new Error(`Scene ${scene} not found!`)
+		}
+
 		this.world.clear()
-		this.scenes[scene](this.s2, this.world)
+		loadScene(this.world)
 	}
 
 	getList(out = []) {
