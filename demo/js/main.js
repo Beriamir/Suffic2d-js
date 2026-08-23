@@ -77,19 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
 			last = now
 			accu += dt
 
-			world.simulate(step)
-
 			if (accu >= step) {
+				world.simulate(step)
 				demo.update(dt)
-				accu = 0
+
+				status.bodies = world.bodies.length
+				status.contacts = world.contacts.size
+				status.joints = world.joints.size
+				status.fps = 1 / dt
+
+				renderer.draw(world)
+				accu -= step
 			}
-
-			status.bodies = world.bodies.length
-			status.contacts = world.contacts.size
-			status.joints = world.joints.size
-			status.fps = 1 / dt
-
-			renderer.draw(world)
 			requestAnimationFrame(loop)
 		}
 
