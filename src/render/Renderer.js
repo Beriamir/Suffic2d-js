@@ -6,7 +6,7 @@ export default class Renderer {
 		this.canvas = canvas
 		this.camera = new Camera(0, 0, 0, 100)
 		this.gfx = new Graphics(canvas, options)
-		this.dpr = window.devicePixelRatio ?? 1 // before dividing anything with the camera.scale, multiply the value by the dpr first.
+		this.resolution = options.resolution ?? 1 // before dividing anything with the camera.scale, multiply the value by the resolution first.
 		this.debugColor = '#ffffff'
 		this.debugs = {
 			bodies: options.bodies ?? true,
@@ -43,7 +43,7 @@ export default class Renderer {
 	}
 
 	resize(w, h) {
-		this.gfx.setSize(w, h, this.dpr)
+		this.gfx.setSize(w, h, this.resolution)
 	}
 
 	debugList(out = []) {
@@ -55,12 +55,12 @@ export default class Renderer {
 	}
 
 	onDown(x, y) {
-		const { camera, canvas, dpr } = this
+		const { camera, canvas, resolution } = this
 
 		const centerX = canvas.width * 0.5
 		const centerY = canvas.height * 0.5
-		const x0 = (x * dpr - centerX) / camera.scale
-		const y0 = (y * dpr - centerY) / camera.scale
+		const x0 = (x * resolution - centerX) / camera.scale
+		const y0 = (y * resolution - centerY) / camera.scale
 
 		const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
 		const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
@@ -69,22 +69,22 @@ export default class Renderer {
 	}
 
 	onMove(dx, dy, x = 0, y = 0) {
-		const { camera, canvas, dpr } = this
+		const { camera, canvas, resolution } = this
 
 		const moveX = dx * camera.cos + dy * camera.sin
 		const moveY = -dx * camera.sin + dy * camera.cos
 
 		const centerX = canvas.width * 0.5
 		const centerY = canvas.height * 0.5
-		const x0 = (x * dpr - centerX) / camera.scale
-		const y0 = (y * dpr - centerY) / camera.scale
+		const x0 = (x * resolution - centerX) / camera.scale
+		const y0 = (y * resolution - centerY) / camera.scale
 
 		const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
 		const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
 
 		return [
-			(moveX * dpr) / camera.scale,
-			(moveY * dpr) / camera.scale,
+			(moveX * resolution) / camera.scale,
+			(moveY * resolution) / camera.scale,
 			pointX,
 			pointY
 		]
@@ -105,9 +105,9 @@ export default class Renderer {
 	}
 
 	draw(world) {
-		const { gfx, camera, canvas, debugs, islandColors, dpr } = this
+		const { gfx, camera, canvas, debugs, islandColors, resolution } = this
 		const debugColor = this.debugColor
-		const strokeWidth = dpr / camera.scale
+		const strokeWidth = resolution / camera.scale
 
 		gfx.clear(0, 0, canvas.width, canvas.height)
 		gfx.setCamera(camera)
@@ -272,7 +272,7 @@ export default class Renderer {
 						strokeWidth
 					})
 					gfx.drawCircle(originX, originY, 1, 0, {
-						radius: (2 * dpr) / camera.scale,
+						radius: (2 * resolution) / camera.scale,
 						fillColor: debugColor,
 						noStroke: true
 					})
@@ -304,7 +304,7 @@ export default class Renderer {
 
 					if (debugs.point) {
 						gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-							radius: (2 * dpr) / camera.scale,
+							radius: (2 * resolution) / camera.scale,
 							fillColor: debugColor,
 							noStroke: true,
 							strokeWidth
@@ -313,7 +313,7 @@ export default class Renderer {
 
 					if (debugs.normal) {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-							length: (10 * dpr) / camera.scale,
+							length: (10 * resolution) / camera.scale,
 							strokeColor: debugColor,
 							strokeWidth
 						})
