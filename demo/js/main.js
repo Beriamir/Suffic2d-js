@@ -3,9 +3,9 @@ import dat from '../../lib/dat.gui.mjs'
 import SceneManager from './SceneManager.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-	const s2Renderer = new s2.Renderer(document.getElementById('canvas'))
-	const s2World = new s2.World()
-	const sceneManager = new SceneManager(s2, s2World)
+	const renderer = new s2.Renderer(document.getElementById('canvas'))
+	const world = new s2.World()
+	const sceneManager = new SceneManager(s2, world)
 	const gui = new dat.GUI()
 
 	const status = {
@@ -22,17 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
 			stiffness: 0.1
 		})
 
-		s2Renderer.onDown = (x, y) => {
-			for (const body of s2World.queryPoint(x, y)) {
+		renderer.onDown = (x, y) => {
+			for (const body of world.queryPoint(x, y)) {
 				if (body.testPoint(x, y)) {
 					s2GrabJoint.set(x, y, body)
-					s2World.createJoint(s2GrabJoint)
+					world.createJoint(s2GrabJoint)
 					break
 				}
 			}
 		}
-		s2Renderer.onMove = (dx, dy) => s2GrabJoint.move(dx, dy)
-		s2Renderer.onUp = () => s2World.destroyJoint(s2GrabJoint)
+		renderer.onMove = (dx, dy) => s2GrabJoint.move(dx, dy)
+		renderer.onUp = () => world.destroyJoint(s2GrabJoint)
 	}
 
 	// GUI
@@ -45,15 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
 			statusGui.add(status, key).listen()
 		}
 
-		for (const key of s2Renderer.getDebugList()) {
-			renderGui.add(s2Renderer.debugs, key)
+		for (const key of renderer.getDebugList()) {
+			renderGui.add(renderer.debugs, key)
 		}
 
-		worldGui.add(s2World, 'substeps', 1, 10, 1)
-		worldGui.add(s2World, 'primaryIterations', 1, 20, 1).name('primary')
-		worldGui.add(s2World, 'secondaryIterations', 1, 10, 1).name('secondary')
-		worldGui.add(s2World, 'useBlockSolver').name('block solver')
-		worldGui.add(s2World, 'useSleeping').name('sleeping')
+		worldGui.add(world, 'substeps', 1, 10, 1)
+		worldGui.add(world, 'primaryIterations', 1, 20, 1).name('primary')
+		worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary')
+		worldGui.add(world, 'useBlockSolver').name('block solver')
+		worldGui.add(world, 'useSleeping').name('sleeping')
 		worldGui
 			.add(sceneManager, 'scene', sceneManager.getList())
 			.onChange(scene => sceneManager.switch(scene))
@@ -73,13 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			const dt = now - last
 			last = now
 
-			s2World.simulate(step)
-			s2Renderer.draw(s2World)
+			world.simulate(step)
+			renderer.draw(world)
 
 			status.fps = 1000 / dt
-			status.bodies = s2World.bodies.length
-			status.contacts = s2World.contacts.size
-			status.joints = s2World.joints.size
+			status.bodies = world.bodies.length
+			status.contacts = world.contacts.size
+			status.joints = world.joints.size
 
 			requestAnimationFrame(update)
 		}
