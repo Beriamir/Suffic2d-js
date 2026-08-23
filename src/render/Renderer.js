@@ -118,7 +118,13 @@ export default class Renderer {
 				const { position, cos, sin, isSleeping, isStatic, islandId, fixtures } =
 					world.bodies[i]
 
-				const strokeColor = debugs.wireframe ? debugColor : 'black'
+				const strokeColor =
+					debugs.wireframe && (isSleeping || isStatic)
+						? 'gray'
+						: debugs.wireframe
+							? debugColor
+							: 'black'
+
 				const fillColor =
 					isSleeping || isStatic
 						? 'gray'
