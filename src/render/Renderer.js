@@ -1,19 +1,13 @@
-import Input from './Input.js'
 import Graphics from './Graphics.js'
 import Camera from './Camera.js'
 
 export default class Renderer {
 	constructor(canvas, options = {}) {
 		this.canvas = canvas
-		this.input = new Input(canvas)
 		this.camera = new Camera(0, 0, 0, 100)
 		this.gfx = new Graphics(canvas, options)
-
-		this.onDown = null
-		this.onMove = null
-		this.onUp = null
-		this.setup()
-
+		this.dpr = window.devicePixelRatio ?? 1 // before dividing anything with the camera.scale, multiply the value by the dpr first.
+		this.debugColor = '#ffffff'
 		this.debugs = {
 			bodies: options.bodies ?? true,
 			wireframe: options.wireframe ?? false,
@@ -26,8 +20,6 @@ export default class Renderer {
 			aabb: options.aabb ?? false,
 			bvh: options.bvh ?? false
 		}
-
-		this.debugColor = '#ffffff'
 		this.islandColors = [
 			'#0ea5e9',
 			'#3b82f6',
@@ -46,63 +38,15 @@ export default class Renderer {
 			'#14b8a6',
 			'#06b6d4'
 		]
+
+		this.resize(innerWidth, innerHeight)
 	}
 
-	setup() {
-		const { input, camera, canvas } = this
-
-		input.onDown = (x, y) => {
-			const centerX = canvas.width * 0.5
-			const centerY = canvas.height * 0.5
-			const x0 = (x - centerX) / camera.scale
-			const y0 = (y - centerY) / camera.scale
-
-			const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
-			const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
-
-			if (typeof this.onDown === 'function') {
-				this.onDown(grabX, grabY)
-			}
-		}
-		input.onMove = (dx, dy, x, y) => {
-			const worldDx = dx * camera.cos + dy * camera.sin
-			const worldDy = -dx * camera.sin + dy * camera.cos
-
-			const centerX = canvas.width * 0.5
-			const centerY = canvas.height * 0.5
-			const x0 = (x - centerX) / camera.scale
-			const y0 = (y - centerY) / camera.scale
-
-			const grabX = camera.x + (x0 * camera.cos + y0 * camera.sin)
-			const grabY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
-
-			if (typeof this.onMove === 'function') {
-				this.onMove(
-					worldDx / camera.scale,
-					worldDy / camera.scale,
-					grabX,
-					grabY
-				)
-			}
-		}
-		input.onUp = () => {
-			if (typeof this.onUp === 'function') {
-				this.onUp()
-			}
-		}
-		input.onPan = (dx, dy) => camera.move(dx, dy)
-		input.onZoom = factor => camera.zoom(factor)
-		input.onRotate = delta => camera.rotate(delta)
-		input.onResize = (w, h) => this.setSize(w, h)
-
-		this.setSize(innerWidth, innerHeight)
+	resize(w, h) {
+		this.gfx.setSize(w, h, this.dpr)
 	}
 
-	setSize(width, height) {
-		this.gfx.setSize(width, height)
-	}
-
-	getDebugList(out = []) {
+	debugList(out = []) {
 		for (const key of Object.keys(this.debugs)) {
 			out.push(key)
 		}
@@ -110,10 +54,60 @@ export default class Renderer {
 		return out
 	}
 
+	onDown(x, y) {
+		const { camera, canvas, dpr } = this
+
+		const centerX = canvas.width * 0.5
+		const centerY = canvas.height * 0.5
+		const x0 = (x * dpr - centerX) / camera.scale
+		const y0 = (y * dpr - centerY) / camera.scale
+
+		const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+		const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+
+		return [pointX, pointY]
+	}
+
+	onMove(dx, dy, x = 0, y = 0) {
+		const { camera, canvas, dpr } = this
+
+		const moveX = dx * camera.cos + dy * camera.sin
+		const moveY = -dx * camera.sin + dy * camera.cos
+
+		const centerX = canvas.width * 0.5
+		const centerY = canvas.height * 0.5
+		const x0 = (x * dpr - centerX) / camera.scale
+		const y0 = (y * dpr - centerY) / camera.scale
+
+		const pointX = camera.x + (x0 * camera.cos + y0 * camera.sin)
+		const pointY = camera.y + (-x0 * camera.sin + y0 * camera.cos)
+
+		return [
+			(moveX * dpr) / camera.scale,
+			(moveY * dpr) / camera.scale,
+			pointX,
+			pointY
+		]
+	}
+
+	onUp() {}
+
+	pan(dx, dy) {
+		this.camera.move(dx, dy)
+	}
+
+	zoom(factor) {
+		this.camera.zoom(factor)
+	}
+
+	rotate(delta) {
+		this.camera.rotate(delta)
+	}
+
 	draw(world) {
-		const { gfx, camera, canvas, debugs, islandColors } = this
+		const { gfx, camera, canvas, debugs, islandColors, dpr } = this
 		const debugColor = this.debugColor
-		const strokeWidth = 1 / camera.scale
+		const strokeWidth = dpr / camera.scale
 
 		gfx.clear(0, 0, canvas.width, canvas.height)
 		gfx.setCamera(camera)
@@ -272,7 +266,7 @@ export default class Renderer {
 						strokeWidth
 					})
 					gfx.drawCircle(originX, originY, 1, 0, {
-						radius: 2 / camera.scale,
+						radius: (2 * dpr) / camera.scale,
 						fillColor: debugColor,
 						noStroke: true
 					})
@@ -304,7 +298,7 @@ export default class Renderer {
 
 					if (debugs.point) {
 						gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
-							radius: 1.5 / camera.scale,
+							radius: (2 * dpr) / camera.scale,
 							fillColor: debugColor,
 							noStroke: true,
 							strokeWidth
@@ -313,7 +307,7 @@ export default class Renderer {
 
 					if (debugs.normal) {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
-							length: 8 / camera.scale,
+							length: (10 * dpr) / camera.scale,
 							strokeColor: debugColor,
 							strokeWidth
 						})

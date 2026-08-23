@@ -1,13 +1,14 @@
-import { Renderer, World, GrabJoint } from '../../src/suffic2d.js'
+import { Renderer, Input, World } from '../../src/suffic2d.js'
 import dat from '../../lib/dat.gui.js'
-import SceneManager from './SceneManager.js'
+import Demo from './Demo.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-	const renderer = new Renderer(document.getElementById('canvas'))
+	const canvas = document.getElementById('canvas')
+	const renderer = new Renderer(canvas)
+	const input = new Input(canvas)
 	const world = new World()
-	const sceneManager = new SceneManager(world)
+	const demo = new Demo(world)
 	const gui = new dat.GUI()
-
 	const status = {
 		fps: 0,
 		bodies: 0,
@@ -15,27 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		joints: 0
 	}
 
-	// Grab
-	{
-		const grabJoint = new GrabJoint(0, 0, null, {
-			damping: 0.3,
-			stiffness: 0.1
-		})
-
-		renderer.onDown = (x, y) => {
-			for (const body of world.queryPoint(x, y)) {
-				if (body.testPoint(x, y)) {
-					grabJoint.set(x, y, body)
-					world.createJoint(grabJoint)
-					break
-				}
-			}
-		}
-		renderer.onMove = (dx, dy) => grabJoint.move(dx, dy)
-		renderer.onUp = () => world.destroyJoint(grabJoint)
-	}
-
-	// GUI
+	// Setup GUI
 	{
 		const statusGui = gui.addFolder('Status')
 		const renderGui = gui.addFolder('Render')
@@ -45,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			statusGui.add(status, key).listen()
 		}
 
-		for (const key of renderer.getDebugList()) {
+		for (const key of renderer.debugList()) {
 			renderGui.add(renderer.debugs, key)
 		}
 
@@ -55,37 +36,63 @@ document.addEventListener('DOMContentLoaded', () => {
 		worldGui.add(world, 'useBlockSolver').name('block solver')
 		worldGui.add(world, 'useSleeping').name('sleeping')
 		worldGui
-			.add(sceneManager, 'scene', sceneManager.getList())
-			.onChange(scene => sceneManager.load(scene))
+			.add(demo, 'scene', demo.sceneList())
+			.onChange(scene => demo.load(scene))
 			.name('Scene')
-		worldGui.add(sceneManager, 'load').name('Restart')
+		worldGui.add(demo, 'load').name('Restart')
 		worldGui.open()
 	}
 
-	function setup() {
+	// Setup events
+	{
+		input.onDown = (x, y) => {
+			const [pointX, pointY] = renderer.onDown(x, y)
+
+			demo.onDown(pointX, pointY)
+		}
+		input.onMove = (dx, dy) => {
+			const [moveX, moveY] = renderer.onMove(dx, dy)
+
+			demo.onMove(moveX, moveY)
+		}
+		input.onUp = () => {
+			demo.onUp()
+		}
+		input.onPan = (dx, dy) => renderer.pan(dx, dy)
+		input.onZoom = factor => renderer.zoom(factor)
+		input.onRotate = delta => renderer.rotate(delta)
+		input.onResize = (w, h) => renderer.resize(w, h)
+	}
+
+	demo.initialize()
+
+	// Animation loop
+	{
 		const step = 1 / 60
 		let last = performance.now()
+		let accu = 0
 
-		// Initial scene
-		sceneManager.load(sceneManager.scene)
-
-		const update = now => {
-			const dt = now - last
+		const loop = now => {
+			const dt = (now - last) * 0.001
 			last = now
+			accu += dt
 
 			world.simulate(step)
-			renderer.draw(world)
 
-			status.fps = 1000 / dt
+			if (accu >= step) {
+				demo.update(dt)
+				accu = 0
+			}
+
 			status.bodies = world.bodies.length
 			status.contacts = world.contacts.size
 			status.joints = world.joints.size
+			status.fps = 1 / dt
 
-			requestAnimationFrame(update)
+			renderer.draw(world)
+			requestAnimationFrame(loop)
 		}
 
-		requestAnimationFrame(update)
+		requestAnimationFrame(loop)
 	}
-
-	setup()
 })

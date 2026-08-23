@@ -5,9 +5,11 @@ export default class Graphics {
 		this.canvas = canvas
 	}
 
-	setSize(w, h) {
-		this.canvas.width = w
-		this.canvas.height = h
+	setSize(w, h, scale = 1) {
+		this.canvas.width = w * scale
+		this.canvas.height = h * scale
+		this.canvas.style.width = w + 'px'
+		this.canvas.style.height = h + 'px'
 	}
 
 	clear(x, y, w, h) {

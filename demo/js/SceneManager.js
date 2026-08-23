@@ -44,7 +44,7 @@ export default class SceneManager {
 		loadScene(this.world)
 	}
 
-	getList(out = []) {
+	sceneList(out = []) {
 		for (const key of Object.keys(this.scenes)) {
 			out.push(key)
 		}

@@ -9,7 +9,7 @@ export default class Island {
     this.bodies = []
     this.contactKeys = []
     this.jointKeys = []
-    this.sleepingTime = 1 // Second
+    this.sleepingTime = 0.5 // Second
     this.isSleeping = false
     this.stack = []
     this.visited = new Set()
