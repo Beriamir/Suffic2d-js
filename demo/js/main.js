@@ -1,5 +1,5 @@
-import s2 from '../../src/index.js'
-import dat from '../../lib/dat.gui.mjs'
+import * as s2 from '../../src/suffic2d.js'
+import dat from '../../lib/dat.gui.js'
 import SceneManager from './SceneManager.js'
 
 document.addEventListener('DOMContentLoaded', () => {
