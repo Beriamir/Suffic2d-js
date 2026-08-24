@@ -39,7 +39,10 @@ export default class Renderer {
 			'#06b6d4'
 		]
 
-		this.resize(innerWidth, innerHeight)
+		this.resize(
+			parseFloat(getComputedStyle(canvas).width),
+			parseFloat(getComputedStyle(canvas).height)
+		)
 	}
 
 	resize(w, h) {

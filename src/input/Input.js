@@ -18,7 +18,10 @@ export default class Input {
 
 		window.addEventListener('resize', e => {
 			if (typeof this.onResize == 'function') {
-				this.onResize(innerWidth, innerHeight)
+				this.onResize(
+					parseFloat(getComputedStyle(target).width),
+					parseFloat(getComputedStyle(target).height)
+				)
 			}
 		})
 	}
