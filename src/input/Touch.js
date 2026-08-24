@@ -32,21 +32,24 @@ export default class Touch {
 			'touchmove',
 			e => {
 				e.preventDefault()
+				const rect = target.getBoundingClientRect()
 
 				if (this.#touchId !== null) {
 					const touch = this.#findTouch(e.touches, this.#touchId)
+					const touchX = touch.clientX - rect.left
+					const touchY = touch.clientY - rect.top
 
 					if (touch) {
-						const dx = touch.clientX - this.#lastTouchX
-						const dy = touch.clientY - this.#lastTouchY
+						const dx = touchX - this.#lastTouchX
+						const dy = touchY - this.#lastTouchY
 
 						if (typeof input.onMove == 'function') {
-							input.onMove(dx, dy, touch.clientX, touch.clientY)
+							input.onMove(dx, dy, touchX, touchY)
 						}
 					}
 
-					this.#lastTouchX = touch.clientX
-					this.#lastTouchY = touch.clientY
+					this.#lastTouchX = touchX
+					this.#lastTouchY = touchY
 				}
 
 				// pan + zoom + rotate
@@ -100,8 +103,10 @@ export default class Touch {
 	}
 
 	#getCenter(a, b, out = {}) {
-		out.x = (a.clientX + b.clientX) * 0.5
-		out.y = (a.clientY + b.clientY) * 0.5
+		const rect = this.input.target.getBoundingClientRect()
+
+		out.x = (a.clientX + b.clientX) * 0.5 - rect.left
+		out.y = (a.clientY + b.clientY) * 0.5 - rect.top
 		return out
 	}
 
@@ -128,12 +133,16 @@ export default class Touch {
 		this.#lastTouchY = 0
 
 		if (touches.length == 1) {
+			const rect = this.input.target.getBoundingClientRect()
+			const touchX = touches[0].clientX - rect.left
+			const touchY = touches[0].clientY - rect.top
+
 			this.#touchId = touches[0].identifier
-			this.#lastTouchX = touches[0].clientX
-			this.#lastTouchY = touches[0].clientY
+			this.#lastTouchX = touchX
+			this.#lastTouchY = touchY
 
 			if (typeof this.input.onDown == 'function') {
-				this.input.onDown(touches[0].clientX, touches[0].clientY)
+				this.input.onDown(touchX, touchY)
 			}
 		} else if (touches.length >= 2) {
 			this.#gestureIds[0] = touches[0].identifier

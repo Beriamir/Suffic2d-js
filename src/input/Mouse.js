@@ -8,24 +8,36 @@ export default class Mouse {
 	static RIGHT = 2
 
 	constructor(input) {
-		input.target.addEventListener('mousedown', event => {
+		const target = input.target
+
+		target.addEventListener('mousedown', event => {
 			event.preventDefault()
+
+			const rect = target.getBoundingClientRect()
+			const mouseX = event.clientX - rect.left
+			const mouseY = event.clientY - rect.top
+
 			this.#buttons.add(event.button)
-			this.#lastX = event.clientX
-			this.#lastY = event.clientY
+			this.#lastX = mouseX
+			this.#lastY = mouseY
 
 			if (typeof input.onDown == 'function') {
-				input.onDown(event.clientX, event.clientY)
+				input.onDown(mouseX, mouseY)
 			}
 		})
 
-		input.target.addEventListener('mousemove', event => {
+		target.addEventListener('mousemove', event => {
 			event.preventDefault()
-			const dx = event.clientX - this.#lastX
-			const dy = event.clientY - this.#lastY
+
+			const rect = target.getBoundingClientRect()
+			const mouseX = event.clientX - rect.left
+			const mouseY = event.clientY - rect.top
+
+			const dx = mouseX - this.#lastX
+			const dy = mouseY - this.#lastY
 
 			if (typeof input.onMove == 'function') {
-				input.onMove(dx, dy, event.clientX, event.clientY)
+				input.onMove(dx, dy, mouseX, mouseY)
 			}
 
 			if (input.keyboard.isDown('Space') && this.isDown(Mouse.LEFT)) {
@@ -40,11 +52,11 @@ export default class Mouse {
 				}
 			}
 
-			this.#lastX = event.clientX
-			this.#lastY = event.clientY
+			this.#lastX = mouseX
+			this.#lastY = mouseY
 		})
 
-		input.target.addEventListener('mouseup', event => {
+		target.addEventListener('mouseup', event => {
 			event.preventDefault()
 			this.#buttons.delete(event.button)
 			this.#lastX = 0
@@ -55,7 +67,7 @@ export default class Mouse {
 			}
 		})
 
-		input.target.addEventListener(
+		target.addEventListener(
 			'wheel',
 			event => {
 				event.preventDefault()
