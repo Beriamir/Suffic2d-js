@@ -4,33 +4,37 @@ export default (world, options = {}) => {
 	const {
 		count = 50,
 		size = 0.24,
-		groundWidth = 5,
+		wallSize = 5,
 		centerX = 0,
 		bottomY = 0
 	} = options
 
-	const ground = new RigidBody(centerX, bottomY, 0, {
+	const wall = new RigidBody(centerX, bottomY, 0, {
 		isStatic: true
 	})
-		.createLine(groundWidth, {
+		.createLine(wallSize, {
 			rotation: Math.PI * 0.5
 		})
-		.createLine(groundWidth, {
-			offset: new Vector(-groundWidth * 0.5, -groundWidth * 0.5),
+		.createLine(wallSize, {
+			offset: new Vector(0, -wallSize),
+			rotation: Math.PI * 0.5
+		})
+		.createLine(wallSize, {
+			offset: new Vector(-wallSize * 0.5, -wallSize * 0.5),
 			rotation: 0
 		})
-		.createLine(groundWidth, {
-			offset: new Vector(groundWidth * 0.5, -groundWidth * 0.5),
+		.createLine(wallSize, {
+			offset: new Vector(wallSize * 0.5, -wallSize * 0.5),
 			rotation: 0
 		})
 
-	world.createBody(ground)
+	world.createBody(wall)
 
 	const eachCount = Math.floor(count / 3)
 
 	for (let i = 0; i < eachCount; i++) {
-		const x = Math.random() * groundWidth - groundWidth * 0.5
-		const y = Math.random() * -groundWidth
+		const x = Math.random() * wallSize - wallSize * 0.5
+		const y = Math.random() * -wallSize
 		const body = new RigidBody(x, y, 0, {
 			friction: 0.3
 		}).createCircle(size, {})
@@ -39,8 +43,8 @@ export default (world, options = {}) => {
 	}
 
 	for (let i = 0; i < eachCount; i++) {
-		const x = Math.random() * groundWidth - groundWidth * 0.5
-		const y = Math.random() * -groundWidth
+		const x = Math.random() * wallSize - wallSize * 0.5
+		const y = Math.random() * -wallSize
 		const body = new RigidBody(x, y, 0, {
 			friction: 0.3
 		}).createCapsule(size * 1.25, size * 0.75, {
@@ -51,8 +55,8 @@ export default (world, options = {}) => {
 	}
 
 	for (let i = 0; i < eachCount; i++) {
-		const x = Math.random() * groundWidth - groundWidth * 0.5
-		const y = Math.random() * -groundWidth
+		const x = Math.random() * wallSize - wallSize * 0.5
+		const y = Math.random() * -wallSize
 		const body = new RigidBody(x, y, 0, {
 			friction: 0.3
 		}).createPolygon(

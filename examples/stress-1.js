@@ -5,7 +5,7 @@ export default (
 	options = {
 		count: 1000,
 		size: 0.24,
-		groundWidth: 20,
+		wallSize: 20,
 		centerX: 0,
 		bottomY: 0
 	}
