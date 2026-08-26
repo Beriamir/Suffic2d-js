@@ -1,193 +1,197 @@
-import BlockSolver from "./BlockSolver.js"
-import ContactSolver from "./ContactSolver.js"
+import ContactSolver from './ContactSolver.js'
 
 export default class Island {
-  constructor(world, options = {}) {
-    this.world = world
-    this.blockSolver = new BlockSolver(options)
-    this.contactSolver = new ContactSolver(options)
-    this.bodies = []
-    this.contactKeys = []
-    this.jointKeys = []
-    this.sleepingTime = 0.5 // Second
-    this.isSleeping = false
-    this.stack = []
-    this.visited = new Set()
-  }
+	constructor(world, options = {}) {
+		this.world = world
+		this.contactSolver = new ContactSolver(options)
+		this.bodies = []
+		this.contactKeys = []
+		this.jointKeys = []
+		this.sleepingTime = 0.5 // Second
+		this.isSleeping = false
+		this.stack = []
+		this.visited = new Set()
+	}
 
-  clear() {
-    this.bodies.length = 0
-    this.contactKeys.length = 0
-    this.jointKeys.length = 0
-    this.isSleeping = false
-    this.stack.length = 0
-  }
+	clear() {
+		this.bodies.length = 0
+		this.contactKeys.length = 0
+		this.jointKeys.length = 0
+		this.isSleeping = false
+		this.stack.length = 0
+	}
 
-  build(seed) {
-    let minSleepingTime = Infinity
+	build(seed) {
+		let minSleepingTime = Infinity
 
-    this.stack.push(seed)
-    while (this.stack.length > 0) {
-      const body = this.stack.pop()
+		this.stack.push(seed)
+		while (this.stack.length > 0) {
+			const body = this.stack.pop()
 
-      if (this.visited.has(body.id) || body.isStatic) {
-        continue
-      }
+			if (this.visited.has(body.id) || body.isStatic) {
+				continue
+			}
 
-      this.bodies.push(body)
-      this.visited.add(body.id)
+			this.bodies.push(body)
+			this.visited.add(body.id)
 
-      // Contacts
-      for (let i = 0; i < body.contactKeys.length; ++i) {
-        const key = body.contactKeys[i]
-        const contact = this.world.contacts.get(key)
-        const other =
-          contact.bodyA.id == body.id ? contact.bodyB : contact.bodyA
+			// Contacts
+			for (let i = 0; i < body.contactKeys.length; ++i) {
+				const key = body.contactKeys[i]
+				const contact = this.world.contacts.get(key)
+				const other =
+					contact.bodyA.id == body.id ? contact.bodyB : contact.bodyA
 
-        if (this.visited.has(other.id)) {
-          continue
-        }
+				if (this.visited.has(other.id)) {
+					continue
+				}
 
-        this.stack.push(other)
-        this.contactKeys.push(key)
-      }
+				this.stack.push(other)
+				this.contactKeys.push(key)
+			}
 
-      // Joints
-      for (let i = 0; i < body.jointKeys.length; ++i) {
-        const key = body.jointKeys[i]
-        const joint = this.world.joints.get(key)
-        
-        if (!joint) {
-          continue
-        }
+			// Joints
+			for (let i = 0; i < body.jointKeys.length; ++i) {
+				const key = body.jointKeys[i]
+				const joint = this.world.joints.get(key)
 
-        if (joint.type == "GrabJoint") {
-          this.isSleeping = false
-          body.awake()
-        } else {
-          const other = joint.bodyA.id == body.id ? joint.bodyB : joint.bodyA
+				if (!joint) {
+					continue
+				}
 
-          if (this.visited.has(other.id)) {
-            continue
-          }
+				if (joint.type == 'GrabJoint') {
+					this.isSleeping = false
+					body.awake()
+				} else {
+					const other = joint.bodyA.id == body.id ? joint.bodyB : joint.bodyA
 
-          this.stack.push(other)
-        }
+					if (this.visited.has(other.id)) {
+						continue
+					}
 
-        this.jointKeys.push(key)
-      }
+					this.stack.push(other)
+				}
 
-      if (body.sleepingTime < minSleepingTime) {
-        minSleepingTime = body.sleepingTime
-      }
-    }
+				this.jointKeys.push(key)
+			}
 
-    if (this.world.useSleeping && minSleepingTime >= this.sleepingTime) {
-      this.isSleeping = true
-    }
-  }
+			if (body.sleepingTime < minSleepingTime) {
+				minSleepingTime = body.sleepingTime
+			}
+		}
 
-  solve(dt) {
-    for (let i = 0; i < this.bodies.length; ++i) {
-      const body = this.bodies[i]
+		if (this.world.useSleeping && minSleepingTime >= this.sleepingTime) {
+			this.isSleeping = true
+		}
+	}
 
-      body.isSleeping = this.isSleeping
+	solve(dt) {
+		for (let i = 0; i < this.bodies.length; ++i) {
+			const body = this.bodies[i]
 
-      if (body.isSleeping) {
-        body.linearVelocity.zero()
-        body.angularVelocity = 0
-      }
+			body.isSleeping = this.isSleeping
 
-      if (body.isSleeping || body.canSleep()) {
-        body.sleepingTime += dt
-      } else {
-        this.isSleeping = false
-        body.awake()
-      }
+			if (body.isSleeping) {
+				body.linearVelocity.zero()
+				body.angularVelocity = 0
+			}
 
-      if (!body.isSleeping) {
-        body.linearVelocity.addMulV(this.world.gravity, dt)
-      }
-    }
+			if (body.isSleeping || body.canSleep()) {
+				body.sleepingTime += dt
+			} else {
+				this.isSleeping = false
+				body.awake()
+			}
 
-    const contactSolver = this.world.useBlockSolver
-      ? this.blockSolver
-      : this.contactSolver
+			if (!body.isSleeping) {
+				body.linearVelocity.addMulV(this.world.gravity, dt)
+			}
+		}
 
-    // Prepare and Warm start joints
-    for (let i = 0; i < this.jointKeys.length; ++i) {
-      const joint = this.world.joints.get(this.jointKeys[i])
+		const useBlockSolver = this.world.useBlockSolver
 
-      joint.prepare()
-      joint.warmStart()
-    }
+		// Prepare and Warm start joints
+		for (let i = 0; i < this.jointKeys.length; ++i) {
+			const joint = this.world.joints.get(this.jointKeys[i])
 
-    // Prepare and Warm start contacts
-    for (let i = 0; i < this.contactKeys.length; ++i) {
-      const key = this.contactKeys[i]
-      const contact = this.world.contacts.get(key)
-      const oldContactPoints = this.world.oldContactPoints.get(key)
+			joint.prepare()
+			joint.warmStart()
+		}
 
-      contactSolver.prepare(contact)
-      contactSolver.warmStart(contact, oldContactPoints)
-    }
+		// Prepare and Warm start contacts
+		for (let i = 0; i < this.contactKeys.length; ++i) {
+			const key = this.contactKeys[i]
+			const contact = this.world.contacts.get(key)
+			const oldContactPoints = this.world.oldContactPoints.get(key)
 
-    if (this.isSleeping) {
-      return
-    }
+			this.contactSolver.prepare(contact, useBlockSolver)
+			this.contactSolver.warmStart(contact, oldContactPoints)
+		}
 
-    this.contactKeys.sort((a, b) => {
-      if (a < b) return -1
-      if (a > b) return 1
-      return 0
-    })
+		if (this.isSleeping) {
+			return
+		}
 
-    this.jointKeys.sort((a, b) => {
-      if (a < b) return -1
-      if (a > b) return 1
-      return 0
-    })
+		this.contactKeys.sort((a, b) => {
+			if (a < b) return -1
+			if (a > b) return 1
+			return 0
+		})
 
-    // Solve + baumgarte bias
-    for (let i = 0; i < this.world.primaryIterations; ++i) {
-      for (let j = 0; j < this.jointKeys.length; ++j) {
-        this.world.joints.get(this.jointKeys[j]).solve(true)
-      }
-      for (let j = 0; j < this.contactKeys.length; ++j) {
-        contactSolver.solve(this.world.contacts.get(this.contactKeys[j]), true)
-      }
-    }
+		this.jointKeys.sort((a, b) => {
+			if (a < b) return -1
+			if (a > b) return 1
+			return 0
+		})
 
-    // Update position and broadphase
-    for (let i = 0; i < this.bodies.length; ++i) {
-      const body = this.bodies[i]
+		// Solve + baumgarte bias
+		for (let i = 0; i < this.world.primaryIterations; ++i) {
+			for (let j = 0; j < this.jointKeys.length; ++j) {
+				this.world.joints.get(this.jointKeys[j]).solve(true)
+			}
+			for (let j = 0; j < this.contactKeys.length; ++j) {
+				this.contactSolver.solve(
+					this.world.contacts.get(this.contactKeys[j]),
+					useBlockSolver,
+					true
+				)
+			}
+		}
 
-      body.position.addMulV(body.linearVelocity, dt)
-      body.rotation += body.angularVelocity * dt
+		// Update position and broadphase
+		for (let i = 0; i < this.bodies.length; ++i) {
+			const body = this.bodies[i]
 
-      for (let j = 0; j < body.fixtures.length; ++j) {
-        const s = body.fixtures[j]
+			body.position.addMulV(body.linearVelocity, dt)
+			body.rotation += body.angularVelocity * dt
 
-        s.updateWorldVertices(
-          body.position.x,
-          body.position.y,
-          body.cos,
-          body.sin
-        )
-      }
+			for (let j = 0; j < body.fixtures.length; ++j) {
+				const s = body.fixtures[j]
 
-      body.updateAABB()
-      this.world.dynamicTree.updateBody(body, this.world.nodeMargin)
-    }
+				s.updateWorldVertices(
+					body.position.x,
+					body.position.y,
+					body.cos,
+					body.sin
+				)
+			}
 
-    // Relax + restitution
-    for (let i = 0; i < this.world.secondaryIterations; ++i) {
-      for (let j = 0; j < this.jointKeys.length; ++j) {
-        this.world.joints.get(this.jointKeys[j]).solve(false)
-      }
-      for (let j = 0; j < this.contactKeys.length; ++j) {
-        contactSolver.solve(this.world.contacts.get(this.contactKeys[j]), false)
-      }
-    }
-  }
+			body.updateAABB()
+			this.world.dynamicTree.updateBody(body, this.world.nodeMargin)
+		}
+
+		// Relax + restitution
+		for (let i = 0; i < this.world.secondaryIterations; ++i) {
+			for (let j = 0; j < this.jointKeys.length; ++j) {
+				this.world.joints.get(this.jointKeys[j]).solve(false)
+			}
+			for (let j = 0; j < this.contactKeys.length; ++j) {
+				this.contactSolver.solve(
+					this.world.contacts.get(this.contactKeys[j]),
+					useBlockSolver,
+					false
+				)
+			}
+		}
+	}
 }

@@ -1,5 +1,4 @@
 export { default as AABB } from './AABB.js'
-export { default as BlockSolver } from './BlockSolver.js'
 export { default as Capsule } from './Capsule.js'
 export { default as Circle } from './Circle.js'
 export { default as CollideCapsuleCircle } from './CollideCapsuleCircle.js'
