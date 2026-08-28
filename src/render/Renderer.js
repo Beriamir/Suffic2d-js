@@ -10,6 +10,7 @@ export default class Renderer {
 		this.debugColor = '#ffffff'
 		this.debugs = {
 			bodies: options.bodies ?? true,
+			colorize: options.colorize ?? false,
 			wireframe: options.wireframe ?? false,
 			epa: options.epa ?? false,
 			normal: options.normal ?? false,
@@ -118,20 +119,30 @@ export default class Renderer {
 		if (debugs.bodies) {
 			// Draw bodies
 			for (let i = 0; i < world.bodies.length; ++i) {
-				const { position, cos, sin, isSleeping, isStatic, islandId, fixtures } =
-					world.bodies[i]
+				const {
+					id: bodyId,
+					position,
+					cos,
+					sin,
+					isSleeping,
+					isStatic,
+					islandId,
+					fixtures
+				} = world.bodies[i]
 
 				const strokeColor =
-					debugs.wireframe && (isSleeping || isStatic)
-						? 'gray'
-						: debugs.wireframe
-							? debugColor
+					debugs.wireframe && !isSleeping && !isStatic
+						? debugColor
+						: debugs.wireframe && (isSleeping || isStatic)
+							? 'gray'
 							: 'black'
 
 				const fillColor =
-					isSleeping || isStatic
-						? 'gray'
-						: islandColors[islandId % islandColors.length]
+					debugs.colorize && !isSleeping && !isStatic
+						? islandColors[bodyId % islandColors.length]
+						: !debugs.colorize && !isSleeping && !isStatic
+							? islandColors[islandId % islandColors.length]
+							: 'gray'
 
 				for (const shape of fixtures) {
 					switch (shape.type) {
