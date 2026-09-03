@@ -40,6 +40,12 @@ export default class Renderer {
 			'#14b8a6',
 			'#06b6d4'
 		]
+		this.status = {
+			fps: 0,
+			bodies: 0,
+			contacts: 0,
+			joints: 0
+		}
 
 		this.resize(
 			parseFloat(getComputedStyle(canvas).width),
@@ -49,6 +55,14 @@ export default class Renderer {
 
 	resize(w, h) {
 		this.gfx.setSize(w, h, this.resolution)
+	}
+
+	statusList(out = []) {
+		for (const key of Object.keys(this.status)) {
+			out.push(key)
+		}
+
+		return out
 	}
 
 	debugList(out = []) {
@@ -109,7 +123,7 @@ export default class Renderer {
 		this.camera.rotate(delta)
 	}
 
-	draw(world) {
+	draw(world, dt = 0.016) {
 		const { gfx, camera, canvas, debugs, islandColors, resolution } = this
 		const debugColor = this.debugColor
 		const strokeWidth = resolution / camera.scale
@@ -373,5 +387,13 @@ export default class Renderer {
 		}
 
 		gfx.setCamera(null)
+
+		// Update status
+		{
+			this.status.bodies = world.bodies.length
+			this.status.contacts = world.contacts.size
+			this.status.joints = world.joints.size
+			this.status.fps = 1 / dt
+		}
 	}
 }

@@ -9,12 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	const world = new World()
 	const demo = new Demo(world)
 	const gui = new dat.GUI()
-	const status = {
-		fps: 0,
-		bodies: 0,
-		contacts: 0,
-		joints: 0
-	}
 
 	// Setup GUI
 	{
@@ -22,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		const renderGui = gui.addFolder('Render')
 		const worldGui = gui.addFolder('World')
 
-		for (const key of Object.keys(status)) {
-			statusGui.add(status, key).listen()
+		for (const key of renderer.statusList()) {
+			statusGui.add(renderer.status, key).listen()
 		}
 
 		for (const key of renderer.debugList()) {
@@ -80,15 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (accu >= step) {
 				world.simulate(step)
 				demo.update(dt)
-
-				status.bodies = world.bodies.length
-				status.contacts = world.contacts.size
-				status.joints = world.joints.size
-				status.fps = 1 / dt
-
-				renderer.draw(world)
+				renderer.draw(world, dt)
 				accu -= step
 			}
+
 			requestAnimationFrame(loop)
 		}
 
