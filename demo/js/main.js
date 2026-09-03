@@ -32,8 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		worldGui
 			.add(demo, 'scene', demo.sceneList())
 			.onChange(scene => demo.load(scene))
-			.name('Scene')
-		worldGui.add(demo, 'load').name('Restart')
+		worldGui.add(demo, 'load').name('restart')
 		worldGui.open()
 	}
 

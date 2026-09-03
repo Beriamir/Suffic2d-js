@@ -12,6 +12,8 @@ export default class CollidePolygons {
 		this.simplex = []
 		this.arrays = new Pool(() => [], 16)
 		this.vectors = new Pool(() => new Vector(), 16)
+		this.ref = { id: 0, edge: [] }
+		this.inc = { id: 0, edge: [] }
 	}
 
 	collide(sA, sB, manifold = {}) {
@@ -86,8 +88,8 @@ export default class CollidePolygons {
 		const normalX = manifold.normalX
 		const normalY = manifold.normalY
 
-		const ref = this.#bestEdge(verticesA, normalX, normalY)
-		const inc = this.#bestEdge(verticesB, -normalX, -normalY)
+		const ref = this.#bestEdge(verticesA, normalX, normalY, this.ref)
+		const inc = this.#bestEdge(verticesB, -normalX, -normalY, this.inc)
 
 		const refDeltaX = ref.edge[2] - ref.edge[0]
 		const refDeltaY = ref.edge[3] - ref.edge[1]
@@ -131,8 +133,6 @@ export default class CollidePolygons {
 			this.arrays.deallocate(secondClipping)
 		}
 
-		manifold.ref = ref
-		manifold.inc = inc
 		manifold.contactPoints = []
 
 		const dot0 = ref.edge[0] * normalX + ref.edge[1] * normalY
@@ -189,7 +189,7 @@ export default class CollidePolygons {
 		return result
 	}
 
-	#bestEdge(vertices, dirX, dirY) {
+	#bestEdge(vertices, dirX, dirY, out = {}) {
 		let bestDot = -Infinity
 		let index = 0
 
@@ -221,19 +221,17 @@ export default class CollidePolygons {
 		const prevDot = prevDeltaX * dirX + prevDeltaY * dirY
 		const nextDot = nextDeltaX * dirX + nextDeltaY * dirY
 
-		const edge = []
-		let id = index >> 1
-		let dot = bestDot
+		out.id = index >> 1
+		out.edge.length = 0
 
 		if (prevDot > nextDot) {
-			edge.push(prevX, prevY, bestX, bestY)
-			id = prevI >> 1
-			dot = prevDot
+			out.edge.push(prevX, prevY, bestX, bestY)
+			out.id = prevI >> 1
 		} else {
-			edge.push(bestX, bestY, nextX, nextY)
+			out.edge.push(bestX, bestY, nextX, nextY)
 		}
 
-		return { edge, id, dot }
+		return out
 	}
 
 	#EPA(verticesA, verticesB, simplex, dir, manifold = {}) {
@@ -275,18 +273,12 @@ export default class CollidePolygons {
 			const dot = this.vectors.at(support).dot(dir)
 
 			if (dot - minDot <= 1e-4) {
-				manifold.polytope = new Float32Array(simplex.length << 1)
 				manifold.normalX = dir.x
 				manifold.normalY = dir.y
 				manifold.overlap = minDot
 
 				for (let i = 0; i < simplex.length; ++i) {
-					const v = simplex[i]
-
-					manifold.polytope[i << 1] = this.vectors.at(v).x
-					manifold.polytope[(i << 1) + 1] = this.vectors.at(v).y
-
-					this.vectors.deallocate(v)
+					this.vectors.deallocate(simplex[i])
 				}
 
 				this.vectors.deallocate(support)
