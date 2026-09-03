@@ -20,7 +20,7 @@ export default class CollideCircles {
 		const magSq = this.#vectors.at(dir).magSq()
 		const radiiSum = sA.radius + sB.radius
 
-		if (magSq === 0 || magSq >= radiiSum * radiiSum) {
+		if (magSq === 0 || magSq > radiiSum * radiiSum) {
 			this.#vectors.deallocate(dir)
 			return null
 		}

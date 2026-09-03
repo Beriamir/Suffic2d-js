@@ -49,7 +49,7 @@ export default class CollidePolygons {
 			)
 
 			// Does it contain the origin?
-			if (this.vectors.at(support).dot(this.vectors.at(dir)) <= 0) {
+			if (this.vectors.at(support).dot(this.vectors.at(dir)) < 0) {
 				this.vectors.deallocate(support)
 				for (let i = 0; i < this.simplex.length; ++i) {
 					this.vectors.deallocate(this.simplex[i])
@@ -342,7 +342,7 @@ export default class CollidePolygons {
 			this.vectors.at(acPerp).copy(this.vectors.at(ac)).perp()
 		}
 
-		if (this.vectors.at(abPerp).dot(this.vectors.at(ao)) >= 0) {
+		if (this.vectors.at(abPerp).dot(this.vectors.at(ao)) > 0) {
 			simplex.length = 2
 			simplex[0] = b
 			simplex[1] = a
@@ -357,7 +357,7 @@ export default class CollidePolygons {
 			return false
 		}
 
-		if (this.vectors.at(acPerp).dot(this.vectors.at(ao)) >= 0) {
+		if (this.vectors.at(acPerp).dot(this.vectors.at(ao)) > 0) {
 			simplex.length = 2
 			simplex[0] = c
 			simplex[1] = a

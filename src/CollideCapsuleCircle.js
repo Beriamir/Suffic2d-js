@@ -26,7 +26,7 @@ export default class CollideCapsuleCircle {
 		const magSq = deltaX * deltaX + deltaY * deltaY
 		const radiiSum = sA.radius + sB.radius
 
-		if (magSq === 0 || magSq >= radiiSum * radiiSum) {
+		if (magSq === 0 || magSq > radiiSum * radiiSum) {
 			return null
 		}
 
