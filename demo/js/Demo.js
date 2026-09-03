@@ -9,7 +9,6 @@ export default class Demo extends SceneManager {
 
 	initialize() {
 		this.load('Pyramid')
-
 		//
 	}
 
@@ -44,7 +43,5 @@ export default class Demo extends SceneManager {
 				i--
 			}
 		}
-
-		//
 	}
 }

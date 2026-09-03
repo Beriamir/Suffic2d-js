@@ -10,7 +10,8 @@ export default class Renderer {
 		this.debugColor = '#ffffff'
 		this.debugs = {
 			bodies: options.bodies ?? true,
-			colorize: options.colorize ?? false,
+			colorizeBody: options.colorizeBody ?? false,
+			rectangleAxes: options.rectangleAxes ?? false,
 			wireframe: options.wireframe ?? false,
 			epa: options.epa ?? false,
 			normal: options.normal ?? false,
@@ -138,15 +139,16 @@ export default class Renderer {
 							: 'black'
 
 				const fillColor =
-					debugs.colorize && !isSleeping && !isStatic
+					debugs.colorizeBody && !isSleeping && !isStatic
 						? islandColors[bodyId % islandColors.length]
-						: !debugs.colorize && !isSleeping && !isStatic
+						: !debugs.colorizeBody && !isSleeping && !isStatic
 							? islandColors[islandId % islandColors.length]
 							: 'gray'
 
 				for (const shape of fixtures) {
 					switch (shape.type) {
 						case 'polygon':
+						case 'rectangle':
 							gfx.drawPolygon(position.x, position.y, cos, sin, {
 								offsetX: shape.offset.x,
 								offsetY: shape.offset.y,
@@ -255,6 +257,39 @@ export default class Renderer {
 				})
 			}
 
+			if (debugs.rectangleAxes) {
+				for (let i = 0; i < world.bodies.length; ++i) {
+					const { position, cos, sin, fixtures } = world.bodies[i]
+
+					for (const s of fixtures) {
+						if (s.axes) {
+							for (let j = 0; j < s.axes.length; j += 2) {
+								const axisX = -s.axes[j]
+								const axisY = -s.axes[j + 1]
+								const axisCos = s.cos * cos - s.sin * sin
+								const axisSin = s.cos * sin + s.sin * cos
+
+								const offsetX = s.offset.x * cos - s.offset.y * sin
+								const offsetY = s.offset.x * sin + s.offset.y * cos
+
+								gfx.drawNormal(
+									position.x + offsetX,
+									position.y + offsetY,
+									axisX * axisCos - axisY * axisSin,
+									axisX * axisSin + axisY * axisCos,
+									{
+										showHead: false,
+										strokeColor: debugColor,
+										strokeWidth,
+										length: (10 * resolution) / camera.scale
+									}
+								)
+							}
+						}
+					}
+				}
+			}
+
 			for (let i = 0; i < world.contactKeys.length; ++i) {
 				const contact = world.contacts.get(world.contactKeys[i])
 				const {
@@ -329,7 +364,8 @@ export default class Renderer {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
 							length: (10 * resolution) / camera.scale,
 							strokeColor: debugColor,
-							strokeWidth
+							strokeWidth,
+							showHead: false
 						})
 					}
 				}

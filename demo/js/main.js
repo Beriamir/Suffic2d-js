@@ -4,9 +4,7 @@ import Demo from './Demo.js'
 
 document.addEventListener('DOMContentLoaded', () => {
 	const canvas = document.getElementById('canvas')
-	const renderer = new Renderer(canvas, {
-		resolution: devicePixelRatio ?? 1
-	})
+	const renderer = new Renderer(canvas, { resolution: devicePixelRatio })
 	const input = new Input(canvas)
 	const world = new World()
 	const demo = new Demo(world)

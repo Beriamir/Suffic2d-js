@@ -1,5 +1,22 @@
 import { RigidBody, Vector } from '../src/suffic2d.js'
 
+function createCapsuleVertices(length, radius, roundness = 9) {
+	const capsule = []
+	const halfLength = length * 0.5
+
+	for (let i = 0; i <= roundness; i++) {
+		const t = (i * Math.PI) / roundness
+		capsule.push(Math.cos(t) * radius, halfLength + Math.sin(t) * radius)
+	}
+
+	for (let i = 0; i <= roundness; i++) {
+		const t = Math.PI + (i * Math.PI) / roundness
+		capsule.push(Math.cos(t) * radius, -halfLength + Math.sin(t) * radius)
+	}
+
+	return new Float32Array(capsule)
+}
+
 export default (world, options = {}) => {
 	const {
 		count = 50,
@@ -30,7 +47,7 @@ export default (world, options = {}) => {
 
 	world.createBody(wall)
 
-	const eachCount = Math.floor(count / 3)
+	const eachCount = Math.floor(count / 4)
 
 	for (let i = 0; i < eachCount; i++) {
 		const x = Math.random() * wallSize - wallSize * 0.5
@@ -59,10 +76,17 @@ export default (world, options = {}) => {
 		const y = Math.random() * -wallSize
 		const body = new RigidBody(x, y, 0, {
 			friction: 0.3
-		}).createPolygon(
-			new Float32Array([-size, -size, size, -size, size, size, -size, size]),
-			{}
-		)
+		}).createPolygon(createCapsuleVertices(size * 1.25, size * 0.75, 9), {})
+
+		world.createBody(body)
+	}
+
+	for (let i = 0; i < eachCount; i++) {
+		const x = Math.random() * wallSize - wallSize * 0.5
+		const y = Math.random() * -wallSize
+		const body = new RigidBody(x, y, 0, {
+			friction: 0.3
+		}).createRectangle(size, size, {})
 
 		world.createBody(body)
 	}

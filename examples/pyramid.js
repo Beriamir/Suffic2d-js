@@ -14,19 +14,7 @@ export default (world, options = {}) => {
 
 	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
-	}).createPolygon(
-		new Float32Array([
-			-groundWidth,
-			-groundHeight,
-			groundWidth,
-			-groundHeight,
-			groundWidth,
-			groundHeight,
-			-groundWidth,
-			groundHeight
-		]),
-		{}
-	)
+	}).createRectangle(groundWidth, groundHeight, {})
 
 	world.createBody(ground)
 
@@ -41,19 +29,7 @@ export default (world, options = {}) => {
 		for (let col = 0; col < count; ++col) {
 			const body = new RigidBody(startX + col * colStep, y, 0, {
 				friction: 0.3
-			}).createPolygon(
-				new Float32Array([
-					-boxWidth,
-					-boxHeight,
-					boxWidth,
-					-boxHeight,
-					boxWidth,
-					boxHeight,
-					-boxWidth,
-					boxHeight
-				]),
-				{}
-			)
+			}).createRectangle(boxWidth, boxHeight, {})
 
 			world.createBody(body)
 		}

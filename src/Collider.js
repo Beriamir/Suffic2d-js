@@ -3,6 +3,8 @@ import CollideCapsuleCircle from './CollideCapsuleCircle.js'
 import CollidePolygonCircle from './CollidePolygonCircle.js'
 import CollidePolygons from './CollidePolygons.js'
 import CollideLines from './CollideLines.js'
+import CollideRectangles from './CollideRectangles.js'
+import CollideRectangleCircle from './CollideRectangleCircle.js'
 
 export default class Collider {
 	constructor() {
@@ -11,12 +13,15 @@ export default class Collider {
 		this.collidePolygonCircle = new CollidePolygonCircle()
 		this.collidePolygons = new CollidePolygons()
 		this.collideLines = new CollideLines()
+		this.collideRectangles = new CollideRectangles()
+		this.collideRectangleCircle = new CollideRectangleCircle()
 		this.colliders = []
 		this.shapes = {
 			circle: 0,
 			line: 1,
 			capsule: 2,
-			polygon: 3
+			polygon: 3,
+			rectangle: 4
 		}
 		this.table = {
 			circle: {
@@ -36,6 +41,13 @@ export default class Collider {
 				line: this.collidePolygons,
 				capsule: this.collidePolygons,
 				polygon: this.collidePolygons
+			},
+			rectangle: {
+				circle: this.collideRectangleCircle,
+				line: this.collidePolygons,
+				capsule: this.collidePolygons,
+				polygon: this.collidePolygons,
+				rectangle: this.collideRectangles
 			}
 		}
 

@@ -2,6 +2,7 @@ import Vector from './Vector.js'
 import AABB from './AABB.js'
 import Polygon from './Polygon.js'
 import Circle from './Circle.js'
+import Rectangle from './Rectangle.js'
 import Capsule from './Capsule.js'
 import Line from './Line.js'
 
@@ -205,6 +206,13 @@ export default class RigidBody {
 		const circle = new Circle(radius, option)
 
 		this.createFixture(circle)
+		return this
+	}
+
+	createRectangle(width, height, option = {}) {
+		const rectangle = new Rectangle(width, height, option)
+
+		this.createFixture(rectangle)
 		return this
 	}
 

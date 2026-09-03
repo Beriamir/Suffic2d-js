@@ -14,19 +14,7 @@ export default (world, options = {}) => {
 
 	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
-	}).createPolygon(
-		new Float32Array([
-			-groundWidth,
-			-groundHeight,
-			groundWidth,
-			-groundHeight,
-			groundWidth,
-			groundHeight,
-			-groundWidth,
-			groundHeight
-		]),
-		{}
-	)
+	}).createRectangle(groundWidth, groundHeight, {})
 
 	world.createBody(ground)
 

@@ -13,38 +13,13 @@ export default (world, options = {}) => {
 
 	const ramp = new RigidBody(-rampWidth * 0.3, -5, 0.2, {
 		isStatic: true
-	}).createPolygon(
-		new Float32Array([
-			-rampWidth,
-			-rampHeight,
-			rampWidth,
-			-rampHeight,
-			rampWidth,
-			rampHeight,
-			-rampWidth,
-			rampHeight
-		]),
-		{}
-	)
-
-	world.createBody(ramp)
+	}).createRectangle(rampWidth, rampHeight, {})
 
 	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
 		isStatic: true
-	}).createPolygon(
-		new Float32Array([
-			-groundWidth,
-			-groundHeight,
-			groundWidth,
-			-groundHeight,
-			groundWidth,
-			groundHeight,
-			-groundWidth,
-			groundHeight
-		]),
-		{}
-	)
+	}).createRectangle(groundWidth, groundHeight, {})
 
+	world.createBody(ramp)
 	world.createBody(ground)
 
 	for (let i = 10, j = 0; i >= 0; i--, j++) {
@@ -56,10 +31,7 @@ export default (world, options = {}) => {
 			{
 				friction: i / 10
 			}
-		).createPolygon(
-			new Float32Array([-size, -size, size, -size, size, size, -size, size]),
-			{}
-		)
+		).createRectangle(size, size, {})
 
 		world.createBody(body)
 	}
