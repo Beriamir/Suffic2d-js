@@ -19,8 +19,7 @@ export default (world, options = {}) => {
 		isStatic: true
 	}).createRectangle(groundWidth, groundHeight, {})
 
-	world.createBody(ramp)
-	world.createBody(ground)
+	world.createBodies([ramp, ground])
 
 	for (let i = 10, j = 0; i >= 0; i--, j++) {
 		const size = 0.24

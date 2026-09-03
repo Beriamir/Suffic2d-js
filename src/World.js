@@ -79,6 +79,12 @@ export default class World {
 		return joint
 	}
 
+	createJoints(joints) {
+		for (const joint of joints) {
+			this.createJoint(joint)
+		}
+	}
+
 	destroyJoint(joint) {
 		if (!joint) {
 			return joint
@@ -133,6 +139,12 @@ export default class World {
 		return joint
 	}
 
+	destroyJoints(joints) {
+		for (const joint of joints) {
+			this.destroyJoint(joint)
+		}
+	}
+
 	createBody(body) {
 		if (body.index >= 0) {
 			return body
@@ -143,6 +155,12 @@ export default class World {
 		body.index = this.bodies.length - 1
 
 		return body
+	}
+
+	createBodies(bodies) {
+		for (const body of bodies) {
+			this.createBody(body)
+		}
 	}
 
 	destroyBody(body) {
@@ -164,6 +182,12 @@ export default class World {
 		body.index = -1
 
 		return body
+	}
+
+	destroyBodies(bodies) {
+		for (const body of bodies) {
+			this.destroyBody(body)
+		}
 	}
 
 	queryPoint(pointX, pointY, result = []) {
