@@ -46,15 +46,15 @@ export default class CollideRectangles {
 
 		const dirX = sB.center.x - sA.center.x
 		const dirY = sB.center.y - sA.center.y
+		const normalX = manifold.normalX
+		const normalY = manifold.normalY
 
-		if (dirX * manifold.normalX + dirY * manifold.normalY < 0) {
-			manifold.normalX *= -1
-			manifold.normalY *= -1
+		if (dirX * normalX + dirY * normalY < 0) {
+			manifold.normalX = -normalX
+			manifold.normalY = -normalY
 		}
 
-		this.#getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
-
-		return manifold
+		return this.#getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
 	}
 
 	#getContactPoints(verticesA, verticesB, manifold) {
@@ -120,7 +120,7 @@ export default class CollideRectangles {
 			const pointDot = pointX * normalX + pointY * normalY
 
 			manifold.contactPoints.push({
-				id: `${ref.id}-${inc.id},${i >> 1}`,
+				id: `${ref.id}-${inc.id}-${i >> 1}`,
 				pointX,
 				pointY,
 				overlap: clippingDot - pointDot,
