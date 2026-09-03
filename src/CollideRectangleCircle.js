@@ -53,9 +53,12 @@ export default class CollideRectangleCircle {
 			}
 		}
 
-		if (dirX * manifold.normalX + dirY * manifold.normalY < 0) {
-			manifold.normalX *= -1
-			manifold.normalY *= -1
+		const normalX = manifold.normalX
+		const normalY = manifold.normalY
+
+		if (dirX * normalX + dirY * normalY < 0) {
+			manifold.normalX = -normalX
+			manifold.normalY = -normalY
 		}
 
 		manifold.contactPoints = [
