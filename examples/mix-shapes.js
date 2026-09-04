@@ -1,20 +1,17 @@
 import { RigidBody, Vector } from '../src/suffic2d.js'
 
-function createCapsuleVertices(length, radius, roundness = 9) {
-	const capsule = []
-	const halfLength = length * 0.5
+function roundPoly(radius, roundness = 16) {
+	const vertices = []
 
-	for (let i = 0; i <= roundness; i++) {
-		const t = (i * Math.PI) / roundness
-		capsule.push(Math.cos(t) * radius, halfLength + Math.sin(t) * radius)
+	for (let i = 0; i < roundness; ++i) {
+		const angle = (i * Math.PI * 2) / roundness
+		const x = radius * Math.cos(angle)
+		const y = radius * Math.sin(angle)
+
+		vertices.push(x, y)
 	}
 
-	for (let i = 0; i <= roundness; i++) {
-		const t = Math.PI + (i * Math.PI) / roundness
-		capsule.push(Math.cos(t) * radius, -halfLength + Math.sin(t) * radius)
-	}
-
-	return new Float32Array(capsule)
+	return new Float32Array(vertices)
 }
 
 export default (world, options = {}) => {
@@ -48,13 +45,15 @@ export default (world, options = {}) => {
 	world.createBody(wall)
 
 	const eachCount = Math.floor(count / 4)
+	const option = {
+		friction: 0.3,
+		restitution: 0.0
+	}
 
 	for (let i = 0; i < eachCount; i++) {
 		const x = Math.random() * wallSize - wallSize * 0.5
 		const y = Math.random() * -wallSize
-		const body = new RigidBody(x, y, 0, {
-			friction: 0.3
-		}).createCircle(size, {})
+		const body = new RigidBody(x, y, 0, option).createCircle(size, {})
 
 		world.createBody(body)
 	}
@@ -62,11 +61,11 @@ export default (world, options = {}) => {
 	for (let i = 0; i < eachCount; i++) {
 		const x = Math.random() * wallSize - wallSize * 0.5
 		const y = Math.random() * -wallSize
-		const body = new RigidBody(x, y, 0, {
-			friction: 0.3
-		}).createCapsule(size * 1.25, size * 0.75, {
-			roundness: 9
-		})
+		const body = new RigidBody(x, y, 0, option).createCapsule(
+			size * 1.25,
+			size * 0.75,
+			{}
+		)
 
 		world.createBody(body)
 	}
@@ -74,9 +73,9 @@ export default (world, options = {}) => {
 	for (let i = 0; i < eachCount; i++) {
 		const x = Math.random() * wallSize - wallSize * 0.5
 		const y = Math.random() * -wallSize
-		const body = new RigidBody(x, y, 0, {
-			friction: 0.3
-		}).createPolygon(createCapsuleVertices(size * 1.25, size * 0.75, 9), {})
+		const body = new RigidBody(x, y, 0, option).createPolygon(
+			roundPoly(size, 12)
+		)
 
 		world.createBody(body)
 	}
@@ -84,9 +83,7 @@ export default (world, options = {}) => {
 	for (let i = 0; i < eachCount; i++) {
 		const x = Math.random() * wallSize - wallSize * 0.5
 		const y = Math.random() * -wallSize
-		const body = new RigidBody(x, y, 0, {
-			friction: 0.3
-		}).createRectangle(size, size, {})
+		const body = new RigidBody(x, y, 0, option).createRectangle(size, size, {})
 
 		world.createBody(body)
 	}
