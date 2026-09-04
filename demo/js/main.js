@@ -39,14 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Setup events
 	{
 		input.onDown = (x, y) => {
-			const [pointX, pointY] = renderer.onDown(x, y)
-
-			demo.onDown(pointX, pointY)
+			demo.onDown(...renderer.onDown(x, y))
 		}
 		input.onMove = (dx, dy) => {
-			const [moveX, moveY] = renderer.onMove(dx, dy)
-
-			demo.onMove(moveX, moveY)
+			demo.onMove(...renderer.onMove(dx, dy))
 		}
 		input.onUp = () => {
 			demo.onUp()
@@ -57,29 +53,25 @@ document.addEventListener('DOMContentLoaded', () => {
 		input.onResize = (w, h) => renderer.resize(w, h)
 	}
 
-	demo.initialize()
+	const step = 1 / 60
+	let last = performance.now()
+	let accu = 0
 
-	// Animation loop
-	{
-		const step = 1 / 60
-		let last = performance.now()
-		let accu = 0
+	const loop = now => {
+		const dt = (now - last) * 0.001
+		last = now
+		accu += dt
 
-		const loop = now => {
-			const dt = (now - last) * 0.001
-			last = now
-			accu += dt
-
-			if (accu >= step) {
-				world.simulate(step)
-				demo.update(dt)
-				renderer.draw(world, dt)
-				accu -= step
-			}
-
-			requestAnimationFrame(loop)
+		if (accu >= step) {
+			world.simulate(step)
+			demo.update(dt, step)
+			renderer.draw(world, dt)
+			accu -= step
 		}
 
 		requestAnimationFrame(loop)
 	}
+
+	demo.initialize()
+	requestAnimationFrame(loop)
 })
