@@ -61,6 +61,7 @@ export default class CollideRectangleCircle {
 			manifold.normalY = -normalY
 		}
 
+		manifold.contactCount = 1
 		manifold.contactPoints = [
 			{
 				id: `${sA.id}-${sB.id},0`,

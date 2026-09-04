@@ -69,6 +69,7 @@ export default class CollidePolygonCircle {
 		manifold.normalX = normalX
 		manifold.normalY = normalY
 		manifold.overlap = overlap
+		manifold.contactCount = 1
 		manifold.contactPoints = [
 			{
 				id: `${sA.id}-${sB.id},0`,

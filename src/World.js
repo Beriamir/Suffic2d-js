@@ -5,6 +5,7 @@ import RigidBody from './RigidBody.js'
 import Circle from './Circle.js'
 import Collider from './Collider.js'
 import Island from './Island.js'
+import Pool from './Pool.js'
 
 export default class World {
 	constructor(options = {}) {
@@ -17,6 +18,7 @@ export default class World {
 		this.dynamicTree = new DynamicTree()
 		this.nearby = []
 		this.collider = new Collider()
+		this.contactPool = new Pool(() => ({}), 16)
 
 		this.gravity = options.gravity ?? new Vector(0, 9.81)
 		this.substeps = options.substeps ?? 1
@@ -34,6 +36,14 @@ export default class World {
 			--i
 		}
 		this.oldContactPoints.clear()
+
+		for (let i = 0; i < this.contactKeys.length; ++i) {
+			const key = this.contactKeys[i]
+			const { poolIndex } = this.contacts.get(key)
+
+			this.contactPool.deallocate(poolIndex)
+		}
+
 		this.contacts.clear()
 		this.contactKeys.length = 0
 
@@ -212,7 +222,8 @@ export default class World {
 			// Cache contact points and preserve sleeping contacts
 			for (let i = 0; i < this.contactKeys.length; ++i) {
 				const key = this.contactKeys[i]
-				const { bodyA, bodyB, contactPoints } = this.contacts.get(key)
+				const { bodyA, bodyB, contactPoints, poolIndex } =
+					this.contacts.get(key)
 
 				this.oldContactPoints.set(key, contactPoints)
 
@@ -227,6 +238,7 @@ export default class World {
 				}
 
 				this.contacts.delete(key)
+				this.contactPool.deallocate(poolIndex)
 				this.contactKeys[i] = this.contactKeys[this.contactKeys.length - 1]
 				this.contactKeys.pop()
 				--i
@@ -269,12 +281,19 @@ export default class World {
 							}
 
 							// Narrowphase
-							const contact = this.collider.collide(sA, sB)
+							const contactI = this.contactPool.allocate()
+							const contact = this.collider.collide(
+								sA,
+								sB,
+								this.contactPool.at(contactI)
+							)
 
 							if (!contact) {
+								this.contactPool.deallocate(contactI)
 								continue
 							}
 
+							contact.poolIndex = contactI
 							contact.bodyA = bodyA
 							contact.bodyB = bodyB
 

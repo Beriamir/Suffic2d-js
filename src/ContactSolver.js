@@ -24,7 +24,7 @@ export default class ContactSolver {
 
 		const tangentX = (contact.tangentX = -normalY)
 		const tangentY = (contact.tangentY = normalX)
-		const contactCount = (contact.contactCount = contactPoints.length)
+		const contactCount = contact.contactCount
 
 		for (let i = 0; i < contactCount; ++i) {
 			const cp = contactPoints[i]
@@ -325,7 +325,7 @@ export default class ContactSolver {
 				wB += cp.rnB * impulse * iB
 			}
 		}
-	
+
 		// Friction
 		for (let i = 0; i < contactCount; ++i) {
 			const cp = contactPoints[i]

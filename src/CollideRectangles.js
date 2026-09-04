@@ -108,6 +108,7 @@ export default class CollideRectangles {
 			this.arrays.deallocate(secondClipping)
 		}
 
+		manifold.contactCount = this.arrays.at(finalClipping).length >> 1
 		manifold.contactPoints = []
 
 		const dot0 = ref.edge[0] * normalX + ref.edge[1] * normalY

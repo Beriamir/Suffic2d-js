@@ -278,7 +278,8 @@ export default class Renderer {
 					inc,
 					overlap,
 					polytope,
-					contactPoints
+					contactPoints,
+					contactCount
 				} = contact
 
 				if (debugs.epa && polytope) {
@@ -318,7 +319,9 @@ export default class Renderer {
 					})
 				}
 
-				for (const cp of contactPoints) {
+				for (let j = 0; j < contactCount; ++j) {
+					const cp = contactPoints[j]
+
 					if (debugs.impulse) {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
 							length: cp.normalImpulse,
