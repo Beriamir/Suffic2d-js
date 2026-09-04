@@ -7,7 +7,7 @@ export default (world, options = {}) => {
 		spacing = 0.024,
 		boxWidth = 0.24,
 		boxHeight = 0.24,
-		groundWidth = 1000,
+		groundWidth = 5,
 		groundHeight = 0.48,
 		centerX = 0,
 		bottomY = 0

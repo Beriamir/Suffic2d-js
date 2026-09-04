@@ -4,7 +4,7 @@ export default (world, options = {}) => {
 	const {
 		spacing = 0.24,
 		radius = 0.24,
-		groundWidth = 1000,
+		groundWidth = 5,
 		groundHeight = 0.48,
 		centerX = 0,
 		bottomY = 0

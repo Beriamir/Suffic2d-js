@@ -6,7 +6,7 @@ export default (world, options = {}) => {
 		rows = 10,
 		radius = 0.24,
 		spacing = 0.024,
-		groundWidth = 1000,
+		groundWidth = 5,
 		groundHeight = 0.48,
 		centerX = 0,
 		bottomY = 0

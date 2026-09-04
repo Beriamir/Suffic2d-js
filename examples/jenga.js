@@ -5,7 +5,7 @@ export default (world, options = {}) => {
 		levels = 7,
 		width = 0.48,
 		height = 0.12,
-		groundWidth = 1000,
+		groundWidth = 5,
 		groundHeight = 0.48,
 		centerX = 0,
 		bottomY = 0
@@ -27,7 +27,7 @@ export default (world, options = {}) => {
 			y -= height * 6
 		}
 
-		for (let block = -levels >> 1; block <= levels >> 1; ++block) {
+		for (let block = -(levels >> 1); block <= levels >> 1; ++block) {
 			const x = centerX - block * blockSpacing
 			const angle = horizontal ? 0 : Math.PI * 0.5
 

@@ -5,7 +5,7 @@ export default (world, options = {}) => {
 		spacing = 1,
 		rampWidth = 8,
 		rampHeight = 0.24,
-		groundWidth = 1000,
+		groundWidth = 10,
 		groundHeight = 0.48,
 		centerX = 0,
 		bottomY = 0
@@ -15,9 +15,14 @@ export default (world, options = {}) => {
 		isStatic: true
 	}).createRectangle(rampWidth, rampHeight, {})
 
-	const ground = new RigidBody(centerX, bottomY + groundHeight, 0, {
-		isStatic: true
-	}).createRectangle(groundWidth, groundHeight, {})
+	const ground = new RigidBody(
+		centerX + groundWidth * 0.5,
+		bottomY + groundHeight,
+		0,
+		{
+			isStatic: true
+		}
+	).createRectangle(groundWidth, groundHeight, {})
 
 	world.createBodies([ramp, ground])
 
