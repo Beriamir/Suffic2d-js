@@ -9,7 +9,6 @@ export default class Demo extends SceneManager {
 
 	initialize() {
 		this.load('Pyramid')
-		//
 	}
 
 	onDown(pointX, pointY) {
