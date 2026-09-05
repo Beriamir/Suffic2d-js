@@ -2,16 +2,15 @@ import Vector from './Vector.js'
 import AABB from './AABB.js'
 
 export default class Circle {
-	#rot
 	constructor(radius, options = {}) {
 		this.type = 'circle'
 		this.radius = radius
 		this.center = new Vector()
 
 		this.offset = options.offset ?? new Vector()
-		this.#rot = options.rotation ?? 0
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
+		this.rotation = options.rotation ?? 0
+		this.cos = Math.cos(this.rotation)
+		this.sin = Math.sin(this.rotation)
 
 		this.density = options.density ?? 1
 		this.thickness = options.thickness ?? 1
@@ -20,14 +19,6 @@ export default class Circle {
 		this.inertia = 0.5 * this.mass * this.radius * this.radius
 
 		this.aabb = new AABB()
-	}
-	set rotation(value) {
-		this.#rot = value
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
-	}
-	get rotation() {
-		return this.#rot
 	}
 
 	testPoint(pointX, pointY) {

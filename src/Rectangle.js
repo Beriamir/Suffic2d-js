@@ -3,7 +3,6 @@ import Vertices from './Vertices.js'
 import AABB from './AABB.js'
 
 export default class Rectangle {
-	#rot
 	constructor(width, height, options = {}) {
 		this.type = 'rectangle'
 		this.vertices = new Float32Array([
@@ -22,9 +21,9 @@ export default class Rectangle {
 		this.worldAxes = new Float32Array(8)
 
 		this.offset = options.offset ?? new Vector()
-		this.#rot = options.rotation ?? 0
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
+		this.rotation = options.rotation ?? 0
+		this.cos = Math.cos(this.rotation)
+		this.sin = Math.sin(this.rotation)
 
 		this.density = options.density ?? 1
 		this.thickness = options.thickness ?? 1
@@ -33,15 +32,6 @@ export default class Rectangle {
 		this.inertia = Vertices.getInertia(this.vertices, this.mass)
 
 		this.aabb = new AABB()
-	}
-
-	set rotation(value) {
-		this.#rot = value
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
-	}
-	get rotation() {
-		return this.#rot
 	}
 
 	testPoint(pointX, pointY) {

@@ -7,14 +7,13 @@ import Capsule from './Capsule.js'
 import Line from './Line.js'
 
 export default class RigidBody {
-	#rot
-	static #uid = 0
+	static ids = 0
 	constructor(x, y, rot, options = {}) {
-		this.id = RigidBody.#uid++
+		this.id = RigidBody.ids++
 		this.type = 'rigid'
 
 		this.position = new Vector(x, y)
-		this.#rot = rot
+		this.rotation = rot
 		this.cos = Math.cos(rot)
 		this.sin = Math.sin(rot)
 
@@ -41,7 +40,7 @@ export default class RigidBody {
 		this.invMass = 0
 		this.invInertia = 0
 
-		this.fixtureUid = 0
+		this.fixtureIds = 0
 		this.fixtures = []
 		this.anchors = []
 		this.aabb = new AABB()
@@ -86,23 +85,13 @@ export default class RigidBody {
 		)
 	}
 
-	set rotation(value) {
-		this.#rot = value
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
-	}
-
-	get rotation() {
-		return this.#rot
-	}
-
 	createFixture(shape) {
 		if (shape.index > 0) {
 			return
 		}
 
 		this.fixtures.push(shape)
-		shape.id = this.fixtureUid++
+		shape.id = this.fixtureIds++
 		shape.index = this.fixtures.length - 1
 		shape.updateWorldVertices(
 			this.position.x,

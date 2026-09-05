@@ -3,7 +3,6 @@ import AABB from './AABB.js'
 import Vertices from './Vertices.js'
 
 export default class Line {
-	#rot
 	constructor(length, options = {}) {
 		this.type = 'line'
 		this.length = length
@@ -15,9 +14,9 @@ export default class Line {
 		this.center2 = new Vector()
 
 		this.offset = options.offset ?? new Vector()
-		this.#rot = options.rotation ?? 0
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
+		this.rotation = options.rotation ?? 0
+		this.cos = Math.cos(this.rotation)
+		this.sin = Math.sin(this.rotation)
 
 		this.density = options.density ?? 1
 		this.thickness = options.thickness ?? 1
@@ -26,14 +25,6 @@ export default class Line {
 		this.inertia = 0.0833333333 * this.mass * this.length ** 2
 
 		this.aabb = new AABB()
-	}
-	set rotation(value) {
-		this.#rot = value
-		this.cos = Math.cos(this.#rot)
-		this.sin = Math.sin(this.#rot)
-	}
-	get rotation() {
-		return this.#rot
 	}
 
 	testPoint(pointX, pointY) {

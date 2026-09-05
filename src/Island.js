@@ -164,6 +164,8 @@ export default class Island {
 
 			body.position.addMulV(body.linearVelocity, dt)
 			body.rotation += body.angularVelocity * dt
+			body.cos = Math.cos(body.rotation)
+			body.sin = Math.sin(body.rotation)
 
 			for (let j = 0; j < body.fixtures.length; ++j) {
 				const s = body.fixtures[j]
