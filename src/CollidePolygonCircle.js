@@ -22,60 +22,44 @@ export default class CollidePolygonCircle {
 
 		const axes = this.getAxes(sA.worldVertices, this.axes)
 
-		let normalX = dirX
-		let normalY = dirY
-		let overlap = Infinity
+		manifold.normalX = 0
+		manifold.normalY = 0
+		manifold.overlap = Infinity
 
 		for (let i = 0; i < axes.length; i += 2) {
 			const x0 = axes[i]
 			const y0 = axes[i + 1]
-			const mag = Math.sqrt(x0 * x0 + y0 * y0)
+			const invMag = 1 / Math.sqrt(x0 * x0 + y0 * y0)
 
-			if (mag == 0) {
-				continue
-			}
-
-			const invMag = 1 / mag
-			const axisX = x0 * invMag
-			const axisY = y0 * invMag
-
-			this.projVertices(sA.worldVertices, axisX, axisY)
-
-			const projB = sB.center.x * axisX + sB.center.y * axisY
-			this.projB.min = projB - sB.radius
-			this.projB.max = projB + sB.radius
-
-			if (this.projA.min > this.projB.max || this.projB.min > this.projA.max) {
-				return null
-			}
-
-			const minOverlap = Math.min(
-				this.projA.max - this.projB.min,
-				this.projB.max - this.projA.min
+			const mtv = this.getMTV(
+				sA.worldVertices,
+				sB.center,
+				sB.radius,
+				x0 * invMag,
+				y0 * invMag,
+				manifold
 			)
 
-			if (minOverlap < overlap) {
-				normalX = axisX
-				normalY = axisY
-				overlap = minOverlap
+			if (!mtv) {
+				return null
 			}
 		}
 
+		const normalX = manifold.normalX
+		const normalY = manifold.normalY
+
 		if (dirX * normalX + dirY * normalY < 0) {
-			normalX *= -1
-			normalY *= -1
+			manifold.normalX = -normalX
+			manifold.normalY = -normalY
 		}
 
-		manifold.normalX = normalX
-		manifold.normalY = normalY
-		manifold.overlap = overlap
 		manifold.contactCount = 1
 		manifold.contactPoints = [
 			{
 				id: `${sA.id}-${sB.id},0`,
-				pointX: sB.center.x - normalX * sB.radius,
-				pointY: sB.center.y - normalY * sB.radius,
-				overlap: overlap,
+				pointX: sB.center.x - manifold.normalX * sB.radius,
+				pointY: sB.center.y - manifold.normalY * sB.radius,
+				overlap: manifold.overlap,
 				normalImpulse: 0,
 				tangentImpulse: 0,
 				persistent: false
@@ -118,15 +102,41 @@ export default class CollidePolygonCircle {
 		return best
 	}
 
-	projVertices(vertices, dx, dy) {
-		this.projA.min = Infinity
-		this.projA.max = -Infinity
+	getMTV(verticesA, centerB, radiusB, axisX, axisY, mtv = {}) {
+		const projA = this.projVertices(verticesA, axisX, axisY, this.projA)
+		const projB = this.projB
+
+		const dot = centerB.x * axisX + centerB.y * axisY
+
+		projB.min = dot - radiusB
+		projB.max = dot + radiusB
+
+		if (projA.min > projB.max || projB.min > projA.max) {
+			return null
+		}
+
+		const minOverlap = Math.min(projA.max - projB.min, projB.max - projA.min)
+
+		if (minOverlap < mtv.overlap) {
+			mtv.normalX = axisX
+			mtv.normalY = axisY
+			mtv.overlap = minOverlap
+		}
+
+		return mtv
+	}
+
+	projVertices(vertices, dx, dy, out = {}) {
+		out.min = Infinity
+		out.max = -Infinity
 
 		for (let i = 0; i < vertices.length; i += 2) {
 			const proj = vertices[i] * dx + vertices[i + 1] * dy
 
-			if (proj < this.projA.min) this.projA.min = proj
-			if (proj > this.projA.max) this.projA.max = proj
+			if (proj < out.min) out.min = proj
+			if (proj > out.max) out.max = proj
 		}
+
+		return out
 	}
 }
