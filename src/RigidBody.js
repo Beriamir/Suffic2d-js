@@ -47,12 +47,20 @@ export default class RigidBody {
 	}
 
 	addForce(force, dt = 1) {
+		if (this.isStatic) {
+			return this
+		}
+
 		this.linearVelocity.x += force.x * dt
 		this.linearVelocity.y += force.y * dt
 		return this
 	}
 
 	addTorque(torque) {
+		if (this.isStatic) {
+			return this
+		}
+
 		this.angularVelocity += torque
 		return this
 	}
