@@ -3,17 +3,18 @@ import Pool from './Pool.js'
 
 export default class DynamicTree {
 	constructor() {
-		this.nodes = new Pool(() => {
-			return {
+		this.nodes = new Pool(
+			() => ({
 				aabb: new AABB(),
-				margin: 10,
+				margin: 0,
 				height: 0,
 				data: null,
 				parent: null,
 				child1: null,
 				child2: null
-			}
-		}, 16)
+			}),
+			16
+		)
 		this.root = null
 		this.stack = []
 		this.rotation = true
