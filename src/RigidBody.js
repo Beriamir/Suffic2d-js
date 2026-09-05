@@ -47,6 +47,17 @@ export default class RigidBody {
 		this.aabb = new AABB()
 	}
 
+	addForce(force, dt = 1) {
+		this.linearVelocity.x += force.x * dt
+		this.linearVelocity.y += force.y * dt
+		return this
+	}
+
+	addTorque(torque) {
+		this.angularVelocity += torque
+		return this
+	}
+
 	testPoint(pointX, pointY) {
 		for (let i = 0; i < this.fixtures.length; ++i) {
 			const s = this.fixtures[i]
