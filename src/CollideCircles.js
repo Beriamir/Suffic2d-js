@@ -2,33 +2,34 @@ import Vector from './Vector.js'
 import Pool from './Pool.js'
 
 export default class CollideCircles {
-	#vectors = new Pool(() => new Vector(), 16)
-	constructor() {}
+	constructor() {
+		this.vectors = new Pool(() => new Vector(), 16)
+	}
 
 	collide(sA, sB, manifold = {}) {
 		if (!sA.aabb.overlaps(sB.aabb)) {
 			return null
 		}
 
-		const dir = this.#vectors.allocate()
+		const dir = this.vectors.allocate()
 		const deltaX = sB.center.x - sA.center.x
 		const deltaY = sB.center.y - sA.center.y
 
-		this.#vectors.at(dir).x = deltaX
-		this.#vectors.at(dir).y = deltaY
+		this.vectors.at(dir).x = deltaX
+		this.vectors.at(dir).y = deltaY
 
-		const magSq = this.#vectors.at(dir).magSq()
+		const magSq = this.vectors.at(dir).magSq()
 		const radiiSum = sA.radius + sB.radius
 
 		if (magSq === 0 || magSq > radiiSum * radiiSum) {
-			this.#vectors.deallocate(dir)
+			this.vectors.deallocate(dir)
 			return null
 		}
 
 		const distance = Math.sqrt(magSq)
 		const invDistance = 1 / distance
-		const normalX = this.#vectors.at(dir).x * invDistance
-		const normalY = this.#vectors.at(dir).y * invDistance
+		const normalX = this.vectors.at(dir).x * invDistance
+		const normalY = this.vectors.at(dir).y * invDistance
 		const overlap = radiiSum - distance
 
 		manifold.normalX = normalX
@@ -47,7 +48,7 @@ export default class CollideCircles {
 			}
 		]
 
-		this.#vectors.deallocate(dir)
+		this.vectors.deallocate(dir)
 
 		return manifold
 	}

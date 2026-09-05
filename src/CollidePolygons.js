@@ -34,7 +34,7 @@ export default class CollidePolygons {
 
 		this.simplex.length = 0
 		this.simplex.push(
-			this.#getSupportPolygons(
+			this.getSupportPolygons(
 				sA.worldVertices,
 				sB.worldVertices,
 				this.vectors.at(dir)
@@ -44,7 +44,7 @@ export default class CollidePolygons {
 		this.vectors.at(dir).negate()
 
 		while (true) {
-			const support = this.#getSupportPolygons(
+			const support = this.getSupportPolygons(
 				sA.worldVertices,
 				sB.worldVertices,
 				this.vectors.at(dir)
@@ -64,19 +64,19 @@ export default class CollidePolygons {
 			this.simplex.push(support)
 
 			if (this.simplex.length === 2) {
-				this.#handleLineSimplex(this.simplex, this.vectors.at(dir))
+				this.handleLineSimplex(this.simplex, this.vectors.at(dir))
 				continue
 			}
 
-			if (this.#handleTriangleSimplex(this.simplex, this.vectors.at(dir))) {
-				this.#EPA(
+			if (this.handleTriangleSimplex(this.simplex, this.vectors.at(dir))) {
+				this.EPA(
 					sA.worldVertices,
 					sB.worldVertices,
 					this.simplex,
 					this.vectors.at(dir),
 					manifold
 				)
-				this.#getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
+				this.getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
 
 				this.vectors.deallocate(dir)
 				return manifold
@@ -84,17 +84,17 @@ export default class CollidePolygons {
 		}
 	}
 
-	#getContactPoints(verticesA, verticesB, manifold) {
+	getContactPoints(verticesA, verticesB, manifold) {
 		const normalX = manifold.normalX
 		const normalY = manifold.normalY
 
-		const ref = this.#bestEdge(verticesA, normalX, normalY, this.ref)
-		const inc = this.#bestEdge(verticesB, -normalX, -normalY, this.inc)
+		const ref = this.bestEdge(verticesA, normalX, normalY, this.ref)
+		const inc = this.bestEdge(verticesB, -normalX, -normalY, this.inc)
 
 		const refDeltaX = ref.edge[2] - ref.edge[0]
 		const refDeltaY = ref.edge[3] - ref.edge[1]
 
-		const firstClipping = this.#clipEdge(
+		const firstClipping = this.clipEdge(
 			inc.edge,
 			ref.edge[0],
 			ref.edge[1],
@@ -106,7 +106,7 @@ export default class CollidePolygons {
 		let secondClipping = firstClipping
 
 		if (this.arrays.at(firstClipping).length > 1) {
-			secondClipping = this.#clipEdge(
+			secondClipping = this.clipEdge(
 				this.arrays.at(firstClipping),
 				ref.edge[2],
 				ref.edge[3],
@@ -121,7 +121,7 @@ export default class CollidePolygons {
 		let finalClipping = secondClipping
 
 		if (this.arrays.at(secondClipping).length > 1) {
-			finalClipping = this.#clipEdge(
+			finalClipping = this.clipEdge(
 				this.arrays.at(secondClipping),
 				ref.edge[0],
 				ref.edge[1],
@@ -160,7 +160,7 @@ export default class CollidePolygons {
 		return manifold
 	}
 
-	#clipEdge(inc, startX, startY, dirX, dirY, clip) {
+	clipEdge(inc, startX, startY, dirX, dirY, clip) {
 		const result = this.arrays.allocate()
 		const d0 = startX * dirX + startY * dirY
 		const u0 = inc[0] * dirX + inc[1] * dirY - d0
@@ -190,7 +190,7 @@ export default class CollidePolygons {
 		return result
 	}
 
-	#bestEdge(vertices, dirX, dirY, out = {}) {
+	bestEdge(vertices, dirX, dirY, out = {}) {
 		let bestDot = -Infinity
 		let index = 0
 
@@ -235,7 +235,7 @@ export default class CollidePolygons {
 		return out
 	}
 
-	#EPA(verticesA, verticesB, simplex, dir, manifold = {}) {
+	EPA(verticesA, verticesB, simplex, dir, manifold = {}) {
 		while (true) {
 			let minDot = Infinity
 			let index = 0
@@ -270,7 +270,7 @@ export default class CollidePolygons {
 				}
 			}
 
-			const support = this.#getSupportPolygons(verticesA, verticesB, dir)
+			const support = this.getSupportPolygons(verticesA, verticesB, dir)
 			const dot = this.vectors.at(support).dot(dir)
 
 			if (dot - minDot <= 1e-4) {
@@ -290,7 +290,7 @@ export default class CollidePolygons {
 		}
 	}
 
-	#handleTriangleSimplex(simplex, dir) {
+	handleTriangleSimplex(simplex, dir) {
 		const [c, b, a] = simplex
 
 		const ab = this.vectors.allocate()
@@ -314,13 +314,13 @@ export default class CollidePolygons {
 
 		this.vectors.at(ao).copy(this.vectors.at(a)).negate()
 
-		this.#tripleProduct(
+		this.tripleProduct(
 			this.vectors.at(ac),
 			this.vectors.at(ab),
 			this.vectors.at(ab),
 			this.vectors.at(abPerp)
 		)
-		this.#tripleProduct(
+		this.tripleProduct(
 			this.vectors.at(ab),
 			this.vectors.at(ac),
 			this.vectors.at(ac),
@@ -373,7 +373,7 @@ export default class CollidePolygons {
 		return true
 	}
 
-	#handleLineSimplex(simplex, dir) {
+	handleLineSimplex(simplex, dir) {
 		const [b, a] = simplex
 
 		const ab = this.vectors.allocate()
@@ -389,7 +389,7 @@ export default class CollidePolygons {
 
 		this.vectors.at(ao).copy(this.vectors.at(a)).negate()
 
-		this.#tripleProduct(
+		this.tripleProduct(
 			this.vectors.at(ab),
 			this.vectors.at(ao),
 			this.vectors.at(ab),
@@ -407,7 +407,7 @@ export default class CollidePolygons {
 		this.vectors.deallocate(abPerp)
 	}
 
-	#tripleProduct(u, v, w, out = new Vector()) {
+	tripleProduct(u, v, w, out = new Vector()) {
 		const dotWU = w.dot(u)
 		const dotWV = w.dot(v)
 
@@ -416,7 +416,7 @@ export default class CollidePolygons {
 		return out
 	}
 
-	#bestPoint(vertices, dirX, dirY) {
+	bestPoint(vertices, dirX, dirY) {
 		let bestDot = -Infinity
 		let bestInd = 0
 
@@ -437,9 +437,9 @@ export default class CollidePolygons {
 		return point
 	}
 
-	#getSupportPolygons(verticesA, verticesB, dir) {
-		const bestA = this.#bestPoint(verticesA, dir.x, dir.y)
-		const bestB = this.#bestPoint(verticesB, -dir.x, -dir.y)
+	getSupportPolygons(verticesA, verticesB, dir) {
+		const bestA = this.bestPoint(verticesA, dir.x, dir.y)
+		const bestB = this.bestPoint(verticesB, -dir.x, -dir.y)
 		const point = this.vectors.allocate()
 
 		this.vectors.at(point).x =

@@ -48,7 +48,7 @@ export default class DynamicTree {
 	// case1: D becomes a sibling of B
 	// case2: D becomes a descendant of B along with a new internal node of area(D).
 	// - Erin
-	#findBestSibling(node) {
+	findBestSibling(node) {
 		let sibling = this.root
 		let siblingArea = this.nodes.at(sibling).aabb.perimeter
 
@@ -166,7 +166,7 @@ export default class DynamicTree {
 	}
 
 	// Perform a left or right rotation if node A is imbalanced. - Erin
-	#rotate(node) {
+	rotate(node) {
 		if (this.nodes.at(node).height < 2) {
 			return
 		}
@@ -419,6 +419,7 @@ export default class DynamicTree {
 			}
 		}
 	}
+
 	insertBody(data, margin = null) {
 		const node = this.nodes.allocate()
 
@@ -438,7 +439,7 @@ export default class DynamicTree {
 		}
 
 		// Stage 1 find the best sibling
-		const sibling = this.#findBestSibling(node)
+		const sibling = this.findBestSibling(node)
 
 		// Stage 2 create a new parent
 		const oldParent = this.nodes.at(sibling).parent
@@ -475,12 +476,13 @@ export default class DynamicTree {
 				1 + Math.max(this.nodes.at(c1).height, this.nodes.at(c2).height)
 
 			if (this.rotation) {
-				this.#rotate(ancestor)
+				this.rotate(ancestor)
 			}
 
 			ancestor = this.nodes.at(ancestor).parent
 		}
 	}
+
 	removeBody(data) {
 		const node = data.node
 
@@ -523,7 +525,7 @@ export default class DynamicTree {
 					1 +
 					Math.max(this.nodes.at(child1).height, this.nodes.at(child2).height)
 
-				if (this.rotation) this.#rotate(ancestor)
+				if (this.rotation) this.rotate(ancestor)
 
 				ancestor = this.nodes.at(ancestor).parent
 			}
@@ -537,6 +539,7 @@ export default class DynamicTree {
 			this.nodes.deallocate(node)
 		}
 	}
+
 	updateBody(data, margin) {
 		const node = data.node
 
@@ -545,6 +548,7 @@ export default class DynamicTree {
 			this.insertBody(data, margin)
 		}
 	}
+
 	queryAABB(aabb, result = []) {
 		this.stack.length = 0
 		this.stack.push(this.root)
@@ -567,6 +571,7 @@ export default class DynamicTree {
 
 		return result
 	}
+
 	queryPoint(pointX, pointY, result = []) {
 		this.stack.length = 0
 		this.stack.push(this.root)
@@ -589,6 +594,7 @@ export default class DynamicTree {
 
 		return result
 	}
+
 	traverse(callback) {
 		this.stack.length = 0
 		this.stack.push(this.root)

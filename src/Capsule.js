@@ -7,7 +7,7 @@ export default class Capsule {
 		this.type = 'capsule'
 		this.length = length
 		this.radius = radius
-		this.vertices = this.#createCapsuleVertices(
+		this.vertices = this.createCapsuleVertices(
 			length,
 			radius,
 			options.roundness ?? 9
@@ -31,7 +31,7 @@ export default class Capsule {
 		this.aabb = new AABB()
 	}
 
-	#createCapsuleVertices(length, radius, roundness = 9) {
+	createCapsuleVertices(length, radius, roundness = 9) {
 		const capsule = []
 		const halfLength = length * 0.5
 

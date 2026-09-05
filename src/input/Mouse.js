@@ -1,14 +1,14 @@
 export default class Mouse {
-	#buttons = new Set()
-	#lastX = 0
-	#lastY = 0
-
 	static LEFT = 0
 	static MIDDLE = 1
 	static RIGHT = 2
 
 	constructor(input) {
 		const target = input.target
+
+		this.buttons = new Set()
+		this.lastX = 0
+		this.lastY = 0
 
 		target.addEventListener('mousedown', event => {
 			event.preventDefault()
@@ -17,9 +17,9 @@ export default class Mouse {
 			const mouseX = event.clientX - rect.left
 			const mouseY = event.clientY - rect.top
 
-			this.#buttons.add(event.button)
-			this.#lastX = mouseX
-			this.#lastY = mouseY
+			this.buttons.add(event.button)
+			this.lastX = mouseX
+			this.lastY = mouseY
 
 			if (typeof input.onDown == 'function') {
 				input.onDown(mouseX, mouseY)
@@ -33,8 +33,8 @@ export default class Mouse {
 			const mouseX = event.clientX - rect.left
 			const mouseY = event.clientY - rect.top
 
-			const dx = mouseX - this.#lastX
-			const dy = mouseY - this.#lastY
+			const dx = mouseX - this.lastX
+			const dy = mouseY - this.lastY
 
 			if (typeof input.onMove == 'function') {
 				input.onMove(dx, dy, mouseX, mouseY)
@@ -52,15 +52,15 @@ export default class Mouse {
 				}
 			}
 
-			this.#lastX = mouseX
-			this.#lastY = mouseY
+			this.lastX = mouseX
+			this.lastY = mouseY
 		})
 
 		target.addEventListener('mouseup', event => {
 			event.preventDefault()
-			this.#buttons.delete(event.button)
-			this.#lastX = 0
-			this.#lastY = 0
+			this.buttons.delete(event.button)
+			this.lastX = 0
+			this.lastY = 0
 
 			if (typeof input.onUp == 'function') {
 				input.onUp()
@@ -88,6 +88,6 @@ export default class Mouse {
 	}
 
 	isDown(button) {
-		return this.#buttons.has(button)
+		return this.buttons.has(button)
 	}
 }

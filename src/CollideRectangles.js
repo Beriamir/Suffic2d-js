@@ -19,7 +19,7 @@ export default class CollideRectangles {
 		manifold.overlap = Infinity
 
 		for (let i = 0; i < sA.worldAxes.length; i += 2) {
-			const mtv = this.#getMTV(
+			const mtv = this.getMTV(
 				sA.worldVertices,
 				sB.worldVertices,
 				sA.worldAxes[i],
@@ -33,7 +33,7 @@ export default class CollideRectangles {
 		}
 
 		for (let i = 0; i < sB.worldAxes.length; i += 2) {
-			const mtv = this.#getMTV(
+			const mtv = this.getMTV(
 				sA.worldVertices,
 				sB.worldVertices,
 				sB.worldAxes[i],
@@ -56,20 +56,20 @@ export default class CollideRectangles {
 			manifold.normalY = -normalY
 		}
 
-		return this.#getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
+		return this.getContactPoints(sA.worldVertices, sB.worldVertices, manifold)
 	}
 
-	#getContactPoints(verticesA, verticesB, manifold) {
+	getContactPoints(verticesA, verticesB, manifold) {
 		const normalX = manifold.normalX
 		const normalY = manifold.normalY
 
-		const ref = this.#bestEdge(verticesA, normalX, normalY, this.ref)
-		const inc = this.#bestEdge(verticesB, -normalX, -normalY, this.inc)
+		const ref = this.bestEdge(verticesA, normalX, normalY, this.ref)
+		const inc = this.bestEdge(verticesB, -normalX, -normalY, this.inc)
 
 		const refDeltaX = ref.edge[2] - ref.edge[0]
 		const refDeltaY = ref.edge[3] - ref.edge[1]
 
-		const firstClipping = this.#clipEdge(
+		const firstClipping = this.clipEdge(
 			inc.edge,
 			ref.edge[0],
 			ref.edge[1],
@@ -81,7 +81,7 @@ export default class CollideRectangles {
 		let secondClipping = firstClipping
 
 		if (this.arrays.at(firstClipping).length > 1) {
-			secondClipping = this.#clipEdge(
+			secondClipping = this.clipEdge(
 				this.arrays.at(firstClipping),
 				ref.edge[2],
 				ref.edge[3],
@@ -96,7 +96,7 @@ export default class CollideRectangles {
 		let finalClipping = secondClipping
 
 		if (this.arrays.at(secondClipping).length > 1) {
-			finalClipping = this.#clipEdge(
+			finalClipping = this.clipEdge(
 				this.arrays.at(secondClipping),
 				ref.edge[0],
 				ref.edge[1],
@@ -135,7 +135,7 @@ export default class CollideRectangles {
 		return manifold
 	}
 
-	#clipEdge(inc, startX, startY, dirX, dirY, clip) {
+	clipEdge(inc, startX, startY, dirX, dirY, clip) {
 		const result = this.arrays.allocate()
 		const d0 = startX * dirX + startY * dirY
 		const u0 = inc[0] * dirX + inc[1] * dirY - d0
@@ -165,7 +165,7 @@ export default class CollideRectangles {
 		return result
 	}
 
-	#bestEdge(vertices, dirX, dirY, out = {}) {
+	bestEdge(vertices, dirX, dirY, out = {}) {
 		let bestDot = -Infinity
 		let index = 0
 
@@ -210,9 +210,9 @@ export default class CollideRectangles {
 		return out
 	}
 
-	#getMTV(verticesA, verticesB, axisX, axisY, mtv = {}) {
-		const projA = this.#projVertices(verticesA, axisX, axisY, this.projA)
-		const projB = this.#projVertices(verticesB, axisX, axisY, this.projB)
+	getMTV(verticesA, verticesB, axisX, axisY, mtv = {}) {
+		const projA = this.projVertices(verticesA, axisX, axisY, this.projA)
+		const projB = this.projVertices(verticesB, axisX, axisY, this.projB)
 
 		if (projA.min > projB.max || projB.min > projA.max) {
 			return null
@@ -229,7 +229,7 @@ export default class CollideRectangles {
 		return mtv
 	}
 
-	#projVertices(vertices, dx, dy, out = {}) {
+	projVertices(vertices, dx, dy, out = {}) {
 		out.min = Infinity
 		out.max = -Infinity
 

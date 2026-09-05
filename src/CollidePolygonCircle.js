@@ -12,7 +12,7 @@ export default class CollidePolygonCircle {
 
 		const dirX = sB.center.x - sA.center.x
 		const dirY = sB.center.y - sA.center.y
-		const best = this.#bestPoint(sA.worldVertices, dirX, dirY)
+		const best = this.bestPoint(sA.worldVertices, dirX, dirY)
 
 		this.axes.length = 0
 		this.axes.push(
@@ -20,7 +20,7 @@ export default class CollidePolygonCircle {
 			sB.center.y - sA.worldVertices[best + 1]
 		)
 
-		const axes = this.#getAxes(sA.worldVertices, this.axes)
+		const axes = this.getAxes(sA.worldVertices, this.axes)
 
 		let normalX = dirX
 		let normalY = dirY
@@ -39,7 +39,7 @@ export default class CollidePolygonCircle {
 			const axisX = x0 * invMag
 			const axisY = y0 * invMag
 
-			this.#projVertices(sA.worldVertices, axisX, axisY)
+			this.projVertices(sA.worldVertices, axisX, axisY)
 
 			const projB = sB.center.x * axisX + sB.center.y * axisY
 			this.projB.min = projB - sB.radius
@@ -85,7 +85,7 @@ export default class CollidePolygonCircle {
 		return manifold
 	}
 
-	#getAxes(vertices, axes = []) {
+	getAxes(vertices, axes = []) {
 		const n = vertices.length
 
 		for (let i = 0; i < n; i += 2) {
@@ -102,7 +102,7 @@ export default class CollidePolygonCircle {
 		return axes
 	}
 
-	#bestPoint(vertices, dx, dy) {
+	bestPoint(vertices, dx, dy) {
 		let max = -Infinity
 		let best = -1
 
@@ -118,7 +118,7 @@ export default class CollidePolygonCircle {
 		return best
 	}
 
-	#projVertices(vertices, dx, dy) {
+	projVertices(vertices, dx, dy) {
 		this.projA.min = Infinity
 		this.projA.max = -Infinity
 

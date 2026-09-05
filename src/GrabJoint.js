@@ -1,9 +1,9 @@
 import Vector from './Vector.js'
 
 export default class GrabJoint {
-	static #uid = 0
+	static ids = 0
 	constructor(targetX, targetY, body, options = {}) {
-		this.id = GrabJoint.#uid++
+		this.id = GrabJoint.ids++
 		this.type = 'GrabJoint'
 		this.target = new Vector(targetX, targetY)
 		this.body = body

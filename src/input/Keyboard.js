@@ -1,10 +1,10 @@
 export default class Keyboard {
-	#keys = new Set()
-
 	constructor(input) {
+		this.keys = new Set()
+
 		window.addEventListener('keydown', event => {
 			event.preventDefault()
-			this.#keys.add(event.code)
+			this.keys.add(event.code)
 
 			if (this.isDown('ArrowUp') || this.isDown('KeyW')) {
 				if (typeof input.onPan == 'function') {
@@ -44,11 +44,11 @@ export default class Keyboard {
 		})
 
 		window.addEventListener('keyup', event => {
-			this.#keys.delete(event.code)
+			this.keys.delete(event.code)
 		})
 	}
 
 	isDown(code = '') {
-		return this.#keys.has(code)
+		return this.keys.has(code)
 	}
 }

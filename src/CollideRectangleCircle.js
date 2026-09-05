@@ -11,7 +11,7 @@ export default class CollideRectangleCircle {
 
 		const dirX = sB.center.x - sA.center.x
 		const dirY = sB.center.y - sA.center.y
-		const best = this.#bestPoint(sA.worldVertices, dirX, dirY)
+		const best = this.bestPoint(sA.worldVertices, dirX, dirY)
 
 		let axisX = sB.center.x - sA.worldVertices[best]
 		let axisY = sB.center.y - sA.worldVertices[best + 1]
@@ -26,7 +26,7 @@ export default class CollideRectangleCircle {
 		manifold.overlap = Infinity
 
 		if (
-			!this.#getMTV(
+			!this.getMTV(
 				sA.worldVertices,
 				sB.center,
 				sB.radius,
@@ -39,7 +39,7 @@ export default class CollideRectangleCircle {
 		}
 
 		for (let i = 0; i < sA.worldAxes.length; i += 2) {
-			const mtv = this.#getMTV(
+			const mtv = this.getMTV(
 				sA.worldVertices,
 				sB.center,
 				sB.radius,
@@ -77,7 +77,7 @@ export default class CollideRectangleCircle {
 		return manifold
 	}
 
-	#bestPoint(vertices, dx, dy) {
+	bestPoint(vertices, dx, dy) {
 		let max = -Infinity
 		let best = -1
 
@@ -93,8 +93,8 @@ export default class CollideRectangleCircle {
 		return best
 	}
 
-	#getMTV(verticesA, centerB, radiusB, axisX, axisY, mtv = {}) {
-		const projA = this.#projVertices(verticesA, axisX, axisY, this.projA)
+	getMTV(verticesA, centerB, radiusB, axisX, axisY, mtv = {}) {
+		const projA = this.projVertices(verticesA, axisX, axisY, this.projA)
 		const projB = this.projB
 
 		const dot = centerB.x * axisX + centerB.y * axisY
@@ -117,7 +117,7 @@ export default class CollideRectangleCircle {
 		return mtv
 	}
 
-	#projVertices(vertices, dx, dy, out = {}) {
+	projVertices(vertices, dx, dy, out = {}) {
 		out.min = Infinity
 		out.max = -Infinity
 
