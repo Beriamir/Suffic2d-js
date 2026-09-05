@@ -2,6 +2,7 @@ export default class Graphics {
 	constructor(canvas, options = {}) {
 		this.ctx = canvas.getContext('2d', options)
 		this.canvas = canvas
+		this.vertices = []
 	}
 
 	setSize(w, h, scale = 1) {
@@ -62,8 +63,8 @@ export default class Graphics {
 		const localSin = options.sin ?? 0
 		const radius = options.radius ?? null
 		const wireframe = options.wireframe ?? false
-		const noStroke = options.noStroke ?? false
-		const noLine = options.noLine ?? false
+		const stroke = options.stroke ?? true
+		const axis = options.axis ?? true
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
 
@@ -75,8 +76,6 @@ export default class Graphics {
 		const localY = offsetY
 		const worldX = x + (localX * cos - localY * sin)
 		const worldY = y + (localX * sin + localY * cos)
-		const anchorX = worldX + radius * (cos * localCos - sin * localSin)
-		const anchorY = worldY + radius * (cos * localSin + sin * localCos)
 
 		this.ctx.beginPath()
 		this.ctx.arc(worldX, worldY, radius, 0, Math.PI * 2)
@@ -86,13 +85,16 @@ export default class Graphics {
 			this.ctx.fill()
 		}
 
-		if (noStroke) {
+		if (!stroke) {
 			return this
 		}
 
-		if (!noLine) {
+		if (axis) {
+			const axisX = worldX + radius * (cos * localCos - sin * localSin)
+			const axisY = worldY + radius * (cos * localSin + sin * localCos)
+
 			this.ctx.moveTo(worldX, worldY)
-			this.ctx.lineTo(anchorX, anchorY)
+			this.ctx.lineTo(axisX, axisY)
 		}
 
 		this.ctx.lineWidth = strokeWidth
@@ -109,8 +111,8 @@ export default class Graphics {
 		const length = options.length ?? 0
 		const radius = options.radius ?? 0
 		const wireframe = options.wireframe ?? false
-		const noStroke = options.noStroke ?? false
-		const noLine = options.noLine ?? false
+		const stroke = options.stroke ?? true
+		const axis = options.axis ?? true
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
 
@@ -149,13 +151,107 @@ export default class Graphics {
 			this.ctx.fill()
 		}
 
-		if (noStroke) {
+		if (!stroke) {
 			return this
 		}
 
-		if (!noLine) {
+		if (axis) {
 			this.ctx.moveTo(world0X, world0Y)
 			this.ctx.lineTo(world1X, world1Y)
+		}
+
+		this.ctx.lineWidth = strokeWidth
+		this.ctx.strokeStyle = strokeColor
+		this.ctx.stroke()
+		return this
+	}
+
+	drawRectangle(x, y, cos = 1, sin = 0, options = {}) {
+		const offsetX = options.offsetX ?? 0
+		const offsetY = options.offsetY ?? 0
+		const localCos = options.cos ?? 1
+		const localSin = options.sin ?? 0
+		const width = options.width ?? null
+		const height = options.height ?? null
+		const wireframe = options.wireframe ?? false
+		const stroke = options.stroke ?? true
+		const strokeColor = options.strokeColor ?? 'dimgray'
+		const strokeWidth = options.strokeWidth ?? 1
+		const axis = options.axis ?? true
+
+		if (!width || !height) {
+			return this
+		}
+
+		const vertices = this.vertices
+
+		vertices.length = 0
+		vertices.push(
+			-width,
+			-height,
+			width,
+			-height,
+			width,
+			height,
+			-width,
+			height
+		)
+
+		const localX = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
+		const localY = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
+		const worldX = x + (localX * cos - localY * sin)
+		const worldY = y + (localX * sin + localY * cos)
+
+		this.ctx.beginPath()
+		this.ctx.moveTo(worldX, worldY)
+		for (let i = 2; i < vertices.length; i += 2) {
+			const localX =
+				offsetX + (vertices[i] * localCos - vertices[i + 1] * localSin)
+			const localY =
+				offsetY + (vertices[i] * localSin + vertices[i + 1] * localCos)
+
+			const worldX = x + (localX * cos - localY * sin)
+			const worldY = y + (localX * sin + localY * cos)
+
+			this.ctx.lineTo(worldX, worldY)
+		}
+		this.ctx.lineTo(worldX, worldY)
+
+		if (!wireframe) {
+			this.ctx.fillStyle = options.fillColor ?? `gray`
+			this.ctx.fill()
+		}
+
+		if (!stroke) {
+			return this
+		}
+
+		if (axis) {
+			vertices.length = 0
+			vertices.push(0, -1, 1, 0, 0, 1, -1, 0)
+
+			const length = width < height ? width * 0.5 : height * 0.5
+			const worldX = x + (offsetX * cos - offsetY * sin)
+			const worldY = y + (offsetX * sin + offsetY * cos)
+
+			const axisCos = localCos * cos - localSin * sin
+			const axisSin = localCos * sin + localSin * cos
+
+			let axisX = vertices[0] * axisCos - vertices[1] * axisSin
+			let axisY = vertices[0] * axisSin + vertices[1] * axisCos
+
+			this.ctx.moveTo(worldX, worldY)
+			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
+			for (let i = 2; i < vertices.length; i += 2) {
+				axisX = vertices[i] * axisCos - vertices[i + 1] * axisSin
+				axisY = vertices[i] * axisSin + vertices[i + 1] * axisCos
+				this.ctx.moveTo(worldX, worldY)
+				this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
+			}
+			axisX = vertices[0] * axisCos - vertices[1] * axisSin
+			axisY = vertices[0] * axisSin + vertices[1] * axisCos
+			this.ctx.moveTo(worldX, worldY)
+			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
 		}
 
 		this.ctx.lineWidth = strokeWidth
@@ -171,7 +267,7 @@ export default class Graphics {
 		const localSin = options.sin ?? 0
 		const vertices = options.vertices ?? null
 		const wireframe = options.wireframe ?? false
-		const noStroke = options.noStroke ?? false
+		const stroke = options.stroke ?? true
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
 
@@ -204,7 +300,7 @@ export default class Graphics {
 			this.ctx.fill()
 		}
 
-		if (noStroke) {
+		if (!stroke) {
 			return this
 		}
 
@@ -229,7 +325,7 @@ export default class Graphics {
 
 	drawAABB(aabb, options = {}) {
 		const wireframe = options.wireframe ?? false
-		const noStroke = options.noStroke ?? false
+		const stroke = options.stroke ?? true
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
 
@@ -245,7 +341,7 @@ export default class Graphics {
 			this.ctx.fill()
 		}
 
-		if (noStroke) {
+		if (!stroke) {
 			return this
 		}
 
@@ -259,7 +355,7 @@ export default class Graphics {
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
 		const length = options.length ?? 20
-		const showHead = options.showHead ?? true
+		const head = options.head ?? true
 
 		const endX = x + normalX * length
 		const endY = y + normalY * length
@@ -267,7 +363,7 @@ export default class Graphics {
 		this.ctx.beginPath()
 		this.ctx.moveTo(x, y)
 		this.ctx.lineTo(endX, endY)
-		if (showHead) {
+		if (head) {
 			const head = length * 0.3
 			const backX = -normalX
 			const backY = -normalY

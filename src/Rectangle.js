@@ -5,6 +5,8 @@ import AABB from './AABB.js'
 export default class Rectangle {
 	constructor(width, height, options = {}) {
 		this.type = 'rectangle'
+		this.width = width
+		this.height = height
 		this.vertices = new Float32Array([
 			-width,
 			-height,

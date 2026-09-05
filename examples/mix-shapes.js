@@ -74,7 +74,7 @@ export default (world, options = {}) => {
 		const x = Math.random() * wallSize - wallSize * 0.5
 		const y = Math.random() * -wallSize
 		const body = new RigidBody(x, y, 0, option).createPolygon(
-			roundPoly(size, 12)
+			roundPoly(size, 9)
 		)
 
 		world.createBody(body)

@@ -158,13 +158,27 @@ export default class Renderer {
 				for (const shape of fixtures) {
 					switch (shape.type) {
 						case 'polygon':
-						case 'rectangle':
 							gfx.drawPolygon(position.x, position.y, cos, sin, {
 								offsetX: shape.offset.x,
 								offsetY: shape.offset.y,
 								cos: shape.cos,
 								sin: shape.sin,
 								vertices: shape.vertices,
+								fillColor,
+								strokeColor,
+								wireframe: debugs.wireframe,
+								strokeWidth
+							})
+							break
+						case 'rectangle':
+							gfx.drawRectangle(position.x, position.y, cos, sin, {
+								offsetX: shape.offset.x,
+								offsetY: shape.offset.y,
+								cos: shape.cos,
+								sin: shape.sin,
+								width: shape.width,
+								height: shape.height,
+								axis: true,
 								fillColor,
 								strokeColor,
 								wireframe: debugs.wireframe,
@@ -178,6 +192,7 @@ export default class Renderer {
 								cos: shape.cos,
 								sin: shape.sin,
 								radius: shape.radius,
+								axis: true,
 								fillColor,
 								strokeColor,
 								wireframe: debugs.wireframe,
@@ -192,6 +207,7 @@ export default class Renderer {
 								sin: shape.sin,
 								length: shape.length,
 								radius: shape.radius,
+								axis: true,
 								fillColor,
 								strokeColor,
 								wireframe: debugs.wireframe,
@@ -274,50 +290,10 @@ export default class Renderer {
 					bodyB,
 					normalX,
 					normalY,
-					ref,
-					inc,
 					overlap,
-					polytope,
 					contactPoints,
 					contactCount
 				} = contact
-
-				if (debugs.epa && polytope) {
-					const originX = 0
-					const originY = 0
-					const mtvX = normalX * overlap
-					const mtvY = normalY * overlap
-
-					gfx.drawPolygon(originX, originY, 1, 0, {
-						vertices: polytope,
-						wireframe: true,
-						strokeColor: debugColor,
-						strokeWidth
-					})
-					gfx.drawLine(originX, originY, mtvX, mtvY, {
-						strokeColor: debugColor,
-						strokeWidth
-					})
-					gfx.drawCircle(originX, originY, 1, 0, {
-						radius: (2 * resolution) / camera.scale,
-						fillColor: debugColor,
-						noStroke: true
-					})
-				}
-
-				if (debugs.ref && ref) {
-					gfx.drawLine(ref.edge[0], ref.edge[1], ref.edge[2], ref.edge[3], {
-						strokeColor: debugColor,
-						strokeWidth
-					})
-				}
-
-				if (debugs.inc && inc) {
-					gfx.drawLine(inc.edge[0], inc.edge[1], inc.edge[2], inc.edge[3], {
-						strokeColor: debugColor,
-						strokeWidth
-					})
-				}
 
 				for (let j = 0; j < contactCount; ++j) {
 					const cp = contactPoints[j]
@@ -325,7 +301,7 @@ export default class Renderer {
 					if (debugs.impulse) {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
 							length: cp.normalImpulse,
-							showHead: false,
+							head: false,
 							strokeColor: debugColor,
 							strokeWidth
 						})
@@ -335,7 +311,8 @@ export default class Renderer {
 						gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
 							radius: (2 * resolution) / camera.scale,
 							fillColor: debugColor,
-							noStroke: true,
+							stroke: false,
+							axis: true,
 							strokeWidth
 						})
 					}
@@ -345,7 +322,7 @@ export default class Renderer {
 							length: (10 * resolution) / camera.scale,
 							strokeColor: debugColor,
 							strokeWidth,
-							showHead: false
+							head: false
 						})
 					}
 				}
