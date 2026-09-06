@@ -1,6 +1,5 @@
 export default class CollidePolygonCircle {
 	constructor() {
-		this.axes = []
 		this.projA = {}
 		this.projB = {}
 	}
@@ -14,29 +13,34 @@ export default class CollidePolygonCircle {
 		const dirY = sB.center.y - sA.center.y
 		const best = this.bestPoint(sA.worldVertices, dirX, dirY)
 
-		this.axes.length = 0
-		this.axes.push(
-			sB.center.x - sA.worldVertices[best],
-			sB.center.y - sA.worldVertices[best + 1]
-		)
-
-		const axes = this.getAxes(sA.worldVertices, this.axes)
+		const axisX = sB.center.x - sA.worldVertices[best]
+		const axisY = sB.center.y - sA.worldVertices[best + 1]
+		const invMag = 1 / Math.sqrt(axisX * axisX + axisY * axisY)
 
 		manifold.normalX = 0
 		manifold.normalY = 0
 		manifold.overlap = Infinity
 
-		for (let i = 0; i < axes.length; i += 2) {
-			const x0 = axes[i]
-			const y0 = axes[i + 1]
-			const invMag = 1 / Math.sqrt(x0 * x0 + y0 * y0)
+		if (
+			!this.getMTV(
+				sA.worldVertices,
+				sB.center,
+				sB.radius,
+				axisX * invMag,
+				axisY * invMag,
+				manifold
+			)
+		) {
+			return null
+		}
 
+		for (let i = 0; i < sA.worldAxes.length; i += 2) {
 			const mtv = this.getMTV(
 				sA.worldVertices,
 				sB.center,
 				sB.radius,
-				x0 * invMag,
-				y0 * invMag,
+				sA.worldAxes[i],
+				sA.worldAxes[i + 1],
 				manifold
 			)
 
@@ -67,23 +71,6 @@ export default class CollidePolygonCircle {
 		]
 
 		return manifold
-	}
-
-	getAxes(vertices, axes = []) {
-		const n = vertices.length
-
-		for (let i = 0; i < n; i += 2) {
-			const j = i < n - 2 ? i + 2 : 0
-
-			const x0 = vertices[i]
-			const y0 = vertices[i + 1]
-			const x1 = vertices[j]
-			const y1 = vertices[j + 1]
-
-			axes.push(-(y1 - y0), x1 - x0)
-		}
-
-		return axes
 	}
 
 	bestPoint(vertices, dx, dy) {

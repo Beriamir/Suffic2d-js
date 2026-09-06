@@ -13,13 +13,9 @@ export default class CollideRectangleCircle {
 		const dirY = sB.center.y - sA.center.y
 		const best = this.bestPoint(sA.worldVertices, dirX, dirY)
 
-		let axisX = sB.center.x - sA.worldVertices[best]
-		let axisY = sB.center.y - sA.worldVertices[best + 1]
-
+		const axisX = sB.center.x - sA.worldVertices[best]
+		const axisY = sB.center.y - sA.worldVertices[best + 1]
 		const invMag = 1 / Math.sqrt(axisX * axisX + axisY * axisY)
-
-		axisX *= invMag
-		axisY *= invMag
 
 		manifold.normalX = 0
 		manifold.normalY = 0
@@ -30,8 +26,8 @@ export default class CollideRectangleCircle {
 				sA.worldVertices,
 				sB.center,
 				sB.radius,
-				axisX,
-				axisY,
+				axisX * invMag,
+				axisY * invMag,
 				manifold
 			)
 		) {
