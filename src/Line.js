@@ -27,6 +27,16 @@ export default class Line {
 		this.aabb = new AABB()
 	}
 
+	scale(value) {
+		this.length *= value
+		for (let i = 0; i < this.vertices.length; i += 2) {
+			this.vertices[i] *= value
+			this.vertices[i + 1] *= value
+		}
+		this.offset.x *= value
+		this.offset.y *= value
+	}
+
 	testPoint(pointX, pointY) {
 		const abX = this.center2.x - this.center1.x
 		const abY = this.center2.y - this.center1.y

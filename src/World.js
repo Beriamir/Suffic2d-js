@@ -200,6 +200,31 @@ export default class World {
 		}
 	}
 
+	scaleBody(body, value) {
+		for (let i = 0; i < body.fixtures.length; ++i) {
+			const shape = body.fixtures[i]
+
+			shape.scale(value)
+			shape.updateWorldVertices(
+				body.position.x,
+				body.position.y,
+				body.cos,
+				body.sin
+			)
+		}
+
+		body.awake()
+		body.updateAABB()
+		this.dynamicTree.removeBody(body)
+		this.dynamicTree.insertBody(body, this.nodeMargin)
+	}
+
+	scaleBodies(bodies, value) {
+		for (const body of bodies) {
+			this.scaleBody(body, value)
+		}
+	}
+
 	queryPoint(pointX, pointY, result = []) {
 		return this.dynamicTree.queryPoint(pointX, pointY, result)
 	}

@@ -20,6 +20,12 @@ export default class Circle {
 
 		this.aabb = new AABB()
 	}
+	
+	scale(value) {
+	  this.radius *= value
+	  this.offset.x *= value
+		this.offset.y *= value
+	}
 
 	testPoint(pointX, pointY) {
 		const dx = pointX - this.center.x

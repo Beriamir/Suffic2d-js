@@ -31,6 +31,17 @@ export default class Capsule {
 		this.aabb = new AABB()
 	}
 
+	scale(value) {
+		this.length *= value
+		this.radius *= value
+		for (let i = 0; i < this.vertices.length; i += 2) {
+			this.vertices[i] *= value
+			this.vertices[i + 1] *= value
+		}
+		this.offset.x *= value
+		this.offset.y *= value
+	}
+
 	createCapsuleVertices(length, radius, roundness = 9) {
 		const capsule = []
 		const halfLength = length * 0.5
