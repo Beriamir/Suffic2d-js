@@ -30,6 +30,7 @@ export default class Polygon {
 		}
 		this.offset.x *= value
 		this.offset.y *= value
+		this.updateMass()
 	}
 
 	testPoint(pointX, pointY) {
@@ -69,6 +70,12 @@ export default class Polygon {
 
 		Vertices.getCentroid(this.worldVertices, this.center)
 		this.updateAABB()
+	}
+
+	updateMass() {
+		this.area = Vertices.getArea(this.vertices)
+		this.mass = this.density * this.area * this.thickness
+		this.inertia = Vertices.getInertia(this.vertices, this.mass)
 	}
 
 	updateAABB() {

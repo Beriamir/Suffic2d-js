@@ -16,15 +16,16 @@ export default class Circle {
 		this.thickness = options.thickness ?? 1
 		this.area = Math.PI * radius * radius
 		this.mass = this.density * this.area * this.thickness
-		this.inertia = 0.5 * this.mass * this.radius * this.radius
+		this.inertia = 0.5 * this.mass * radius * radius
 
 		this.aabb = new AABB()
 	}
-	
+
 	scale(value) {
-	  this.radius *= value
-	  this.offset.x *= value
+		this.radius *= value
+		this.offset.x *= value
 		this.offset.y *= value
+		this.updateMass()
 	}
 
 	testPoint(pointX, pointY) {
@@ -46,6 +47,12 @@ export default class Circle {
 		this.center.x = x + (localX * cos - localY * sin)
 		this.center.y = y + (localX * sin + localY * cos)
 		this.updateAABB()
+	}
+
+	updateMass() {
+		this.area = Math.PI * this.radius * this.radius
+		this.mass = this.density * this.area * this.thickness
+		this.inertia = 0.5 * this.mass * this.radius * this.radius
 	}
 
 	updateAABB() {

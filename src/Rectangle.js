@@ -45,6 +45,7 @@ export default class Rectangle {
 		}
 		this.offset.x *= value
 		this.offset.y *= value
+		this.updateMass()
 	}
 
 	testPoint(pointX, pointY) {
@@ -92,6 +93,12 @@ export default class Rectangle {
 
 		Vertices.getMean(this.worldVertices, this.center)
 		this.updateAABB()
+	}
+
+	updateMass() {
+		this.area = Vertices.getArea(this.vertices)
+		this.mass = this.density * this.thickness * this.area
+		this.inertia = Vertices.getInertia(this.vertices, this.mass)
 	}
 
 	updateAABB() {

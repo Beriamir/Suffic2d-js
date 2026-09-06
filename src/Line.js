@@ -35,6 +35,7 @@ export default class Line {
 		}
 		this.offset.x *= value
 		this.offset.y *= value
+		this.updateMass()
 	}
 
 	testPoint(pointX, pointY) {
@@ -94,6 +95,12 @@ export default class Line {
 
 		this.center.x = (this.center1.x + this.center2.x) * 0.5
 		this.center.y = (this.center1.y + this.center2.y) * 0.5
+	}
+
+	updateMass() {
+		this.area = this.length
+		this.mass = this.density * this.area * this.thickness
+		this.inertia = 0.0833333333 * this.mass * this.length ** 2
 	}
 
 	updateAABB() {

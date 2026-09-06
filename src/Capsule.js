@@ -40,6 +40,7 @@ export default class Capsule {
 		}
 		this.offset.x *= value
 		this.offset.y *= value
+		this.updateMass()
 	}
 
 	createCapsuleVertices(length, radius, roundness = 9) {
@@ -116,6 +117,12 @@ export default class Capsule {
 
 		this.center.x = (this.center1.x + this.center2.x) * 0.5
 		this.center.y = (this.center1.y + this.center2.y) * 0.5
+	}
+
+	updateMass() {
+		this.area = Vertices.getArea(this.vertices)
+		this.mass = this.density * this.area * this.thickness
+		this.inertia = Vertices.getInertia(this.vertices, this.mass)
 	}
 
 	updateAABB() {

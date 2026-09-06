@@ -214,6 +214,7 @@ export default class World {
 		}
 
 		body.awake()
+		body.updateMass()
 		body.updateAABB()
 		this.dynamicTree.removeBody(body)
 		this.dynamicTree.insertBody(body, this.nodeMargin)
