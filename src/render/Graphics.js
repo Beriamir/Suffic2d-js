@@ -354,7 +354,7 @@ export default class Graphics {
 	drawNormal(x, y, normalX, normalY, options = {}) {
 		const strokeColor = options.strokeColor ?? 'dimgray'
 		const strokeWidth = options.strokeWidth ?? 1
-		const length = options.length ?? 20
+		const length = options.length ?? 1
 		const head = options.head ?? true
 
 		const endX = x + normalX * length

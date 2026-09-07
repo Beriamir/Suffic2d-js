@@ -12,6 +12,7 @@ export default class Renderer {
 			bodies: options.bodies ?? true,
 			island: options.island ?? false,
 			wireframe: options.wireframe ?? false,
+			velocity: options.velocity ?? false,
 			normal: options.normal ?? false,
 			point: options.point ?? false,
 			impulse: options.impulse ?? false,
@@ -281,6 +282,29 @@ export default class Renderer {
 				world.dynamicTree.traverse(node => {
 					gfx.drawAABB(node.aabb, options)
 				})
+			}
+
+			if (debugs.velocity) {
+				for (let i = 0; i < world.bodies.length; ++i) {
+					const body = world.bodies[i]
+
+					if (body.isSleeping) {
+						continue
+					}
+
+					gfx.drawNormal(
+						body.position.x,
+						body.position.y,
+						body.linearVelocity.x,
+						body.linearVelocity.y,
+						{
+							length: (2 * resolution) / camera.scale,
+							head: false,
+							strokeColor: debugColor,
+							strokeWidth
+						}
+					)
+				}
 			}
 
 			for (let i = 0; i < world.contactKeys.length; ++i) {
