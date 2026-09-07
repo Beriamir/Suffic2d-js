@@ -13,8 +13,7 @@ export default class Renderer {
 			island: options.island ?? false,
 			wireframe: options.wireframe ?? false,
 			velocity: options.velocity ?? false,
-			normal: options.normal ?? false,
-			point: options.point ?? false,
+			contact: options.contact ?? false,
 			impulse: options.impulse ?? false,
 			aabb: options.aabb ?? false,
 			bvh: options.bvh ?? false
@@ -331,7 +330,7 @@ export default class Renderer {
 						})
 					}
 
-					if (debugs.point) {
+					if (debugs.contact) {
 						gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
 							radius: (2 * resolution) / camera.scale,
 							fillColor: debugColor,
@@ -339,9 +338,7 @@ export default class Renderer {
 							axis: true,
 							strokeWidth
 						})
-					}
 
-					if (debugs.normal) {
 						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
 							length: (10 * resolution) / camera.scale,
 							strokeColor: debugColor,
