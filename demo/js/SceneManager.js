@@ -13,8 +13,7 @@ import stress1 from '../../examples/stress-1.js'
 import stress2 from '../../examples/stress-2.js'
 
 export default class SceneManager {
-	constructor(world) {
-		this.world = world
+	constructor() {
 		this.scene = 'Pyramid'
 		this.scenes = {
 			Pyramid: pyramid,
@@ -33,22 +32,25 @@ export default class SceneManager {
 		}
 	}
 
-	load(scene = this.scene) {
+	load(scene = this.scene, world) {
 		const loadScene = this.scenes[scene]
 
 		if (!loadScene) {
 			throw new Error(`Scene ${scene} not found!`)
 		}
 
-		this.world.clear()
-		loadScene(this.world)
-	}
-
-	sceneList(out = []) {
-		for (const key of Object.keys(this.scenes)) {
-			out.push(key)
+		if (!world) {
+			throw new Error(`Failed to load scene ${scene}. world is missing!`)
 		}
 
-		return out
+		loadScene((this.world = world.clear()))
+	}
+
+	restart() {
+		this.load(this.scene, this.world)
+	}
+
+	sceneList() {
+		return Object.keys(this.scenes)
 	}
 }

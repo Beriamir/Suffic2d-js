@@ -49,6 +49,8 @@ export default class World {
 
 		this.joints.clear()
 		this.jointKeys.length = 0
+
+		return this
 	}
 
 	createJoint(joint) {

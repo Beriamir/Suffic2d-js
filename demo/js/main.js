@@ -1,19 +1,22 @@
 import { Renderer, Input, World } from '../../src/suffic2d.js'
 import dat from '../../lib/dat.gui.js'
 import Demo from './Demo.js'
+import SceneManager from './SceneManager.js'
 
 document.addEventListener('DOMContentLoaded', () => {
 	const canvas = document.getElementById('canvas')
 	const renderer = new Renderer(canvas, { resolution: devicePixelRatio })
 	const input = new Input(canvas)
 	const world = new World()
-	const demo = new Demo(world)
+	const demo = new Demo()
+	const sceneManager = new SceneManager()
 	const gui = new dat.GUI()
 
 	// GUI
 	const statusGui = gui.addFolder('Status')
 	const renderGui = gui.addFolder('Render')
 	const worldGui = gui.addFolder('World')
+	const sceneGui = gui.addFolder('Scene')
 
 	for (const key of renderer.statusList()) {
 		statusGui.add(renderer.status, key).listen()
@@ -28,11 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary')
 	worldGui.add(world, 'useBlockSolver').name('block solver')
 	worldGui.add(world, 'useSleeping').name('sleeping')
-	worldGui
-		.add(demo, 'scene', demo.sceneList())
-		.onChange(scene => demo.load(scene))
-	worldGui.add(demo, 'load').name('restart')
-	worldGui.open()
+
+	sceneGui
+		.add(sceneManager, 'scene', sceneManager.sceneList())
+		.onChange(scene => sceneManager.load(scene, world))
+	sceneGui.add(sceneManager, 'restart')
+	sceneGui.open()
 
 	// Events
 	input.onDown = (x, y) => demo.onDown(...renderer.onDown(x, y))
@@ -57,12 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			world.simulate(step)
 			demo.update(dt, step)
 			renderer.draw(world, dt)
-			accu -= step
+			accu = 0
 		}
 
 		requestAnimationFrame(loop)
 	}
 
-	demo.initialize()
+	demo.setup(world)
+	sceneManager.load('Pyramid', world)
 	requestAnimationFrame(loop)
 })
