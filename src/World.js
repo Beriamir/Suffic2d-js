@@ -213,6 +213,33 @@ export default class World {
 			)
 		}
 
+		for (let i = 0; i < body.contactKeys.length; ++i) {
+			const contact = this.contacts.get(body.contactKeys[i])
+			let other = contact.bodyB
+
+			if (body.id === other.id) {
+				other = contact.bodyA
+			}
+
+			other.awake()
+		}
+
+		for (let i = 0; i < body.jointKeys.length; ++i) {
+			const joint = this.joints.get(body.jointKeys[i])
+
+			if (joint.type === 'GrabJoint') {
+				continue
+			}
+
+			let other = joint.bodyB
+
+			if (body.id === other.id) {
+				other = joint.bodyA
+			}
+
+			other.awake()
+		}
+
 		body.awake()
 		body.updateMass()
 		body.updateAABB()
