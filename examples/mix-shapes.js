@@ -16,9 +16,9 @@ function roundPoly(radius, roundness = 16) {
 
 export default (world, options = {}) => {
 	const {
-		count = 50,
+		count = 60,
 		size = 0.24,
-		wallSize = 5,
+		wallSize = 6,
 		centerX = 0,
 		bottomY = 0
 	} = options
