@@ -6,31 +6,31 @@ export default class CollideLines {
 			return null
 		}
 
-		const aDeltaX = sA.center2.x - sA.center1.x
-		const aDeltaY = sA.center2.y - sA.center1.y
-		const bDeltaX = sB.center2.x - sB.center1.x
-		const bDeltaY = sB.center2.y - sB.center1.y
-		const abDeltaX = sB.center1.x - sA.center1.x
-		const abDeltaY = sB.center1.y - sA.center1.y
+		const aEdgeX = sA.center2.x - sA.center1.x
+		const aEdgeY = sA.center2.y - sA.center1.y
+		const bEdgeX = sB.center2.x - sB.center1.x
+		const bEdgeY = sB.center2.y - sB.center1.y
+		const ab1DeltaX = sB.center1.x - sA.center1.x
+		const ab1DeltaY = sB.center1.y - sA.center1.y
 
-		const denom = aDeltaX * bDeltaY - aDeltaY * bDeltaX
+		const denom = aEdgeX * bEdgeY - aEdgeY * bEdgeX
 
 		if (Math.abs(denom) < 1e-6) {
 			return null
 		}
 
-		const t = (abDeltaX * bDeltaY - abDeltaY * bDeltaX) / denom
-		const u = (abDeltaX * aDeltaY - abDeltaY * aDeltaX) / denom
+		const t = (ab1DeltaX * bEdgeY - ab1DeltaY * bEdgeX) / denom
+		const u = (ab1DeltaX * aEdgeY - ab1DeltaY * aEdgeX) / denom
 
 		if (t <= 0 || t >= 1 || u <= 0 || u >= 1) {
 			return null
 		}
 
-		const pointX = sA.center1.x + aDeltaX * t
-		const pointY = sA.center1.y + aDeltaY * t
+		const pointX = sA.center1.x + aEdgeX * t
+		const pointY = sA.center1.y + aEdgeY * t
 
-		const aPerpX = -aDeltaY
-		const aPerpY = aDeltaX
+		const aPerpX = -aEdgeY
+		const aPerpY = aEdgeX
 		const mag = Math.sqrt(aPerpX * aPerpX + aPerpY * aPerpY)
 
 		if (mag == 0) {

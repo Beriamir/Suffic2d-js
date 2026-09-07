@@ -221,7 +221,7 @@ export default class Renderer {
 								shape.center2.x,
 								shape.center2.y,
 								{
-									strokeColor: fillColor,
+									strokeColor: debugs.wireframe ? strokeColor : fillColor,
 									strokeWidth
 								}
 							)
