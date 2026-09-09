@@ -494,16 +494,18 @@ export default class World {
 						})
 						break
 					case 'line':
-						gfx.drawLine(
-							shape.center1.x,
-							shape.center1.y,
-							shape.center2.x,
-							shape.center2.y,
-							{
-								strokeColor: fill ? fillColor : strokeColor,
-								strokeWidth
-							}
-						)
+						if (fill || stroke) {
+							gfx.drawLine(
+								shape.center1.x,
+								shape.center1.y,
+								shape.center2.x,
+								shape.center2.y,
+								{
+									strokeColor: fill ? fillColor : strokeColor,
+									strokeWidth
+								}
+							)
+						}
 						break
 				}
 			}

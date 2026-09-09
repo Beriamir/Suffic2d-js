@@ -1,17 +1,33 @@
-import { Renderer, Input, World } from '../../src/suffic2d.js'
+import { Renderer, Input, World, GrabJoint } from '../../src/suffic2d.js'
 import dat from '../../lib/dat.gui.js'
-import Demo from './Demo.js'
 import SceneManager from './SceneManager.js'
-import { debugs, status } from './settings.js'
 
 document.addEventListener('DOMContentLoaded', () => {
 	const canvas = document.getElementById('canvas')
 	const input = new Input(canvas)
 	const renderer = new Renderer(canvas, { pixelDensity: devicePixelRatio })
 	const world = new World()
-	const demo = new Demo()
+	const grabJoint = new GrabJoint(0, 0, null)
 	const sceneManager = new SceneManager()
 	const gui = new dat.GUI()
+
+	const debugs = {
+		aabb: false,
+		bvh: false,
+		contact: false,
+		impulse: false,
+		velocity: false,
+		island: true,
+		fill: true,
+		stroke: true
+	}
+
+	const status = {
+		fps: 0,
+		bodies: 0,
+		contacts: 0,
+		joints: 0
+	}
 
 	// GUI
 	{
@@ -38,10 +54,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Events
 	{
-		input.on('down', (x, y) => demo.onDown(renderer.point(x, y)))
-		input.on('move', (dx, dy) => demo.onMove(renderer.delta(dx, dy)))
-		input.on('up', () => demo.onUp())
+		input.on('down', (x, y) => {
+			const point = renderer.point(x, y)
+			const query = world.queryPoint(point.x, point.y)
+
+			for (const body of query) {
+				if (body.testPoint(point.x, point.y)) {
+					grabJoint.set(point.x, point.y, body)
+					world.createJoint(grabJoint)
+					break
+				}
+			}
+		})
+
+		input.on('move', (dx, dy) => {
+			const delta = renderer.delta(dx, dy)
+
+			grabJoint.move(delta.x, delta.y)
+		})
+
+		input.on('up', () => {
+			world.destroyJoint(grabJoint)
+		})
+
 		renderer.sync(input) // Pan Rotate Zoom Resize
+	}
+
+	function setup() {
+		sceneManager.load('Pyramid', world)
+	}
+
+	function update(dt, step) {
+		const deadBottom = 100
+
+		for (let i = 0; i < world.bodies.length; i++) {
+			const body = world.bodies[i]
+
+			if (body.position.y >= deadBottom) {
+				world.destroyBody(body)
+				i--
+			}
+		}
 	}
 
 	// Loop
@@ -57,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			if (accu >= step) {
 				world.simulate(step)
-				demo.update(dt, step)
+				update(dt, step)
 				world.render(renderer, debugs)
 				status.bodies = world.bodies.length
 				status.contacts = world.contacts.size
@@ -69,8 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			requestAnimationFrame(loop)
 		}
 
-		demo.setup(world)
-		sceneManager.load('Pyramid', world)
+		setup()
 		requestAnimationFrame(loop)
 	}
 })
