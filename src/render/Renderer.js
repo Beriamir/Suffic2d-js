@@ -59,13 +59,6 @@ export default class Renderer {
 		this.camera.rotate(delta)
 	}
 
-	graphics() {
-		return {
-			gfx: this.gfx,
-			camera: this.camera
-		}
-	}
-
 	sync(input) {
 		const renderer = this
 
