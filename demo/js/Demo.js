@@ -6,20 +6,20 @@ export default class Demo {
 		this.grabJoint = new GrabJoint(0, 0, null)
 	}
 
-	onDown(pointX, pointY) {
+	onDown(point) {
 		const { world, grabJoint } = this
 
-		for (const body of world.queryPoint(pointX, pointY)) {
-			if (body.testPoint(pointX, pointY)) {
-				grabJoint.set(pointX, pointY, body)
+		for (const body of world.queryPoint(point.x, point.y)) {
+			if (body.testPoint(point.x, point.y)) {
+				grabJoint.set(point.x, point.y, body)
 				world.createJoint(grabJoint)
 				break
 			}
 		}
 	}
 
-	onMove(dx, dy) {
-		this.grabJoint.move(dx, dy)
+	onMove(delta) {
+		this.grabJoint.move(delta.x, delta.y)
 	}
 
 	onUp() {

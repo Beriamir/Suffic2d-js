@@ -1,6 +1,7 @@
 import Touch from './Touch.js'
 import Mouse from './Mouse.js'
 import Keyboard from './Keyboard.js'
+import Event from './Event.js'
 
 export default class Input {
 	constructor(target = window) {
@@ -8,21 +9,29 @@ export default class Input {
 		this.mouse = new Mouse(this)
 		this.touch = new Touch(this)
 		this.keyboard = new Keyboard(this)
-		this.onDown = null
-		this.onMove = null
-		this.onUp = null
-		this.onPan = null
-		this.onZoom = null
-		this.onRotate = null
-		this.onResize = null
+		this.event = new Event()
 
 		window.addEventListener('resize', e => {
-			if (typeof this.onResize == 'function') {
-				this.onResize(
-					parseFloat(getComputedStyle(target).width),
-					parseFloat(getComputedStyle(target).height)
-				)
-			}
+			this.emit(
+				'resize',
+				parseFloat(getComputedStyle(target).width),
+				parseFloat(getComputedStyle(target).height)
+			)
 		})
+	}
+
+	on(name, callback) {
+		this.event.on(name, callback)
+		return this
+	}
+
+	off(name, callback) {
+		this.event.off(name, callback)
+		return this
+	}
+
+	emit(name, ...data) {
+		this.event.emit(name, data)
+		return this
 	}
 }

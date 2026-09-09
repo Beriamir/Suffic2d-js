@@ -42,9 +42,7 @@ export default class Touch {
 						const dx = touchX - this.lastTouchX
 						const dy = touchY - this.lastTouchY
 
-						if (typeof input.onMove == 'function') {
-							input.onMove(dx, dy, touchX, touchY)
-						}
+						input.emit('move', dx, dy, touchX, touchY)
 					}
 
 					this.lastTouchX = touchX
@@ -61,20 +59,12 @@ export default class Touch {
 						const distance = this.getDistance(a, b)
 						const rotation = this.getRotation(a, b)
 
-						if (typeof input.onPan == 'function') {
-							const dx = center.x - this.lastGestureCenter.x
-							const dy = center.y - this.lastGestureCenter.y
+						const dx = center.x - this.lastGestureCenter.x
+						const dy = center.y - this.lastGestureCenter.y
 
-							input.onPan(dx, dy)
-						}
-
-						if (typeof input.onZoom == 'function') {
-							input.onZoom(distance / this.lastGestureDistance)
-						}
-
-						if (typeof input.onRotate == 'function') {
-							input.onRotate(rotation - this.lastGestureRotation)
-						}
+						input.emit('pan', dx, dy)
+						input.emit('zoom', distance / this.lastGestureDistance)
+						input.emit('rotate', rotation - this.lastGestureRotation)
 
 						this.lastGestureCenter.x = center.x
 						this.lastGestureCenter.y = center.y
@@ -140,9 +130,7 @@ export default class Touch {
 			this.lastTouchX = touchX
 			this.lastTouchY = touchY
 
-			if (typeof this.input.onDown == 'function') {
-				this.input.onDown(touchX, touchY)
-			}
+			this.input.emit('down', touchX, touchY)
 		} else if (touches.length >= 2) {
 			this.gestureIds[0] = touches[0].identifier
 			this.gestureIds[1] = touches[1].identifier
@@ -150,9 +138,7 @@ export default class Touch {
 			this.lastGestureDistance = this.getDistance(touches[0], touches[1])
 			this.lastGestureRotation = this.getRotation(touches[0], touches[1])
 		} else {
-			if (typeof this.input.onUp == 'function') {
-				this.input.onUp()
-			}
+			this.input.emit('up', null)
 		}
 	}
 }

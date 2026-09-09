@@ -382,4 +382,251 @@ export default class World {
 			}
 		}
 	}
+
+	render(renderer, options = {}) {
+		const {
+			aabb = false,
+			bvh = false,
+			contact = false,
+			impulse = false,
+			velocity = false,
+			island = true,
+			fill = true,
+			stroke = true
+		} = options
+
+		const { gfx, camera } = renderer.graphics()
+		const strokeWidth = renderer.pixelDensity / camera.scale
+		const debugColor = 'white'
+
+		gfx.clear()
+		gfx.save()
+		gfx.setCamera(camera)
+
+		// Draw bodies
+		for (let i = 0; i < this.bodies.length; ++i) {
+			const {
+				id: bodyId,
+				position,
+				cos,
+				sin,
+				isSleeping,
+				isStatic,
+				islandId,
+				fixtures
+			} = this.bodies[i]
+
+			const strokeColor =
+				!fill && !isSleeping && !isStatic
+					? debugColor
+					: !fill && (isSleeping || isStatic)
+						? 'gray'
+						: 'black'
+
+			const fillColor =
+				!island && !isSleeping && !isStatic
+					? renderer.colors[bodyId % renderer.colors.length]
+					: island && !isSleeping && !isStatic
+						? renderer.colors[islandId % renderer.colors.length]
+						: 'gray'
+
+			for (const shape of fixtures) {
+				switch (shape.type) {
+					case 'polygon':
+						gfx.drawPolygon(position.x, position.y, cos, sin, {
+							offsetX: shape.offset.x,
+							offsetY: shape.offset.y,
+							cos: shape.cos,
+							sin: shape.sin,
+							vertices: shape.vertices,
+							fill,
+							fillColor,
+							stroke,
+							strokeColor,
+							strokeWidth
+						})
+						break
+					case 'rectangle':
+						gfx.drawRectangle(position.x, position.y, cos, sin, {
+							offsetX: shape.offset.x,
+							offsetY: shape.offset.y,
+							cos: shape.cos,
+							sin: shape.sin,
+							width: shape.width,
+							height: shape.height,
+							axis: true,
+							fill,
+							fillColor,
+							stroke,
+							strokeColor,
+							strokeWidth
+						})
+						break
+					case 'circle':
+						gfx.drawCircle(position.x, position.y, cos, sin, {
+							offsetX: shape.offset.x,
+							offsetY: shape.offset.y,
+							cos: shape.cos,
+							sin: shape.sin,
+							radius: shape.radius,
+							axis: true,
+							fill,
+							fillColor,
+							stroke,
+							strokeColor,
+							strokeWidth
+						})
+						break
+					case 'capsule':
+						gfx.drawCapsule(position.x, position.y, cos, sin, {
+							offsetX: shape.offset.x,
+							offsetY: shape.offset.y,
+							cos: shape.cos,
+							sin: shape.sin,
+							length: shape.length,
+							radius: shape.radius,
+							axis: true,
+							fill,
+							fillColor,
+							stroke,
+							strokeColor,
+							strokeWidth
+						})
+						break
+					case 'line':
+						gfx.drawLine(
+							shape.center1.x,
+							shape.center1.y,
+							shape.center2.x,
+							shape.center2.y,
+							{
+								strokeColor: fill ? fillColor : strokeColor,
+								strokeWidth
+							}
+						)
+						break
+				}
+			}
+		}
+
+		// Draw joints
+		if (fill || stroke) {
+			for (let i = 0; i < this.jointKeys.length; ++i) {
+				const joint = this.joints.get(this.jointKeys[i])
+
+				if (joint.type == 'GrabJoint') {
+					const cos = joint.body.cos
+					const sin = joint.body.sin
+					const anchorX = joint.anchorX * cos - joint.anchorY * sin
+					const anchorY = joint.anchorX * sin + joint.anchorY * cos
+
+					gfx.drawLine(
+						joint.body.position.x + anchorX,
+						joint.body.position.y + anchorY,
+						joint.target.x,
+						joint.target.y,
+						{
+							strokeColor: debugColor,
+							strokeWidth
+						}
+					)
+					continue
+				}
+			}
+		}
+
+		// Debugs
+		{
+			const debugOptions = {
+				length: strokeWidth,
+				head: false,
+				fill: false,
+				strokeWidth,
+				strokeColor: debugColor
+			}
+
+			if (aabb) {
+				for (let i = 0; i < this.bodies.length; ++i) {
+					const body = this.bodies[i]
+
+					for (const s of body.fixtures) {
+						gfx.drawAABB(s.aabb, debugOptions)
+					}
+
+					if (body.fixtures.length > 1) {
+						gfx.drawAABB(body.aabb, debugOptions)
+					}
+				}
+			}
+
+			if (bvh) {
+				this.dynamicTree.traverse(node => {
+					gfx.drawAABB(node.aabb, debugOptions)
+				})
+			}
+
+			if (velocity) {
+				for (let i = 0; i < this.bodies.length; ++i) {
+					const body = this.bodies[i]
+
+					if (body.isSleeping) {
+						continue
+					}
+
+					gfx.drawNormal(
+						body.position.x,
+						body.position.y,
+						body.linearVelocity.x,
+						body.linearVelocity.y,
+						debugOptions
+					)
+				}
+			}
+
+			// Draw Contacts
+			for (let i = 0; i < this.contactKeys.length; ++i) {
+				const {
+					bodyA,
+					bodyB,
+					normalX,
+					normalY,
+					overlap,
+					contactPoints,
+					contactCount
+				} = this.contacts.get(this.contactKeys[i])
+
+				for (let j = 0; j < contactCount; ++j) {
+					const cp = contactPoints[j]
+
+					if (contact) {
+						gfx.drawCircle(cp.pointX, cp.pointY, 1, 0, {
+							radius: strokeWidth * 2,
+							fillColor: debugColor,
+							stroke: false,
+							axis: true,
+							strokeWidth
+						})
+
+						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+							length: strokeWidth * 10,
+							strokeColor: debugColor,
+							strokeWidth,
+							head: false
+						})
+					}
+
+					if (impulse) {
+						gfx.drawNormal(cp.pointX, cp.pointY, normalX, normalY, {
+							length: cp.normalImpulse,
+							head: false,
+							strokeColor: debugColor,
+							strokeWidth
+						})
+					}
+				}
+			}
+		}
+
+		gfx.restore()
+	}
 }
