@@ -15,6 +15,7 @@ import stress2 from '../../examples/stress-2.js'
 export default class SceneManager {
 	constructor() {
 		this.scene = 'Pyramid'
+		// TODO: use a Map?
 		this.scenes = {
 			Pyramid: pyramid,
 			'Box Stacks': boxStacks,
