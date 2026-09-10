@@ -423,9 +423,9 @@ export default class World {
 
 			const fillColor =
 				!island && !isSleeping && !isStatic
-					? gfx.color(bodyId)
+					? renderer.color(bodyId)
 					: island && !isSleeping && !isStatic
-						? gfx.color(islandId)
+						? renderer.color(islandId)
 						: 'gray'
 
 			for (const shape of fixtures) {

@@ -8,10 +8,32 @@ export default class Renderer {
 		this.camera = new Camera(0, 0, 0, 100)
 		this.pixelDensity = options.devicePixelRatio ?? 1
 		this.debugColor = options.debugColor ?? 'white'
+		this.colors = options.colors ?? [
+			'#0ea5e9',
+			'#3b82f6',
+			'#6366f1',
+			'#8b5cf6',
+			'#a855f7',
+			'#d946ef',
+			'#ec4899',
+			'#f43f5e',
+			'#ef4444',
+			'#f97316',
+			'#eab308',
+			'#84cc16',
+			'#22c55e',
+			'#10b981',
+			'#14b8a6',
+			'#06b6d4'
+		]
 		this.resize(
 			parseFloat(getComputedStyle(canvas).width),
 			parseFloat(getComputedStyle(canvas).height)
 		)
+	}
+
+	color(index) {
+		return this.colors[index % this.colors.length]
 	}
 
 	resize(w, h) {
