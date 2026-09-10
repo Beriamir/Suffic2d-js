@@ -7,6 +7,7 @@ export default class Renderer {
 		this.gfx = new Graphics(canvas, options)
 		this.camera = new Camera(0, 0, 0, 100)
 		this.pixelDensity = options.devicePixelRatio ?? 1
+		this.debugColor = options.debugColor ?? 'white'
 		this.resize(
 			parseFloat(getComputedStyle(canvas).width),
 			parseFloat(getComputedStyle(canvas).height)
