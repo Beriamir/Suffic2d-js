@@ -53,6 +53,7 @@ export default class GrabJoint {
 		this.anchorX = dx * body.cos + dy * body.sin
 		this.anchorY = -dx * body.sin + dy * body.cos
 		this.body = body
+		this.normalImpulse = 0
 	}
 
 	move(dx, dy) {
