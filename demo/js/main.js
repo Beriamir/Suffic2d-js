@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		impulse: false,
 		velocity: false,
 		island: true,
+		axis: true,
 		fill: true,
 		stroke: true
 	}

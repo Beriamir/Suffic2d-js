@@ -391,6 +391,7 @@ export default class World {
 			impulse = false,
 			velocity = false,
 			island = true,
+			axis = true,
 			fill = true,
 			stroke = true
 		} = options
@@ -457,7 +458,8 @@ export default class World {
 							fillColor,
 							stroke,
 							strokeColor,
-							strokeWidth
+							strokeWidth,
+							axis
 						})
 						break
 					case 'circle':
@@ -472,7 +474,8 @@ export default class World {
 							fillColor,
 							stroke,
 							strokeColor,
-							strokeWidth
+							strokeWidth,
+							axis
 						})
 						break
 					case 'capsule':
@@ -488,7 +491,8 @@ export default class World {
 							fillColor,
 							stroke,
 							strokeColor,
-							strokeWidth
+							strokeWidth,
+							axis
 						})
 						break
 					case 'line':
