@@ -2,7 +2,6 @@ export default class Graphics {
 	constructor(canvas, options = {}) {
 		this.canvas = canvas
 		this.ctx = canvas.getContext('2d', options)
-		this.rectangle = new Float32Array(8)
 	}
 
 	save() {
@@ -183,35 +182,50 @@ export default class Graphics {
 			return this
 		}
 
-		const vertices = this.rectangle
-
-		vertices[0] = -width
-		vertices[1] = -height
-		vertices[2] = width
-		vertices[3] = -height
-		vertices[4] = width
-		vertices[5] = height
-		vertices[6] = -width
-		vertices[7] = height
-
-		const localX = offsetX + (vertices[0] * localCos - vertices[1] * localSin)
-		const localY = offsetY + (vertices[0] * localSin + vertices[1] * localCos)
-		const worldX = x + (localX * cos - localY * sin)
-		const worldY = y + (localX * sin + localY * cos)
+		let vertexX = -width
+		let vertexY = -height
+		let localX = offsetX + (vertexX * localCos - vertexY * localSin)
+		let localY = offsetY + (vertexX * localSin + vertexY * localCos)
+		let worldX = x + (localX * cos - localY * sin)
+		let worldY = y + (localX * sin + localY * cos)
 
 		this.ctx.beginPath()
 		this.ctx.moveTo(worldX, worldY)
-		for (let i = 2; i < vertices.length; i += 2) {
-			const localX =
-				offsetX + (vertices[i] * localCos - vertices[i + 1] * localSin)
-			const localY =
-				offsetY + (vertices[i] * localSin + vertices[i + 1] * localCos)
 
-			const worldX = x + (localX * cos - localY * sin)
-			const worldY = y + (localX * sin + localY * cos)
+		vertexX = width
+		vertexY = -height
+		localX = offsetX + (vertexX * localCos - vertexY * localSin)
+		localY = offsetY + (vertexX * localSin + vertexY * localCos)
+		worldX = x + (localX * cos - localY * sin)
+		worldY = y + (localX * sin + localY * cos)
 
-			this.ctx.lineTo(worldX, worldY)
-		}
+		this.ctx.lineTo(worldX, worldY)
+
+		vertexX = width
+		vertexY = height
+		localX = offsetX + (vertexX * localCos - vertexY * localSin)
+		localY = offsetY + (vertexX * localSin + vertexY * localCos)
+		worldX = x + (localX * cos - localY * sin)
+		worldY = y + (localX * sin + localY * cos)
+
+		this.ctx.lineTo(worldX, worldY)
+
+		vertexX = -width
+		vertexY = height
+		localX = offsetX + (vertexX * localCos - vertexY * localSin)
+		localY = offsetY + (vertexX * localSin + vertexY * localCos)
+		worldX = x + (localX * cos - localY * sin)
+		worldY = y + (localX * sin + localY * cos)
+
+		this.ctx.lineTo(worldX, worldY)
+
+		vertexX = -width
+		vertexY = -height
+		localX = offsetX + (vertexX * localCos - vertexY * localSin)
+		localY = offsetY + (vertexX * localSin + vertexY * localCos)
+		worldX = x + (localX * cos - localY * sin)
+		worldY = y + (localX * sin + localY * cos)
+
 		this.ctx.lineTo(worldX, worldY)
 
 		if (fill) {
@@ -224,35 +238,41 @@ export default class Graphics {
 		}
 
 		if (axis) {
-			vertices[0] = 0
-			vertices[1] = -1
-			vertices[2] = 1
-			vertices[3] = 0
-			vertices[4] = 0
-			vertices[5] = 1
-			vertices[6] = -1
-			vertices[7] = 0
-
 			const length = width < height ? width * 0.5 : height * 0.5
 			const worldX = x + (offsetX * cos - offsetY * sin)
 			const worldY = y + (offsetX * sin + offsetY * cos)
-
 			const axisCos = localCos * cos - localSin * sin
 			const axisSin = localCos * sin + localSin * cos
 
-			let axisX = vertices[0] * axisCos - vertices[1] * axisSin
-			let axisY = vertices[0] * axisSin + vertices[1] * axisCos
+			let vertexX = 0
+			let vertexY = -1
+			let axisX = vertexX * axisCos - vertexY * axisSin
+			let axisY = vertexX * axisSin + vertexY * axisCos
 
 			this.ctx.moveTo(worldX, worldY)
 			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
-			for (let i = 2; i < vertices.length; i += 2) {
-				axisX = vertices[i] * axisCos - vertices[i + 1] * axisSin
-				axisY = vertices[i] * axisSin + vertices[i + 1] * axisCos
-				this.ctx.moveTo(worldX, worldY)
-				this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
-			}
-			axisX = vertices[0] * axisCos - vertices[1] * axisSin
-			axisY = vertices[0] * axisSin + vertices[1] * axisCos
+
+			vertexX = 1
+			vertexY = 0
+			axisX = vertexX * axisCos - vertexY * axisSin
+			axisY = vertexX * axisSin + vertexY * axisCos
+
+			this.ctx.moveTo(worldX, worldY)
+			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
+
+			vertexX = 0
+			vertexY = 1
+			axisX = vertexX * axisCos - vertexY * axisSin
+			axisY = vertexX * axisSin + vertexY * axisCos
+
+			this.ctx.moveTo(worldX, worldY)
+			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
+
+			vertexX = -1
+			vertexY = 0
+			axisX = vertexX * axisCos - vertexY * axisSin
+			axisY = vertexX * axisSin + vertexY * axisCos
+
 			this.ctx.moveTo(worldX, worldY)
 			this.ctx.lineTo(worldX + axisX * length, worldY + axisY * length)
 		}
