@@ -21,6 +21,7 @@ export default class World {
 		this.contactPool = new Pool(() => ({}), 16)
 
 		this.gravity = options.gravity ?? new Vector(0, 9.81)
+		this.gravityScale = options.gravityScale ?? 1
 		this.substeps = options.substeps ?? 1
 		this.primaryIterations = options.primaryIterations ?? 8
 		this.secondaryIterations = options.secondaryIterations ?? 4

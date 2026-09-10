@@ -104,7 +104,10 @@ export default class Island {
 			}
 
 			if (!body.isSleeping) {
-				body.linearVelocity.addMulV(this.world.gravity, dt)
+				body.linearVelocity.addMulV(
+					this.world.gravity,
+					this.world.gravityScale * dt
+				)
 			}
 		}
 

@@ -41,8 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		for (const key of Object.keys(debugs)) debugGui.add(debugs, key)
 
 		worldGui.add(world, 'substeps', 1, 10, 1)
-		worldGui.add(world, 'primaryIterations', 1, 20, 1).name('primary')
-		worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary')
+		worldGui.add(world, 'primaryIterations', 1, 10, 1).name('primary iter')
+		worldGui.add(world, 'secondaryIterations', 1, 10, 1).name('secondary iter')
+		worldGui.add(world, 'gravityScale', -2, 2, 1).name('gravity scale')
 		worldGui.add(world, 'useBlockSolver').name('block solver')
 		worldGui.add(world, 'useSleeping').name('sleeping')
 
