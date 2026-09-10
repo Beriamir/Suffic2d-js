@@ -394,7 +394,6 @@ export default class World {
 			fill = true,
 			stroke = true
 		} = options
-
 		const { gfx, camera, pixelDensity } = renderer
 		const strokeWidth = pixelDensity / camera.scale
 		const debugColor = 'white'

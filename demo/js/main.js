@@ -5,7 +5,7 @@ import SceneManager from './SceneManager.js'
 document.addEventListener('DOMContentLoaded', () => {
 	const canvas = document.getElementById('canvas')
 	const input = new Input(canvas)
-	const renderer = new Renderer(canvas, { pixelDensity: devicePixelRatio })
+	const renderer = new Renderer(canvas, { devicePixelRatio })
 	const world = new World()
 	const grabJoint = new GrabJoint(0, 0, null)
 	const sceneManager = new SceneManager()
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		worldGui.add(world, 'useSleeping').name('sleeping')
 
 		sceneGui
-			.add(sceneManager, 'scene', sceneManager.sceneList())
+			.add(sceneManager, 'scene', sceneManager.list())
 			.onChange(scene => sceneManager.load(scene, world))
 		sceneGui.add(sceneManager, 'restart')
 		sceneGui.open()
@@ -112,10 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				world.simulate(step)
 				update(dt, step)
 				world.render(renderer, debugs)
+
 				status.bodies = world.bodies.length
 				status.contacts = world.contacts.size
 				status.joints = world.joints.size
 				status.fps = 1 / dt
+
 				accu = 0
 			}
 

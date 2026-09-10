@@ -15,7 +15,6 @@ import stress2 from '../../examples/stress-2.js'
 export default class SceneManager {
 	constructor() {
 		this.scene = 'Pyramid'
-		// TODO: use a Map?
 		this.scenes = {
 			Pyramid: pyramid,
 			'Box Stacks': boxStacks,
@@ -34,9 +33,9 @@ export default class SceneManager {
 	}
 
 	load(scene = this.scene, world) {
-		const loadScene = this.scenes[scene]
+		const create = this.scenes[scene]
 
-		if (!loadScene) {
+		if (!create) {
 			throw new Error(`Scene ${scene} not found!`)
 		}
 
@@ -44,14 +43,17 @@ export default class SceneManager {
 			throw new Error(`Failed to load scene ${scene}. world is missing!`)
 		}
 
-		loadScene((this.world = world.clear()))
+		world.clear()
+		create(world)
+
+		this.world = world
 	}
 
 	restart() {
 		this.load(this.scene, this.world)
 	}
 
-	sceneList() {
+	list() {
 		return Object.keys(this.scenes)
 	}
 }
