@@ -1,9 +1,9 @@
 export default class ContactSolver {
 	constructor(options = {}) {
-		this.biasSlop = options.biasSlop ?? 0.01
 		this.biasBeta = options.biasBeta ?? 0.1
-		this.restitutionSlop = options.restitutionSlop ?? 0.5
-		this.invDt = options.invDt ?? 60
+		this.biasSlop = options.biasSlop ?? 0.01
+		this.bounceThreashold = options.bounceThreashold ?? 0.5
+		this.invH = options.invH ?? 60
 	}
 
 	prepare(contact, useBlock = false) {
@@ -50,9 +50,6 @@ export default class ContactSolver {
 			cp.raY = raY
 			cp.rbX = rbX
 			cp.rbY = rbY
-
-			cp.vn = vn
-
 			cp.rnA = rnA
 			cp.rnB = rnB
 			cp.rtA = rtA
@@ -63,8 +60,8 @@ export default class ContactSolver {
 
 			const beta = mA == 0 || mB == 0 ? this.biasBeta * 3 : this.biasBeta
 
-			cp.velBias = Math.max(cp.overlap - this.biasSlop, 0) * (beta * this.invDt)
-			cp.velRestitution = vn <= -this.restitutionSlop ? -restitution * vn : 0
+			cp.bias = Math.max(cp.overlap - this.biasSlop, 0) * (beta * this.invH)
+			cp.bounce = vn <= -this.bounceThreashold ? -restitution * vn : 0
 		}
 
 		if (useBlock && contactCount == 2) {
@@ -140,10 +137,16 @@ export default class ContactSolver {
 
 			for (const oldCp of oldContactPoints) {
 				if (cp.id == oldCp.id) {
-					cp.normalImpulse = oldCp.normalImpulse
-					cp.tangentImpulse = oldCp.tangentImpulse
-					cp.persistent = true
-					break
+					const dx = cp.pointX - oldCp.pointX
+					const dy = cp.pointY - oldCp.pointY
+					const threashold = this.biasSlop * this.biasSlop
+
+					if (dx * dx + dy * dy < threashold * 2) {
+						cp.normalImpulse = oldCp.normalImpulse
+						cp.tangentImpulse = oldCp.tangentImpulse
+						cp.persistent = true
+						break
+					}
 				}
 			}
 
@@ -206,20 +209,18 @@ export default class ContactSolver {
 
 			let velBias1 = 0
 			let velBias2 = 0
-			let velRestitution1 = 0
-			let velRestitution2 = 0
 
 			if (useBias) {
-				velBias1 = cp1.velBias
-				velBias2 = cp2.velBias
+				velBias1 = cp1.bias
+				velBias2 = cp2.bias
 			} else {
-				velRestitution1 = cp1.velRestitution
-				velRestitution2 = cp2.velRestitution
+				velBias1 = cp1.bounce
+				velBias2 = cp2.bounce
 			}
 
 			// Compute b
-			let bX = vn1 - velRestitution1 - velBias1
-			let bY = vn2 - velRestitution2 - velBias2
+			let bX = vn1 - velBias1
+			let bY = vn2 - velBias2
 
 			// Old impulse
 			const aX = cp1.normalImpulse
@@ -302,15 +303,14 @@ export default class ContactSolver {
 				const vn = relVelX * normalX + relVelY * normalY
 
 				let velBias = 0
-				let velRestitution = 0
 
 				if (useBias) {
-					velBias = cp.velBias
+					velBias = cp.bias
 				} else {
-					velRestitution = cp.velRestitution
+					velBias = cp.bounce
 				}
 
-				let impulse = (-vn + velRestitution + velBias) * cp.effNormalMass
+				let impulse = (-vn + velBias) * cp.effNormalMass
 				const oldImpulse = cp.normalImpulse
 				const newImpulse = Math.max(oldImpulse + impulse, 0)
 
